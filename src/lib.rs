@@ -17,6 +17,9 @@ pub enum Level {
     Critical,
 }
 
+impl Copy for Level {
+}
+
 impl Level {
     pub fn as_int(&self) -> u8 {
         match self {
