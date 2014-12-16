@@ -1,0 +1,5 @@
+[package]
+
+name = "simple-logging"
+version = "0.0.1"
+authors = ["Dabo Ross <daboross@daboross.net>"]
