@@ -1,6 +1,7 @@
 #![feature(macro_rules)]
 #![feature(unboxed_closures)]
 
+pub use api::IntoLogger;
 pub use config::Logger as LoggerConfig;
 pub use config::Output as LoggerOutput;
 pub use api::Logger;
@@ -17,8 +18,7 @@ pub enum Level {
     Critical,
 }
 
-impl Copy for Level {
-}
+impl Copy for Level {}
 
 impl Level {
     pub fn as_int(&self) -> u8 {

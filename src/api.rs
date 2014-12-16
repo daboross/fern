@@ -6,5 +6,5 @@ pub trait Logger {
 }
 
 pub trait IntoLogger {
-    fn into_logger(self) -> io::IoResult<Box<Logger + 'static>>;
+    fn into_logger(self) -> io::IoResult<Box<Logger + Sync + Send>>;
 }

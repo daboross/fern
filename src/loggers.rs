@@ -7,11 +7,10 @@ use std::io;
 use std::io::stdio;
 use Level;
 
-
 struct ConfigurationLogger {
-    output: Vec<Box<Logger + 'static>>,
+    output: Vec<Box<Logger + Sync + Send>>,
     level: Level,
-    format: Box<Fn(&str) -> String + Send>,
+    format: Box<Fn(&str) -> String + Sync + Send>,
 }
 
 impl Logger for ConfigurationLogger {
@@ -28,26 +27,26 @@ impl Logger for ConfigurationLogger {
 }
 
 impl IntoLogger for config::Output {
-    fn into_logger(self) -> io::IoResult<Box<Logger + 'static>> {
+    fn into_logger(self) -> io::IoResult<Box<Logger + Sync + Send>> {
         return Ok(match self {
             config::Output::Parent(config) => try!(config.into_logger()),
-            config::Output::File(ref path) => box try!(WriterLogger::<io::File>::with_file(path)) as Box<Logger>,
-            config::Output::Stdout => box WriterLogger::<io::LineBufferedWriter<stdio::StdWriter>>::with_stdout() as Box<Logger>,
-            config::Output::Stderr => box WriterLogger::<io::LineBufferedWriter<stdio::StdWriter>>::with_stderr() as Box<Logger>,
+            config::Output::File(ref path) => box try!(WriterLogger::<io::File>::with_file(path)) as Box<Logger + Sync + Send>,
+            config::Output::Stdout => box WriterLogger::<stdio::StdWriter>::with_stdout() as Box<Logger + Sync + Send>,
+            config::Output::Stderr => box WriterLogger::<stdio::StdWriter>::with_stderr() as Box<Logger + Sync + Send>,
         });
     }
 }
 
 impl IntoLogger for config::Logger {
-    fn into_logger(self) -> io::IoResult<Box<Logger + 'static>> {
+    fn into_logger(self) -> io::IoResult<Box<Logger + Sync + Send>> {
         let config::Logger {
             format,
             level,
             output: config_output,
         } = self;
 
-        let output: Vec<Box<Logger>> = try!(config_output.into_iter().fold(Ok(Vec::new()),
-                                            |processed: io::IoResult<Vec<Box<Logger + 'static>>>, next: config::Output| {
+        let output = try!(config_output.into_iter().fold(Ok(Vec::new()),
+                                            |processed: io::IoResult<Vec<Box<Logger + Sync + Send>>>, next: config::Output| {
             // If an error has already been found, don't try to process any future outputs, just continue passing along the error.
             let mut processed_so_far = try!(processed);
             return match next.into_logger() {
@@ -63,7 +62,7 @@ impl IntoLogger for config::Logger {
             output: output,
             level: level,
             format: format,
-        } as Box<Logger>);
+        } as Box<Logger + Sync + Send>);
     }
 }
 
@@ -78,12 +77,12 @@ impl <T: io::Writer + Send> WriterLogger<T> {
         };
     }
 
-    fn with_stdout() -> WriterLogger<io::LineBufferedWriter<io::stdio::StdWriter>> {
-        return WriterLogger::new(io::stdout());
+    fn with_stdout() -> WriterLogger<io::stdio::StdWriter> {
+        return WriterLogger::new(stdio::stdout_raw());
     }
 
-    fn with_stderr() -> WriterLogger<io::LineBufferedWriter<io::stdio::StdWriter>> {
-        return WriterLogger::new(io::stderr());
+    fn with_stderr() -> WriterLogger<io::stdio::StdWriter> {
+        return WriterLogger::new(stdio::stderr_raw());
     }
 
     fn with_file(path: &Path) -> io::IoResult<WriterLogger<io::File>> {
