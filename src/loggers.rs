@@ -10,15 +10,15 @@ use Level;
 struct ConfigurationLogger {
     output: Vec<Box<Logger + Sync + Send>>,
     level: Level,
-    format: Box<Fn(&str) -> String + Sync + Send>,
+    format: Box<Fn(&str, &Level) -> String + Sync + Send>,
 }
 
 impl Logger for ConfigurationLogger {
-    fn log(&self, level: Level, msg: &str) -> io::IoResult<()> {
+    fn log(&self, level: &Level, msg: &str) -> io::IoResult<()> {
         if level.as_int() < self.level.as_int() {
             return Ok(());
         }
-        let new_msg = self.format.call((msg,));
+        let new_msg = self.format.call((msg, level));
         for logger in self.output.iter() {
             try!(logger.log(level, new_msg.as_slice()));
         }
@@ -91,7 +91,7 @@ impl <T: io::Writer + Send> WriterLogger<T> {
 }
 
 impl <T: io::Writer + Send> Logger for WriterLogger<T> {
-    fn log(&self, _level: Level, message: &str) -> io::IoResult<()> {
+    fn log(&self, _level: &Level, message: &str) -> io::IoResult<()> {
         return self.writer.lock().write_line(message);
     }
 }

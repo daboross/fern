@@ -2,7 +2,7 @@ use Level;
 use std::io;
 
 pub trait Logger {
-    fn log(&self, level: Level, message: &str) -> io::IoResult<()>;
+    fn log(&self, level: &Level, message: &str) -> io::IoResult<()>;
 }
 
 pub trait IntoLogger {

@@ -1,8 +1,7 @@
 use Level;
 
-
 pub struct Logger {
-    pub format: Box<Fn(&str) -> String + Sync + Send>,
+    pub format: Box<Fn(&str, &Level) -> String + Sync + Send>,
     pub output: Vec<Output>,
     pub level: Level,
 }

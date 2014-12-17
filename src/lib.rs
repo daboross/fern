@@ -1,10 +1,12 @@
 #![feature(macro_rules)]
 #![feature(unboxed_closures)]
 
+use std::fmt;
+
 pub use api::IntoLogger;
+pub use api::Logger;
 pub use config::Logger as LoggerConfig;
 pub use config::Output as LoggerOutput;
-pub use api::Logger;
 
 mod config;
 mod api;
@@ -29,5 +31,17 @@ impl Level {
             &Level::Error => 3u8,
             &Level::Critical => 4u8,
         }
+    }
+}
+
+impl fmt::Show for Level {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        return write!(f, "{}", match self {
+            &Level::Debug => "DEBUG",
+            &Level::Info => "INFO",
+            &Level::Warning => "WARNING",
+            &Level::Error => "ERROR",
+            &Level::Critical => "CRITICAL",
+        });
     }
 }
