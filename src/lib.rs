@@ -1,4 +1,3 @@
-#![feature(macro_rules)]
 #![feature(unboxed_closures)]
 
 use std::fmt;
