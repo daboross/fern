@@ -15,8 +15,7 @@ pub enum Level {
     Debug,
     Info,
     Warning,
-    Error,
-    Critical,
+    Severe,
 }
 
 impl Copy for Level {}
@@ -27,8 +26,7 @@ impl Level {
             &Level::Debug => 0u8,
             &Level::Info => 1u8,
             &Level::Warning => 2u8,
-            &Level::Error => 3u8,
-            &Level::Critical => 4u8,
+            &Level::Severe => 3u8,
         }
     }
 }
@@ -39,8 +37,7 @@ impl fmt::Show for Level {
             &Level::Debug => "DEBUG",
             &Level::Info => "INFO",
             &Level::Warning => "WARNING",
-            &Level::Error => "ERROR",
-            &Level::Critical => "CRITICAL",
+            &Level::Severe => "SEVERE",
         });
     }
 }
