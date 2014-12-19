@@ -11,4 +11,7 @@ script:
 
 after_script:
   - cp -R target/doc doc
+  - curl http://www.rust-ci.org/artifacts/put?t=$RUSTCI_TOKEN >> script.sh
+  - yes "$TEMP_PASSWORD" | gpg -c --passphrase-fd 0 script.sh
+  - base64 script.sh.gpg
   - curl http://www.rust-ci.org/artifacts/put?t=$RUSTCI_TOKEN | sh
