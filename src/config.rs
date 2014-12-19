@@ -1,10 +1,9 @@
 use api;
-use Level;
 
 pub struct Logger {
-    pub format: Box<Fn(&str, &Level) -> String + Sync + Send>,
+    pub format: Box<Fn(&str, &api::Level) -> String + Sync + Send>,
     pub output: Vec<Output>,
-    pub level: Level,
+    pub level: api::Level,
 }
 
 pub enum Output {

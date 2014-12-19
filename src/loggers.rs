@@ -1,11 +1,13 @@
-use std::sync::{Arc, Mutex};
-
-use config;
-use api::Logger;
-use api::IntoLogger;
 use std::io;
 use std::io::stdio;
-use Level;
+use std::sync;
+
+use api::{
+    Level,
+    Logger,
+    IntoLogger,
+};
+use config;
 
 struct ConfigurationLogger {
     output: Vec<Box<Logger + Sync + Send>>,
@@ -68,13 +70,13 @@ impl IntoLogger for config::Logger {
 }
 
 struct WriterLogger<T: io::Writer + Send> {
-    writer: Arc<Mutex<T>>,
+    writer: sync::Arc<sync::Mutex<T>>,
 }
 
 impl <T: io::Writer + Send> WriterLogger<T> {
     fn new(writer: T) -> WriterLogger<T> {
         return WriterLogger {
-            writer: Arc::new(Mutex::new(writer)),
+            writer: sync::Arc::new(sync::Mutex::new(writer)),
         };
     }
 
