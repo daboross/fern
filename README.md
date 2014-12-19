@@ -1,7 +1,7 @@
 fern
 ====
 
-fern is a configurable logging framework written for [rust](http://www.rust-lang.org/).
+fern is a runtime-configurable logging library written for [rust](http://www.rust-lang.org/).
 
 Current features are:
 - Multiple loggers. You can create as many loggers as you need, and configure them separately.
@@ -12,4 +12,4 @@ Current features are:
 
 fern is still in development, and most features are experimental. The library is subject to change in non-backwards-compatible ways.
 
-There is also currently a distinct lack of documentation, though the source isn't that hard to read.
+This library can only be used while complying to the license terms in the `LICENSE` file.

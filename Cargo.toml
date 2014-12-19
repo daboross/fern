@@ -3,3 +3,7 @@
 name = "fern"
 version = "0.0.1"
 authors = ["Dabo Ross <daboross@daboross.net>"]
+description = "Fern is a simple runtime-configurable logging library"
+readme = "README.md"
+keywords = ["log", "logging", "logger", "fern"]
+license = "MIT"
