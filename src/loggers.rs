@@ -33,6 +33,7 @@ impl IntoLogger for config::Output {
             config::Output::File(ref path) => box try!(WriterLogger::<io::File>::with_file(path)) as Box<Logger + Sync + Send>,
             config::Output::Stdout => box WriterLogger::<stdio::StdWriter>::with_stdout() as Box<Logger + Sync + Send>,
             config::Output::Stderr => box WriterLogger::<stdio::StdWriter>::with_stderr() as Box<Logger + Sync + Send>,
+            config::Output::Custom(log) => log,
         });
     }
 }

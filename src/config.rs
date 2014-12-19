@@ -1,3 +1,4 @@
+use api;
 use Level;
 
 pub struct Logger {
@@ -11,4 +12,5 @@ pub enum Output {
     File(Path),
     Stdout,
     Stderr,
+    Custom(Box<api::Logger + Sync + Send>),
 }
