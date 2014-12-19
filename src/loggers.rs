@@ -2,17 +2,39 @@ use std::io;
 use std::io::stdio;
 use std::sync;
 
-use api::{
-    Level,
-    Logger,
-    IntoLogger,
-};
+use api::{Logger, Level};
 use config;
 
-struct ConfigurationLogger {
-    output: Vec<Box<Logger + Sync + Send>>,
-    level: Level,
-    format: Box<Fn(&str, &Level) -> String + Sync + Send>,
+pub struct ConfigurationLogger {
+    pub output: Vec<Box<Logger + Sync + Send>>,
+    pub level: Level,
+    pub format: Box<Fn(&str, &Level) -> String + Sync + Send>,
+}
+
+impl ConfigurationLogger {
+    pub fn new(format: Box<Fn(&str, &Level) -> String + Sync + Send>, config_output: Vec<config::OutputConfig>, level: Level)
+                    -> io::IoResult<ConfigurationLogger> {
+
+        let output = try!(config_output.into_iter().fold(Ok(Vec::new()),
+                                            |processed: io::IoResult<Vec<Box<Logger + Sync + Send>>>, next: config::OutputConfig| {
+            // If an error has already been found, don't try to process any future outputs, just continue passing along the error.
+            let mut processed_so_far = try!(processed);
+            return match next.into_logger() {
+                Err(e) => Err(e), // If this one errors, return the error instead of the Vec so far
+                Ok(processed_value) => {
+                    // If it's ok, add the processed logger to the vec, and pass the vec along
+                    processed_so_far.push(processed_value);
+                    Ok(processed_so_far)
+                }
+            };
+        }));
+
+        return Ok(ConfigurationLogger {
+            output: output,
+            level: level,
+            format: format,
+        });
+    }
 }
 
 impl Logger for ConfigurationLogger {
@@ -28,67 +50,26 @@ impl Logger for ConfigurationLogger {
     }
 }
 
-impl IntoLogger for config::Output {
-    fn into_logger(self) -> io::IoResult<Box<Logger + Sync + Send>> {
-        return Ok(match self {
-            config::Output::Parent(config) => try!(config.into_logger()),
-            config::Output::File(ref path) => box try!(WriterLogger::<io::File>::with_file(path)) as Box<Logger + Sync + Send>,
-            config::Output::Stdout => box WriterLogger::<stdio::StdWriter>::with_stdout() as Box<Logger + Sync + Send>,
-            config::Output::Stderr => box WriterLogger::<stdio::StdWriter>::with_stderr() as Box<Logger + Sync + Send>,
-            config::Output::Custom(log) => log,
-        });
-    }
-}
-
-impl IntoLogger for config::Logger {
-    fn into_logger(self) -> io::IoResult<Box<Logger + Sync + Send>> {
-        let config::Logger {
-            format,
-            level,
-            output: config_output,
-        } = self;
-
-        let output = try!(config_output.into_iter().fold(Ok(Vec::new()),
-                                            |processed: io::IoResult<Vec<Box<Logger + Sync + Send>>>, next: config::Output| {
-            // If an error has already been found, don't try to process any future outputs, just continue passing along the error.
-            let mut processed_so_far = try!(processed);
-            return match next.into_logger() {
-                Err(e) => Err(e), // If this one errors, return the error instead of the Vec so far
-                Ok(processed_value) => {
-                    // If it's ok, add the processed logger to the vec, and pass the vec along
-                    processed_so_far.push(processed_value);
-                    Ok(processed_so_far)
-                }
-            };
-        }));
-        return Ok(box ConfigurationLogger {
-            output: output,
-            level: level,
-            format: format,
-        } as Box<Logger + Sync + Send>);
-    }
-}
-
-struct WriterLogger<T: io::Writer + Send> {
+pub struct WriterLogger<T: io::Writer + Send> {
     writer: sync::Arc<sync::Mutex<T>>,
 }
 
 impl <T: io::Writer + Send> WriterLogger<T> {
-    fn new(writer: T) -> WriterLogger<T> {
+    pub fn new(writer: T) -> WriterLogger<T> {
         return WriterLogger {
             writer: sync::Arc::new(sync::Mutex::new(writer)),
         };
     }
 
-    fn with_stdout() -> WriterLogger<io::stdio::StdWriter> {
+    pub fn with_stdout() -> WriterLogger<io::stdio::StdWriter> {
         return WriterLogger::new(stdio::stdout_raw());
     }
 
-    fn with_stderr() -> WriterLogger<io::stdio::StdWriter> {
+    pub fn with_stderr() -> WriterLogger<io::stdio::StdWriter> {
         return WriterLogger::new(stdio::stderr_raw());
     }
 
-    fn with_file(path: &Path) -> io::IoResult<WriterLogger<io::File>> {
+    pub fn with_file(path: &Path) -> io::IoResult<WriterLogger<io::File>> {
         return Ok(WriterLogger::new(try!(io::File::create(path))));
     }
 }

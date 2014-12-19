@@ -5,10 +5,6 @@ pub trait Logger {
     fn log(&self, level: &Level, message: &str) -> io::IoResult<()>;
 }
 
-pub trait IntoLogger {
-    fn into_logger(self) -> io::IoResult<Box<Logger + Sync + Send>>;
-}
-
 #[deriving(Copy)]
 pub enum Level {
     Debug,
