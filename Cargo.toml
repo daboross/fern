@@ -4,6 +4,10 @@ name = "fern"
 version = "0.0.1"
 authors = ["Dabo Ross <daboross@daboross.net>"]
 description = "Fern is a simple runtime-configurable logging library"
+
+documentation = "https://dabo.guru/rust/fern/"
+repository = "https://github.com/daboross/fern-rs"
+
 readme = "README.md"
 keywords = ["log", "logging", "logger", "fern"]
 license = "MIT"
