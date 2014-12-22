@@ -47,7 +47,11 @@ impl OutputConfig {
     pub fn into_logger(self) -> io::IoResult<Box<api::Logger + Sync + Send>> {
         return Ok(match self {
             OutputConfig::Parent(config) => try!(config.into_logger()),
-            OutputConfig::File(ref path) => box try!(loggers::WriterLogger::<io::File>::with_file(path)) as Box<api::Logger + Sync + Send>,
+            OutputConfig::File(ref path) => {
+                // workaround for error if this is all on one line
+                let log = box try!(loggers::WriterLogger::<io::File>::with_file(path));
+                log as Box<api::Logger + Sync + Send>
+            },
             OutputConfig::Stdout => box loggers::WriterLogger::<stdio::StdWriter>::with_stdout() as Box<api::Logger + Sync + Send>,
             OutputConfig::Stderr => box loggers::WriterLogger::<stdio::StdWriter>::with_stderr() as Box<api::Logger + Sync + Send>,
             OutputConfig::Custom(log) => log,
