@@ -5,8 +5,8 @@ version = "0.1.1-dev"
 authors = ["Dabo Ross <daboross@daboross.net>"]
 description = "Fern is a simple runtime-configurable logging library"
 
-documentation = "https://dabo.guru/rust/fern_macros/"
-repository = "https://github.com/daboross/fern-macros-rs"
+documentation = "https://dabo.guru/rust/fern/"
+repository = "https://github.com/daboross/fern-rs"
 
 readme = "README.md"
 keywords = ["log", "logging", "logger", "fern"]
