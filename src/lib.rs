@@ -2,7 +2,7 @@
 
 //! Fern is a runtime-configurable rust logging library.
 
-pub use api::{Logger, Level};
+pub use api::{Logger, BoxedLogger, ArcLogger, Level};
 pub use config::{LoggerConfig, OutputConfig};
 
 mod api;

@@ -37,23 +37,23 @@ pub enum OutputConfig {
     Stderr,
     /// Custom logger - all messages sent here will just be sent on to the logger implementation you provide
     #[unstable]
-    Custom(Box<api::Logger + Sync + Send>),
+    Custom(api::BoxedLogger),
 }
 
 #[experimental]
 impl OutputConfig {
     /// Builds this OutputConfig into an actual Logger that you can send messages to. This will open any files, get handles to stdout/stderr if need, etc.
     #[unstable]
-    pub fn into_logger(self) -> io::IoResult<Box<api::Logger + Sync + Send>> {
+    pub fn into_logger(self) -> io::IoResult<api::BoxedLogger> {
         return Ok(match self {
             OutputConfig::Parent(config) => try!(config.into_logger()),
             OutputConfig::File(ref path) => {
                 // workaround for error if this is all on one line
                 let log = box try!(loggers::WriterLogger::<io::File>::with_file(path));
-                log as Box<api::Logger + Sync + Send>
+                log as api::BoxedLogger
             },
-            OutputConfig::Stdout => box loggers::WriterLogger::<stdio::StdWriter>::with_stdout() as Box<api::Logger + Sync + Send>,
-            OutputConfig::Stderr => box loggers::WriterLogger::<stdio::StdWriter>::with_stderr() as Box<api::Logger + Sync + Send>,
+            OutputConfig::Stdout => box loggers::WriterLogger::<stdio::StdWriter>::with_stdout() as api::BoxedLogger,
+            OutputConfig::Stderr => box loggers::WriterLogger::<stdio::StdWriter>::with_stderr() as api::BoxedLogger,
             OutputConfig::Custom(log) => log,
         });
     }
@@ -63,9 +63,9 @@ impl OutputConfig {
 impl LoggerConfig {
     /// Builds this LoggerConfig into an actual Logger that you can send messages to. This will build all parent OutputConfig loggers as well.
     #[unstable]
-    pub fn into_logger(self) -> io::IoResult<Box<api::Logger + Sync + Send>> {
+    pub fn into_logger(self) -> io::IoResult<api::BoxedLogger> {
         let LoggerConfig {format, level, output} = self;
         let log = try!(loggers::ConfigurationLogger::new(format, output, level));
-        return Ok(box log as Box<api::Logger + Sync + Send>);
+        return Ok(box log as api::BoxedLogger);
     }
 }

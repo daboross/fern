@@ -1,5 +1,6 @@
 use std::io;
 use std::fmt;
+use std::sync;
 
 /// Basic logger trait. Something you can send messages to.
 #[unstable]
@@ -8,6 +9,14 @@ pub trait Logger {
     #[unstable]
     fn log(&self, level: &Level, message: &str) -> io::IoResult<()>;
 }
+
+/// Type alias for a boxed logger
+#[unstable]
+pub type BoxedLogger = Box<Logger + Sync + Send>;
+
+/// Type alias for a reference counted boxed logger
+#[unstable]
+pub type ArcLogger = sync::Arc<Box<Logger + Sync + Send>>;
 
 /// A logging level - definition of how severe your message is.
 #[unstable]

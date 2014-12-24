@@ -2,11 +2,12 @@ use std::io;
 use std::io::stdio;
 use std::sync;
 
-use api::{Logger, Level};
+use api;
+use api::Level;
 use config;
 
 pub struct ConfigurationLogger {
-    pub output: Vec<Box<Logger + Sync + Send>>,
+    pub output: Vec<api::BoxedLogger>,
     pub level: Level,
     pub format: Box<Fn(&str, &Level) -> String + Sync + Send>,
 }
@@ -16,7 +17,7 @@ impl ConfigurationLogger {
                     -> io::IoResult<ConfigurationLogger> {
 
         let output = try!(config_output.into_iter().fold(Ok(Vec::new()),
-                                            |processed: io::IoResult<Vec<Box<Logger + Sync + Send>>>, next: config::OutputConfig| {
+                                            |processed: io::IoResult<Vec<api::BoxedLogger>>, next: config::OutputConfig| {
             // If an error has already been found, don't try to process any future outputs, just continue passing along the error.
             let mut processed_so_far = try!(processed);
             return match next.into_logger() {
@@ -37,7 +38,7 @@ impl ConfigurationLogger {
     }
 }
 
-impl Logger for ConfigurationLogger {
+impl api::Logger for ConfigurationLogger {
     fn log(&self, level: &Level, msg: &str) -> io::IoResult<()> {
         if level.as_int() < self.level.as_int() {
             return Ok(());
@@ -74,7 +75,7 @@ impl <T: io::Writer + Send> WriterLogger<T> {
     }
 }
 
-impl <T: io::Writer + Send> Logger for WriterLogger<T> {
+impl <T: io::Writer + Send> api::Logger for WriterLogger<T> {
     fn log(&self, _level: &Level, message: &str) -> io::IoResult<()> {
         return self.writer.lock().write_line(message);
     }
