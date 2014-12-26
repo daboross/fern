@@ -71,7 +71,7 @@ impl <T: io::Writer + Send> WriterLogger<T> {
     }
 
     pub fn with_file(path: &Path) -> io::IoResult<WriterLogger<io::File>> {
-        return Ok(WriterLogger::new(try!(io::File::create(path))));
+        return Ok(WriterLogger::new(try!(io::File::open_mode(path, io::FileMode::Append, io::FileAccess::Write))));
     }
 }
 
