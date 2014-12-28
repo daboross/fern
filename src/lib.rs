@@ -108,8 +108,7 @@
 //! severe!("Something really bad happened!");
 //! ```
 //!
-//! If your application is multi-threaded, you can spread the logger across threads as follows (do
-//! this instead of the initiating above):
+//! If your application is multi-threaded, you can spread the logger across threads as follows:
 //!
 //! ```
 //! use std::sync;
@@ -119,7 +118,9 @@
 //! fern::local::set_thread_logger(logger_arc.clone()); // Initialize the logger for this thread.
 //!
 //! spawn(move || {
-//!     fern::local::set_thread_logger(logger_arc.clone());
+//!     fern::local::set_thread_logger(logger_arc.clone()); // Initialize the logger for this worker thread.
+//!
+//!     // Do other calculations, and log more here as well.
 //! });
 //! ```
 //!
