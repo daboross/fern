@@ -23,6 +23,7 @@
 //!
 //! Here's a logger that simply logs all messages to stdout, and an output.log file, formatting
 //! each message with the current date, time, and logging level.
+//!
 //! ```
 //! let logger_config = fern::LoggerConfig {
 //!     format: box |msg: &str, level: &fern::Level| {
@@ -57,6 +58,7 @@
 //! is the lowest logging level.
 //!
 //! After creating your logging config, you can turn it into a Logger using `into_logger()`:
+//!
 //! ```
 //! let logger = match logger_config.into_logger() {
 //!     Some(v) => v,
@@ -77,6 +79,7 @@
 //!
 //! To initialize your logger into thread-local storage for use, you can use
 //! `fern::local::set_thread_logger()`
+//!
 //! ```
 //! use std::sync;
 //!
@@ -84,6 +87,7 @@
 //! ```
 //!
 //! You can then log anywhere in this thread using the following macros from fern_macros:
+//!
 //! ```
 //! #[feature(phase)]
 //!
@@ -106,6 +110,7 @@
 //!
 //! If your application is multi-threaded, you can spread the logger across threads as follows (do
 //! this instead of the initiating above):
+//!
 //! ```
 //! use std::sync;
 //!
