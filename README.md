@@ -14,3 +14,5 @@ Current features are:
 fern is still in development, and most features are experimental. The library is subject to change in non-backwards-compatible ways.
 
 This library can only be used while complying to the license terms in the `LICENSE` file.
+
+The more information, and examples on how to use fern, see [the fern docs](https://dabo.guru/rust/fern/).
