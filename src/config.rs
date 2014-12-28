@@ -26,17 +26,16 @@ pub enum OutputConfig {
     #[unstable]
     Parent(LoggerConfig),
     /// File logger - all messages sent to this will be output into the specified path.
-    /// Note that the file will be opened appending, so nothing in the file will be overwritten.opened
-    #[unstable]
+    /// Note that the file will be opened appending, so nothing in the file will be overwritten.
     File(Path),
     /// Stdout logger - all messages sent to this will be printed to stdout
-    #[unstable]
     Stdout,
     /// Stderr logger - all messages sent to this will be printed to stderr
-    #[unstable]
     Stderr,
-    /// Custom logger - all messages sent here will just be sent on to the logger implementation you provide
-    #[unstable]
+    /// Null logger - all messages sent to this logger will simply disappear into the void
+    Null,
+    /// Custom logger - all messages sent here will just be sent on to the logger implementation
+    /// you provide
     Custom(api::BoxedLogger),
 }
 
@@ -50,6 +49,7 @@ impl OutputConfig {
             OutputConfig::File(ref path) => box try!(loggers::WriterLogger::<io::File>::with_file(path)) as api::BoxedLogger,
             OutputConfig::Stdout => box loggers::WriterLogger::<stdio::StdWriter>::with_stdout() as api::BoxedLogger,
             OutputConfig::Stderr => box loggers::WriterLogger::<stdio::StdWriter>::with_stderr() as api::BoxedLogger,
+            OutputConfig::Null => box loggers::NullLogger as api::BoxedLogger,
             OutputConfig::Custom(log) => log,
         });
     }

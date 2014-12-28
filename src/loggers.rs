@@ -80,3 +80,13 @@ impl <T: io::Writer + Send> api::Logger for WriterLogger<T> {
         return self.writer.lock().write_line(message);
     }
 }
+
+/// A logger implementation which does nothing with logged messages.
+#[deriving(Copy)]
+pub struct NullLogger;
+
+impl api::Logger for NullLogger {
+    fn log(&self, _level: &Level, _message: &str) -> io::IoResult<()> {
+        return Ok(());
+    }
+}

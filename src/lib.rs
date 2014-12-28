@@ -4,6 +4,7 @@
 
 pub use api::{Logger, BoxedLogger, ArcLogger, Level};
 pub use config::{LoggerConfig, OutputConfig};
+pub use loggers::NullLogger;
 
 pub mod local;
 mod api;
