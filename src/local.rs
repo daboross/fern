@@ -5,7 +5,8 @@
 
 use std::cell;
 use std::sync;
-use std::io;
+
+use errors::Error;
 use api;
 use config;
 
@@ -32,7 +33,7 @@ pub fn set_thread_logger(logger: api::ArcLogger) {
 /// For a more friendly interface which will automatically report errors, and allows inline
 /// formatting, try using the `log!()` macro in the `fern_macros` package.
 #[experimental]
-pub fn log(level: &api::Level, msg: &str) -> io::IoResult<()> {
+pub fn log(level: &api::Level, msg: &str) -> Result<(), Error> {
     THREAD_LOGGER.with(|logger| {
         logger.borrow().log(level, msg)
     })

@@ -1,13 +1,14 @@
-use std::io;
 use std::fmt;
 use std::sync;
+
+use errors::Error;
 
 /// Basic logger trait. Something you can send messages to.
 #[unstable]
 pub trait Logger {
     /// Logs a given message - puts this message where-ever this logger means to put it
     #[unstable]
-    fn log(&self, level: &Level, message: &str) -> io::IoResult<()>;
+    fn log(&self, level: &Level, message: &str) -> Result<(), Error>;
 }
 
 /// Type alias for a boxed logger

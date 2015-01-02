@@ -2,6 +2,7 @@ use std::io;
 use std::io::stdio;
 use std::sync;
 
+use errors::Error;
 use api;
 use api::Level;
 use config;
@@ -39,7 +40,7 @@ impl ConfigurationLogger {
 }
 
 impl api::Logger for ConfigurationLogger {
-    fn log(&self, level: &Level, msg: &str) -> io::IoResult<()> {
+    fn log(&self, level: &Level, msg: &str) -> Result<(), Error> {
         if level.as_int() < self.level.as_int() {
             return Ok(());
         }
@@ -76,8 +77,9 @@ impl <T: io::Writer + Send> WriterLogger<T> {
 }
 
 impl <T: io::Writer + Send> api::Logger for WriterLogger<T> {
-    fn log(&self, _level: &Level, message: &str) -> io::IoResult<()> {
-        return self.writer.lock().write_line(message);
+    fn log(&self, _level: &Level, message: &str) -> Result<(), Error> {
+        try!(try!(self.writer.lock()).write_line(message));
+        return Ok(());
     }
 }
 
@@ -87,7 +89,7 @@ impl <T: io::Writer + Send> api::Logger for WriterLogger<T> {
 pub struct NullLogger;
 
 impl api::Logger for NullLogger {
-    fn log(&self, _level: &Level, _message: &str) -> io::IoResult<()> {
+    fn log(&self, _level: &Level, _message: &str) -> Result<(), Error> {
         return Ok(());
     }
 }
