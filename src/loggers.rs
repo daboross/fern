@@ -14,12 +14,14 @@ pub struct ConfigurationLogger {
 }
 
 impl ConfigurationLogger {
-    pub fn new(format: Box<Fn(&str, &Level) -> String + Sync + Send>, config_output: Vec<config::OutputConfig>, level: Level)
+    pub fn new(format: Box<Fn(&str, &Level) -> String + Sync + Send>,
+            config_output: Vec<config::OutputConfig>, level: Level)
                     -> io::IoResult<ConfigurationLogger> {
 
         let output = try!(config_output.into_iter().fold(Ok(Vec::new()),
-                                            |processed: io::IoResult<Vec<api::BoxedLogger>>, next: config::OutputConfig| {
-            // If an error has already been found, don't try to process any future outputs, just continue passing along the error.
+                     |processed: io::IoResult<Vec<api::BoxedLogger>>, next: config::OutputConfig| {
+            // If an error has already been found, don't try to process any future outputs, just
+            // continue passing along the error.
             let mut processed_so_far = try!(processed);
             return match next.into_logger() {
                 Err(e) => Err(e), // If this one errors, return the error instead of the Vec so far
@@ -72,7 +74,8 @@ impl <T: io::Writer + Send> WriterLogger<T> {
     }
 
     pub fn with_file(path: &Path) -> io::IoResult<WriterLogger<io::File>> {
-        return Ok(WriterLogger::new(try!(io::File::open_mode(path, io::FileMode::Append, io::FileAccess::Write))));
+        return Ok(WriterLogger::new(try!(io::File::open_mode(path, io::FileMode::Append,
+                                                                io::FileAccess::Write))));
     }
 }
 

@@ -6,20 +6,25 @@ use loggers;
 
 /// This is the base logger configuration in fern.
 ///
-/// All LoggerConfig will do is filter log messages based on level, and then pass on to any number of other loggers.
+/// All LoggerConfig will do is filter log messages based on level, and then pass on to any number
+/// of other loggers.
 #[unstable]
 pub struct LoggerConfig {
-    /// The format for this logger. All log messages coming in will be sent through this closure before being sent to parent loggers
+    /// The format for this logger. All log messages coming in will be sent through this closure
+    /// before being sent to parent loggers
     pub format: Box<Fn(&str, &api::Level) -> String + Sync + Send>,
-    /// A list of loggers to send messages to. Any messages that are sent to this logger that aren't filtered are sent to each of these loggers in turn.
+    /// A list of loggers to send messages to. Any messages that are sent to this logger that
+    /// aren't filtered are sent to each of these loggers in turn.
     pub output: Vec<OutputConfig>,
-    /// The level of this logger. Any messages which have a lower level than this level won't be passed on.
+    /// The level of this logger. Any messages which have a lower level than this level won't be
+    /// passed on.
     pub level: api::Level,
 }
 
 /// This enum contains various outputs that you can send messages to.
 ///
-/// You can use this in conjunction with LoggerConfig for message formating and filtering, or just use this if you don't need to filter or format messages.
+/// You can use this in conjunction with LoggerConfig for message formating and filtering, or just
+/// use this if you don't need to filter or format messages.
 #[experimental]
 pub enum OutputConfig {
     /// Parent logger - another LoggerConfig
@@ -41,7 +46,9 @@ pub enum OutputConfig {
 
 #[experimental]
 impl OutputConfig {
-    /// Builds this OutputConfig into an actual Logger that you can send messages to. This will open any files, get handles to stdout/stderr if need, etc.
+    /// Builds this OutputConfig into an actual Logger that you can send messages to. This will
+    /// open any files, get handles to stdout/stderr, etc. depending on which type of logger this
+    /// is.
     #[unstable]
     pub fn into_logger(self) -> io::IoResult<api::BoxedLogger> {
         return Ok(match self {
@@ -57,7 +64,8 @@ impl OutputConfig {
 
 #[experimental]
 impl LoggerConfig {
-    /// Builds this LoggerConfig into an actual Logger that you can send messages to. This will build all parent OutputConfig loggers as well.
+    /// Builds this LoggerConfig into an actual Logger that you can send messages to. This will
+    /// build all parent OutputConfig loggers as well.
     #[unstable]
     pub fn into_logger(self) -> io::IoResult<api::BoxedLogger> {
         let LoggerConfig {format, level, output} = self;

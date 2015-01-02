@@ -6,12 +6,17 @@
 //!
 //! - Multiple loggers. You can create as many loggers as you need, and configure them separately.
 //! - Configurable output format via closures.
-//! - Multiple outputs per logger - current options are to a file, or to stdout/stderr (or any combination of those)
-//! - Each output can have a Level configured, so you can output all log messages to a log file, and only have warnings and above show up in the console!
-//! - You can also define your own custom logging endpoints - have messages end up where you need them!
-//! - Thread-local logger storage. This allows for convenient debug/info/warning/severe!() and log!() macros via the fern_macros package.
+//! - Multiple outputs per logger - current options are to a file, or to stdout/stderr (or any
+//!   combination of those)
+//! - Each output can have a Level configured, so you can output all log messages to a log file,
+//!   and only have warnings and above show up in the console!
+//! - You can also define your own custom logging endpoints - have messages end up where you need
+//!   them!
+//! - Thread-local logger storage. This allows for convenient debug/info/warning/severe!() and
+//!   log!() macros via the fern_macros package.
 //!
-//! fern is still in development, and most features are experimental. The library is subject to change in non-backwards-compatible ways.
+//! fern is still in development, and most features are experimental. The library is subject to
+//! change in non-backwards-compatible ways.
 //!
 //! This library can only be used while complying to the license terms in the `LICENSE` file.
 //!
@@ -118,7 +123,8 @@
 //! fern::local::set_thread_logger(logger_arc.clone()); // Initialize the logger for this thread.
 //!
 //! spawn(move || {
-//!     fern::local::set_thread_logger(logger_arc.clone()); // Initialize the logger for this worker thread.
+//!     // Initialize the logger for this worker thread.
+//!     fern::local::set_thread_logger(logger_arc.clone());
 //!
 //!     // Do other calculations, and log more here as well.
 //! });

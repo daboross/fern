@@ -41,7 +41,8 @@ impl Copy for Level {}
 
 #[unstable]
 impl Level {
-    /// Take the integer value of this log level. This value is basically 0-3, increasing as the severity of the log increases.
+    /// Take the integer value of this log level. This value is basically 0-3, increasing as the
+    /// severity of the log increases.
     #[inline]
     #[unstable]
     pub fn as_int(&self) -> u8 {
