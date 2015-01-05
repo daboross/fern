@@ -88,7 +88,7 @@ impl <T: io::Writer + Send> api::Logger for WriterLogger<T> {
 
 /// A logger implementation which does nothing with logged messages.
 #[unstable]
-#[deriving(Copy)]
+#[derive(Copy)]
 pub struct NullLogger;
 
 impl api::Logger for NullLogger {

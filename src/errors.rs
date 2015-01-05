@@ -2,7 +2,7 @@ use std::io;
 use std::sync;
 use std::error;
 
-#[deriving(Show)]
+#[derive(Show)]
 pub enum Error {
     Io(io::IoError),
     Poison(String),
