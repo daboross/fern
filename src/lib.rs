@@ -1,5 +1,3 @@
-#![feature(unboxed_closures, old_orphan_check)]
-
 //! Fern is a runtime-configurable rust logging library.
 
 //! Current features are:

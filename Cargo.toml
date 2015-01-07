@@ -1,7 +1,7 @@
 [package]
 
 name = "fern"
-version = "0.1.5"
+version = "0.1.5-dev"
 authors = ["Dabo Ross <daboross@daboross.net>"]
 description = "Fern is a simple runtime-configurable logging library"
 

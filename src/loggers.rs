@@ -46,7 +46,7 @@ impl api::Logger for ConfigurationLogger {
         if level.as_int() < self.level.as_int() {
             return Ok(());
         }
-        let new_msg = self.format.call((msg, level));
+        let new_msg = (self.format)(msg, level);
         for logger in self.output.iter() {
             try!(logger.log(level, new_msg.as_slice()));
         }
