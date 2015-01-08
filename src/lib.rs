@@ -27,7 +27,7 @@
 //! Here's a logger that simply logs all messages to stdout, and an output.log file, formatting
 //! each message with the current date, time, and logging level.
 //!
-//! ```
+//! ```no_test
 //! let logger_config = fern::LoggerConfig {
 //!     format: box |msg: &str, level: &fern::Level| {
 //!         return format!("[{}][{}] {}", chrono::Local::now().format("%Y-%m-%d][%H:%M:%S"), level, msg);
@@ -48,7 +48,7 @@
 //!
 //! With this formatting, the final output of the logger will look something like:
 //!
-//! ```
+//! ```text
 //! [2014-12-01][12:55:04][INFO] A message logged at the Level::Info logging level.
 //! ```
 //!
@@ -62,7 +62,7 @@
 //!
 //! After creating your logging config, you can turn it into a Logger using `into_logger()`:
 //!
-//! ```
+//! ```no_test
 //! let logger = match logger_config.into_logger() {
 //!     Some(v) => v,
 //!     Err(e) => panic!("Failed to create logger! Error: {}", e),
@@ -83,7 +83,7 @@
 //! To initialize your logger into thread-local storage for use, you can use
 //! `fern::local::set_thread_logger()`
 //!
-//! ```
+//! ```no_test
 //! use std::sync;
 //!
 //! fern::local::set_thread_logger(sync::Arc::new(logger));
@@ -91,12 +91,8 @@
 //!
 //! You can then log anywhere in this thread using the following macros from fern_macros:
 //!
-//! ```
-//! #[feature(phase)]
-//!
-//! // ...
-//!
-//! #[phase(plugin)]
+//! ```no_test
+//! #[macro_use]
 //! extern crate fern_macros;
 //!
 //! // ...
@@ -113,7 +109,7 @@
 //!
 //! If your application is multi-threaded, you can spread the logger across threads as follows:
 //!
-//! ```
+//! ```no_test
 //! use std::sync;
 //!
 //! let logger_arc = sync::Arc::new(logger); // Create a reference counted logger
