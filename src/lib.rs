@@ -1,3 +1,4 @@
+#![allow(unstable)]
 //! Fern is a runtime-configurable rust logging library.
 
 //! Current features are:

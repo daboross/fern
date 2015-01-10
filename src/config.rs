@@ -53,10 +53,13 @@ impl OutputConfig {
     pub fn into_logger(self) -> io::IoResult<api::BoxedLogger> {
         return Ok(match self {
             OutputConfig::Parent(config) => try!(config.into_logger()),
-            OutputConfig::File(ref path) => box try!(loggers::WriterLogger::<io::File>::with_file(path)) as api::BoxedLogger,
-            OutputConfig::Stdout => box loggers::WriterLogger::<stdio::StdWriter>::with_stdout() as api::BoxedLogger,
-            OutputConfig::Stderr => box loggers::WriterLogger::<stdio::StdWriter>::with_stderr() as api::BoxedLogger,
-            OutputConfig::Null => box loggers::NullLogger as api::BoxedLogger,
+            OutputConfig::File(ref path) => Box::new(try!(
+                loggers::WriterLogger::<io::File>::with_file(path))) as api::BoxedLogger,
+            OutputConfig::Stdout => Box::new(
+                loggers::WriterLogger::<stdio::StdWriter>::with_stdout()) as api::BoxedLogger,
+            OutputConfig::Stderr => Box::new(
+                loggers::WriterLogger::<stdio::StdWriter>::with_stderr()) as api::BoxedLogger,
+            OutputConfig::Null => Box::new(loggers::NullLogger) as api::BoxedLogger,
             OutputConfig::Custom(log) => log,
         });
     }
@@ -70,6 +73,6 @@ impl LoggerConfig {
     pub fn into_logger(self) -> io::IoResult<api::BoxedLogger> {
         let LoggerConfig {format, level, output} = self;
         let log = try!(loggers::ConfigurationLogger::new(format, output, level));
-        return Ok(box log as api::BoxedLogger);
+        return Ok(Box::new(log) as api::BoxedLogger);
     }
 }
