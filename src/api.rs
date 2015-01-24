@@ -56,7 +56,7 @@ impl Level {
 }
 
 #[unstable]
-impl fmt::Show for Level {
+impl fmt::Debug for Level {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         return f.write_str(match self {
             &Level::Debug => "DEBUG",
