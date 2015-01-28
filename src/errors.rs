@@ -16,6 +16,6 @@ impl error::FromError<io::IoError> for Error {
 
 impl <T> error::FromError<sync::PoisonError<T>> for Error {
     fn from_error(error: sync::PoisonError<T>) -> Error {
-        Error::Poison(format!("{:?}", error))
+        Error::Poison(format!("{}", error))
     }
 }
