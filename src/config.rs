@@ -1,5 +1,5 @@
-use std::io;
-use std::io::stdio;
+use std::old_io as io;
+use std::old_io::stdio;
 
 use api;
 use loggers;

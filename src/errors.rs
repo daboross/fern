@@ -1,8 +1,8 @@
-use std::io;
+use std::old_io as io;
 use std::sync;
 use std::error;
 
-#[derive(Show)]
+#[derive(Debug)]
 pub enum Error {
     Io(io::IoError),
     Poison(String),
