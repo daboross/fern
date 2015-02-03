@@ -25,7 +25,7 @@ pub struct LoggerConfig {
 ///
 /// You can use this in conjunction with LoggerConfig for message formating and filtering, or just
 /// use this if you don't need to filter or format messages.
-#[experimental]
+#[unstable]
 pub enum OutputConfig {
     /// Parent logger - another LoggerConfig
     #[unstable]
@@ -44,7 +44,7 @@ pub enum OutputConfig {
     Custom(api::BoxedLogger),
 }
 
-#[experimental]
+#[unstable]
 impl OutputConfig {
     /// Builds this OutputConfig into an actual Logger that you can send messages to. This will
     /// open any files, get handles to stdout/stderr, etc. depending on which type of logger this
@@ -65,7 +65,7 @@ impl OutputConfig {
     }
 }
 
-#[experimental]
+#[unstable]
 impl LoggerConfig {
     /// Builds this LoggerConfig into an actual Logger that you can send messages to. This will
     /// build all parent OutputConfig loggers as well.

@@ -20,7 +20,7 @@ thread_local!{
 /// once, and then use it on as many threads as necessary.
 ///
 /// The logger set can be accessed directly using the `log()` function.
-#[experimental]
+#[unstable]
 pub fn set_thread_logger(logger: api::ArcLogger) {
     THREAD_LOGGER.with(move |thread_logger| {
         *thread_logger.borrow_mut() = logger;
@@ -32,7 +32,7 @@ pub fn set_thread_logger(logger: api::ArcLogger) {
 ///
 /// For a more friendly interface which will automatically report errors, and allows inline
 /// formatting, try using the `log!()` macro in the `fern_macros` package.
-#[experimental]
+#[unstable]
 pub fn log(level: &api::Level, msg: &str) -> Result<(), Error> {
     THREAD_LOGGER.with(|logger| {
         logger.borrow().log(level, msg)

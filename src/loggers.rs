@@ -47,8 +47,8 @@ impl api::Logger for ConfigurationLogger {
             return Ok(());
         }
         let new_msg = (self.format)(msg, level);
-        for logger in self.output.iter() {
-            try!(logger.log(level, new_msg.as_slice()));
+        for logger in &self.output {
+            try!(logger.log(level, &new_msg));
         }
         return Ok(());
     }

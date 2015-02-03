@@ -1,4 +1,4 @@
-#![allow(unstable)]
+#![feature(io, core)]
 //! Fern is a runtime-configurable rust logging library.
 
 //! Current features are:
@@ -54,7 +54,7 @@
 //! ```
 //!
 //! `output:` is a Vec<> of other configurations to send the messages to. In this example, we send
-//! them to `OutputConfig::Stdout` and `OutputConfig::File(Path::new(config.log_file.as_slice())`.
+//! them to `OutputConfig::Stdout` and `OutputConfig::File(Path::new("output.log"))`.
 //! This will send messages to the console, and to a file called "output.log".
 //!
 //! `level:` is a `fern::Level` which describes the minimum level that should be allowed to pass
