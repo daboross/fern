@@ -65,7 +65,7 @@
 //!
 //! ```no_test
 //! let logger = match logger_config.into_logger() {
-//!     Some(v) => v,
+//!     Ok(v) => v,
 //!     Err(e) => panic!("Failed to create logger! Error: {}", e),
 //! };
 //! ```
