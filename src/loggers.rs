@@ -54,7 +54,7 @@ impl api::Logger for ConfigurationLogger {
     }
 }
 
-pub struct WriterLogger<T: io::Writer + Send> {
+pub struct WriterLogger<T: io::Writer + Send + 'static> {
     writer: sync::Arc<sync::Mutex<T>>,
 }
 
