@@ -4,22 +4,21 @@ use std::sync;
 
 use errors::Error;
 use api;
-use api::Level;
 use config;
+use config::Formatter;
 
-pub struct ConfigurationLogger {
-    pub output: Vec<api::BoxedLogger>,
-    pub level: Level,
-    pub format: Box<Fn(&str, &Level) -> String + Sync + Send>,
+pub struct DispatchLogger {
+    pub output: Vec<Box<api::Logger>>,
+    pub level: api::Level,
+    pub format: Box<Formatter>,
 }
 
-impl ConfigurationLogger {
-    pub fn new(format: Box<Fn(&str, &Level) -> String + Sync + Send>,
-            config_output: Vec<config::OutputConfig>, level: Level)
-                    -> io::IoResult<ConfigurationLogger> {
+impl DispatchLogger {
+    pub fn new(format: Box<Formatter>, config_output: Vec<config::OutputConfig>,
+            level: api::Level) -> io::IoResult<DispatchLogger> {
 
         let output = try!(config_output.into_iter().fold(Ok(Vec::new()),
-                     |processed: io::IoResult<Vec<api::BoxedLogger>>, next: config::OutputConfig| {
+                     |processed: io::IoResult<Vec<Box<api::Logger>>>, next: config::OutputConfig| {
             // If an error has already been found, don't try to process any future outputs, just
             // continue passing along the error.
             let mut processed_so_far = try!(processed);
@@ -33,7 +32,7 @@ impl ConfigurationLogger {
             };
         }));
 
-        return Ok(ConfigurationLogger {
+        return Ok(DispatchLogger {
             output: output,
             level: level,
             format: format,
@@ -41,14 +40,14 @@ impl ConfigurationLogger {
     }
 }
 
-impl api::Logger for ConfigurationLogger {
-    fn log(&self, level: &Level, msg: &str) -> Result<(), Error> {
-        if level.as_int() < self.level.as_int() {
+impl api::Logger for DispatchLogger {
+    fn log(&self, msg: &str, level: &api::Level) -> Result<(), Error> {
+        if *level < self.level {
             return Ok(());
         }
         let new_msg = (self.format)(msg, level);
         for logger in &self.output {
-            try!(logger.log(level, &new_msg));
+            try!(logger.log(&new_msg, level));
         }
         return Ok(());
     }
@@ -80,8 +79,8 @@ impl <T: io::Writer + Send> WriterLogger<T> {
 }
 
 impl <T: io::Writer + Send> api::Logger for WriterLogger<T> {
-    fn log(&self, _level: &Level, message: &str) -> Result<(), Error> {
-        try!(try!(self.writer.lock()).write_line(message));
+    fn log(&self, msg: &str, _level: &api::Level) -> Result<(), Error> {
+        try!(write!(try!(self.writer.lock()), "{}\n", msg));
         return Ok(());
     }
 }
@@ -92,7 +91,7 @@ impl <T: io::Writer + Send> api::Logger for WriterLogger<T> {
 pub struct NullLogger;
 
 impl api::Logger for NullLogger {
-    fn log(&self, _level: &Level, _message: &str) -> Result<(), Error> {
+    fn log(&self, _msg: &str, _level: &api::Level) -> Result<(), Error> {
         return Ok(());
     }
 }

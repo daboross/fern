@@ -130,8 +130,8 @@
 //! can use `fern::ArcLogger` instead.
 
 pub use errors::Error;
-pub use api::{Logger, BoxedLogger, ArcLogger, Level};
-pub use config::{LoggerConfig, OutputConfig};
+pub use api::{Logger, Level};
+pub use config::{DispatchConfig, OutputConfig};
 pub use loggers::NullLogger;
 
 mod api;
