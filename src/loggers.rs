@@ -1,24 +1,24 @@
-use std::old_io as io;
-use std::old_io::stdio;
+use std::io;
 use std::sync;
+use std::fs;
+use std::path;
 
 use errors::Error;
 use api;
 use config;
-use config::Formatter;
 
 pub struct DispatchLogger {
     pub output: Vec<Box<api::Logger>>,
     pub level: api::Level,
-    pub format: Box<Formatter>,
+    pub format: Box<config::Formatter>,
 }
 
 impl DispatchLogger {
-    pub fn new(format: Box<Formatter>, config_output: Vec<config::OutputConfig>,
-            level: api::Level) -> io::IoResult<DispatchLogger> {
+    pub fn new(format: Box<config::Formatter>, config_output: Vec<config::OutputConfig>,
+            level: api::Level) -> io::Result<DispatchLogger> {
 
         let output = try!(config_output.into_iter().fold(Ok(Vec::new()),
-                     |processed: io::IoResult<Vec<Box<api::Logger>>>, next: config::OutputConfig| {
+                     |processed: io::Result<Vec<Box<api::Logger>>>, next: config::OutputConfig| {
             // If an error has already been found, don't try to process any future outputs, just
             // continue passing along the error.
             let mut processed_so_far = try!(processed);
@@ -53,32 +53,31 @@ impl api::Logger for DispatchLogger {
     }
 }
 
-pub struct WriterLogger<T: io::Writer + Send + 'static> {
+pub struct WriterLogger<T: io::Write> {
     writer: sync::Arc<sync::Mutex<T>>,
 }
 
-impl <T: io::Writer + Send> WriterLogger<T> {
+impl <T: io::Write + Send> WriterLogger<T> {
     pub fn new(writer: T) -> WriterLogger<T> {
         return WriterLogger {
             writer: sync::Arc::new(sync::Mutex::new(writer)),
         };
     }
 
-    pub fn with_stdout() -> WriterLogger<io::stdio::StdWriter> {
-        return WriterLogger::new(stdio::stdout_raw());
+    pub fn with_stdout() -> WriterLogger<io::Stdout> {
+        return WriterLogger::new(io::stdout());
     }
 
-    pub fn with_stderr() -> WriterLogger<io::stdio::StdWriter> {
-        return WriterLogger::new(stdio::stderr_raw());
+    pub fn with_stderr() -> WriterLogger<io::Stderr> {
+        return WriterLogger::new(io::stderr());
     }
 
-    pub fn with_file(path: &Path) -> io::IoResult<WriterLogger<io::File>> {
-        return Ok(WriterLogger::new(try!(io::File::open_mode(path, io::FileMode::Append,
-                                                                io::FileAccess::Write))));
+    pub fn with_file<P: path::AsPath + ?Sized>(path: &P) -> io::Result<WriterLogger<fs::File>> {
+        return Ok(WriterLogger::new(try!(fs::OpenOptions::new().write(true).append(true).open(path))));
     }
 }
 
-impl <T: io::Writer + Send> api::Logger for WriterLogger<T> {
+impl <T: io::Write + Send> api::Logger for WriterLogger<T> {
     fn log(&self, msg: &str, _level: &api::Level) -> Result<(), Error> {
         try!(write!(try!(self.writer.lock()), "{}\n", msg));
         return Ok(());

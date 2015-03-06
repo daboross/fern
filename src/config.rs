@@ -1,5 +1,6 @@
-use std::old_io as io;
-use std::old_io::stdio;
+use std::io;
+use std::fs;
+use std::path;
 
 use api;
 use loggers;
@@ -33,7 +34,7 @@ pub enum OutputConfig {
     Child(DispatchConfig),
     /// File logger - all messages sent to this will be output into the specified path. Note that
     /// the file will be opened appending, so nothing in the file will be overwritten.
-    File(Path),
+    File(path::PathBuf),
     /// Stdout logger - all messages sent to this will be printed to stdout.
     Stdout,
     /// Stderr logger - all messages sent to this will be printed to stderr.
@@ -51,15 +52,15 @@ impl OutputConfig {
     /// open any files, get handles to stdout/stderr, etc. depending on which type of logger this
     /// is.
     #[unstable]
-    pub fn into_logger(self) -> io::IoResult<Box<api::Logger>> {
+    pub fn into_logger(self) -> io::Result<Box<api::Logger>> {
         return Ok(match self {
             OutputConfig::Child(config) => try!(config.into_logger()),
             OutputConfig::File(ref path) => Box::new(try!(
-                loggers::WriterLogger::<io::File>::with_file(path))) as Box<api::Logger>,
+                loggers::WriterLogger::<fs::File>::with_file(path))) as Box<api::Logger>,
             OutputConfig::Stdout => Box::new(
-                loggers::WriterLogger::<stdio::StdWriter>::with_stdout()) as Box<api::Logger>,
+                loggers::WriterLogger::<io::Stdout>::with_stdout()) as Box<api::Logger>,
             OutputConfig::Stderr => Box::new(
-                loggers::WriterLogger::<stdio::StdWriter>::with_stderr()) as Box<api::Logger>,
+                loggers::WriterLogger::<io::Stderr>::with_stderr()) as Box<api::Logger>,
             OutputConfig::Null => Box::new(loggers::NullLogger) as Box<api::Logger>,
             OutputConfig::Custom(log) => log,
         });
@@ -71,7 +72,7 @@ impl DispatchConfig {
     /// Builds this LoggerConfig into an actual Logger that you can send messages to. This will
     /// build all child OutputConfig loggers as well.
     #[unstable]
-    pub fn into_logger(self) -> io::IoResult<Box<api::Logger>> {
+    pub fn into_logger(self) -> io::Result<Box<api::Logger>> {
         let DispatchConfig {format, level, output} = self;
         let log = try!(loggers::DispatchLogger::new(format, output, level));
         return Ok(Box::new(log) as Box<api::Logger>);

@@ -1,15 +1,15 @@
-use std::old_io as io;
+use std::io;
 use std::sync;
 use std::error;
 
 #[derive(Debug)]
 pub enum Error {
-    Io(io::IoError),
+    Io(io::Error),
     Poison(String),
 }
 
-impl error::FromError<io::IoError> for Error {
-    fn from_error(error: io::IoError) -> Error {
+impl error::FromError<io::Error> for Error {
+    fn from_error(error: io::Error) -> Error {
         Error::Io(error)
     }
 }
