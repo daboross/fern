@@ -74,7 +74,8 @@ impl <T: io::Write + Send> WriterLogger<T> {
     }
 
     pub fn with_file<P: path::AsPath + ?Sized>(path: &P) -> io::Result<WriterLogger<fs::File>> {
-        return Ok(WriterLogger::new(try!(fs::OpenOptions::new().write(true).append(true).open(path))));
+        return Ok(WriterLogger::new(try!(fs::OpenOptions::new().write(true).append(true)
+                                            .create(true).open(path))));
     }
 }
 
