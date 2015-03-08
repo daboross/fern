@@ -17,7 +17,6 @@ pub struct DispatchLogger {
     pub format: Box<config::Formatter>,
 }
 
-
 impl DispatchLogger {
     pub fn new(format: Box<config::Formatter>, config_output: Vec<config::OutputConfig>,
             level: log::LogLevelFilter) -> io::Result<DispatchLogger> {

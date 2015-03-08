@@ -1,7 +1,8 @@
 #![feature(io, path)]
+#![deny(missing_docs)]
 //! Fern is a runtime-configurable rust logging library.
-
-//! Current features are:
+//!
+//! Current features:
 //!
 //! - Multiple loggers. You can create as many loggers as you need, and configure them separately.
 //! - Configurable output format via closures.
@@ -76,6 +77,10 @@
 //! logger used with logging macros in the `log` crate. This function can only be called once, as
 //! the log crate may only be set up once.
 //!
+//! Note that this function also accepts a `LogLevelFilter`. This is so that you can set a global
+//! minimum log level separate from the logger configuration. If you don't have any reason for
+//! anything else, just set this to `log::LogLevelFilter::Trace`.
+//!
 //! ```rust
 //! # extern crate fern;
 //! # extern crate log;
@@ -94,8 +99,6 @@
 //! This uses the `if let Err(e) =` syntax to catch any errors that happen when initializing
 //! the logger.
 //!
-//! Note that this function also accepts a `LogLevelFilter`. This is so that you can set a global
-//! minimum log level separate from the logger configuration.
 //!
 //! Eventually, this section will contain a few more examples as well. For now though, the above
 //! tutorial paired with the fern docs should be enough to get you started on configuring a logger

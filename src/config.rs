@@ -1,3 +1,4 @@
+#![unstable]
 use std::io;
 use std::fs;
 use std::path;
@@ -12,7 +13,6 @@ use errors::InitError;
 ///
 /// All DispatchConfig will do is filter log messages based on level, and then pass on to any
 /// number of other loggers.
-#[unstable]
 pub struct DispatchConfig {
     /// The format for this logger. All log messages coming in will be sent through this closure
     /// before being sent to parent loggers
@@ -31,7 +31,6 @@ pub type Formatter = Fn(&str, &log::LogLevel, &log::LogLocation) -> String + Syn
 ///
 /// You can use this in conjunction with DispatchConfig for message formating and filtering, or
 /// just use this if you don't need to filter or format messages.
-#[unstable]
 pub enum OutputConfig {
     /// Child logger - another DispatchConfig
     Child(DispatchConfig),
@@ -52,7 +51,6 @@ pub enum OutputConfig {
     Custom(Box<api::Logger>),
 }
 
-#[unstable]
 impl IntoLog for OutputConfig {
     fn into_fern_logger(self) -> io::Result<Box<api::Logger>> {
         return Ok(match self {
@@ -89,7 +87,6 @@ impl IntoLog for OutputConfig {
     }
 }
 
-#[unstable]
 impl IntoLog for DispatchConfig {
     fn into_fern_logger(self) -> io::Result<Box<api::Logger>> {
         let DispatchConfig {format, level, output} = self;
@@ -113,7 +110,6 @@ impl log::Log for Box<api::Logger> {
     }
 }
 
-#[unstable]
 /// Trait which represents any logger configuration which can be built into a `fern::Logger` or
 /// `log::Log`
 pub trait IntoLog {
@@ -129,6 +125,9 @@ pub trait IntoLog {
     fn into_log(self) -> io::Result<Box<log::Log>>;
 }
 
+/// Initializes the global logger of the log crate with the specified log configuration. Note that
+/// the log crate may only be initialized *once* during the entire execution of the current
+/// program.
 pub fn init_global_logger<L: IntoLog>(config: L, global_log_level: log::LogLevelFilter)
         -> Result<(), InitError> {
     let log = try!(config.into_log());
