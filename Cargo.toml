@@ -17,3 +17,6 @@ debug = false
 
 [profile.test]
 debug = false
+
+[dependencies]
+log = "0.2.*"
