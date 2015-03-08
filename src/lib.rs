@@ -131,7 +131,7 @@
 
 pub use errors::LogError;
 pub use api::{Logger, Level};
-pub use config::{DispatchConfig, OutputConfig};
+pub use config::{DispatchConfig, OutputConfig, IntoLog};
 pub use loggers::NullLogger;
 
 mod api;

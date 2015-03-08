@@ -47,12 +47,8 @@ pub enum OutputConfig {
 }
 
 #[unstable]
-impl OutputConfig {
-    /// Builds this OutputConfig into an actual Logger that you can send messages to. This will
-    /// open any files, get handles to stdout/stderr, etc. depending on which type of logger this
-    /// is.
-    #[unstable]
-    pub fn into_logger(self) -> io::Result<Box<api::Logger>> {
+impl IntoLog for OutputConfig {
+    fn into_logger(self) -> io::Result<Box<api::Logger>> {
         return Ok(match self {
             OutputConfig::Child(config) => try!(config.into_logger()),
             OutputConfig::File(ref path) => Box::new(try!(
@@ -68,13 +64,19 @@ impl OutputConfig {
 }
 
 #[unstable]
-impl DispatchConfig {
-    /// Builds this LoggerConfig into an actual Logger that you can send messages to. This will
-    /// build all child OutputConfig loggers as well.
-    #[unstable]
-    pub fn into_logger(self) -> io::Result<Box<api::Logger>> {
+impl IntoLog for DispatchConfig {
+    fn into_logger(self) -> io::Result<Box<api::Logger>> {
         let DispatchConfig {format, level, output} = self;
         let log = try!(loggers::DispatchLogger::new(format, output, level));
         return Ok(Box::new(log) as Box<api::Logger>);
     }
+}
+
+#[unstable]
+/// Trait which represents any logger configuration which can be built into a `fern::Logger`.
+pub trait IntoLog {
+    /// Builds this config into an actual Logger that you can send messages to. This will
+    /// open any files, get handles to stdout/stderr, etc. depending on which type of logger this
+    /// is.
+    fn into_logger(self) -> io::Result<Box<api::Logger>>;
 }

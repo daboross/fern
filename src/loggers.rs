@@ -3,6 +3,7 @@ use std::sync;
 use std::fs;
 use std::path;
 
+use config::IntoLog;
 use errors::LogError;
 use api;
 use config;
