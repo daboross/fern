@@ -11,3 +11,9 @@ repository = "https://github.com/daboross/fern-rs"
 readme = "README.md"
 keywords = ["log", "logging", "logger", "fern"]
 license = "MIT"
+
+[profile.dev]
+debug = false
+
+[profile.test]
+debug = false
