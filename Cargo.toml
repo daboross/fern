@@ -12,14 +12,9 @@ readme = "README.md"
 keywords = ["log", "logging", "logger", "fern"]
 license = "MIT"
 
-[profile.dev]
-debug = false
-
-[profile.test]
-debug = false
-
 [dependencies]
 log = "0.2.*"
 
 [dev-dependencies]
+tempdir = "0.3.*"
 chrono = "0.2.*"

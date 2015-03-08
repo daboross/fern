@@ -1,7 +1,8 @@
-#![feature(io, path, fs, tempdir)]
+#![feature(io, path)]
 #[macro_use]
 extern crate log;
 extern crate fern;
+extern crate tempdir;
 
 use std::io::prelude::*;
 use std::fs;
@@ -9,7 +10,7 @@ use std::fs;
 #[test]
 fn basic_usage_test() {
     // Create a temporary directory to put a log file into for testing
-    let temp_log_dir = fs::TempDir::new("fern").ok()
+    let temp_log_dir = tempdir::TempDir::new("fern").ok()
                         .expect("Failed to set up temporary directory");
     let log_file = temp_log_dir.path().join("test.log");
 

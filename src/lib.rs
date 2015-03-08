@@ -1,4 +1,4 @@
-#![feature(io, fs, path)]
+#![feature(io, path)]
 //! Fern is a runtime-configurable rust logging library.
 
 //! Current features are:
