@@ -1,18 +1,18 @@
 use std::fmt;
 use std::cmp;
 
-use errors::Error;
+use errors::LogError;
 
 /// Basic fern logger trait. Something you can send messages to.
 #[unstable]
 pub trait Logger: Sync + Send {
     /// Logs a given message - puts this message where ever this logger means to put it
     #[unstable]
-    fn log(&self, message: &str, level: &Level) -> Result<(), Error>;
+    fn log(&self, message: &str, level: &Level) -> Result<(), LogError>;
 }
 
 impl Logger for Box<Logger> {
-    fn log(&self, msg: &str, level: &Level) -> Result<(), Error> {
+    fn log(&self, msg: &str, level: &Level) -> Result<(), LogError> {
         (**self).log(msg, level)
     }
 }

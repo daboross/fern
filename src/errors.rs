@@ -3,19 +3,19 @@ use std::sync;
 use std::error;
 
 #[derive(Debug)]
-pub enum Error {
+pub enum LogError {
     Io(io::Error),
     Poison(String),
 }
 
-impl error::FromError<io::Error> for Error {
-    fn from_error(error: io::Error) -> Error {
-        Error::Io(error)
+impl error::FromError<io::Error> for LogError {
+    fn from_error(error: io::Error) -> LogError {
+        LogError::Io(error)
     }
 }
 
-impl <T> error::FromError<sync::PoisonError<T>> for Error {
-    fn from_error(error: sync::PoisonError<T>) -> Error {
-        Error::Poison(format!("{}", error))
+impl <T> error::FromError<sync::PoisonError<T>> for LogError {
+    fn from_error(error: sync::PoisonError<T>) -> LogError {
+        LogError::Poison(format!("{}", error))
     }
 }

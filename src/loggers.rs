@@ -3,7 +3,7 @@ use std::sync;
 use std::fs;
 use std::path;
 
-use errors::Error;
+use errors::LogError;
 use api;
 use config;
 
@@ -41,7 +41,7 @@ impl DispatchLogger {
 }
 
 impl api::Logger for DispatchLogger {
-    fn log(&self, msg: &str, level: &api::Level) -> Result<(), Error> {
+    fn log(&self, msg: &str, level: &api::Level) -> Result<(), LogError> {
         if *level < self.level {
             return Ok(());
         }
@@ -78,7 +78,7 @@ impl <T: io::Write + Send> WriterLogger<T> {
 }
 
 impl <T: io::Write + Send> api::Logger for WriterLogger<T> {
-    fn log(&self, msg: &str, _level: &api::Level) -> Result<(), Error> {
+    fn log(&self, msg: &str, _level: &api::Level) -> Result<(), LogError> {
         try!(write!(try!(self.writer.lock()), "{}\n", msg));
         return Ok(());
     }
@@ -90,7 +90,7 @@ impl <T: io::Write + Send> api::Logger for WriterLogger<T> {
 pub struct NullLogger;
 
 impl api::Logger for NullLogger {
-    fn log(&self, _msg: &str, _level: &api::Level) -> Result<(), Error> {
+    fn log(&self, _msg: &str, _level: &api::Level) -> Result<(), LogError> {
         return Ok(());
     }
 }

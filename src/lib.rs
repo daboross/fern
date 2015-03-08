@@ -129,7 +129,7 @@
 //! type out `sync::Arc<Box<fern::Logger + Sync + Send>>` for all the function declarations, you
 //! can use `fern::ArcLogger` instead.
 
-pub use errors::Error;
+pub use errors::LogError;
 pub use api::{Logger, Level};
 pub use config::{DispatchConfig, OutputConfig};
 pub use loggers::NullLogger;
