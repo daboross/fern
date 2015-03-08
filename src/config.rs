@@ -38,6 +38,9 @@ pub enum OutputConfig {
     /// File logger - all messages sent to this will be output into the specified path. Note that
     /// the file will be opened appending, so nothing in the file will be overwritten.
     File(path::PathBuf),
+    /// File logger with OpenOptions - all messages will be sent to the specified file. The file
+    /// will be opened using the specified OpenOptions.
+    FileOptions(path::PathBuf, fs::OpenOptions),
     /// Stdout logger - all messages sent to this will be printed to stdout.
     Stdout,
     /// Stderr logger - all messages sent to this will be printed to stderr.
@@ -56,6 +59,9 @@ impl IntoLog for OutputConfig {
             OutputConfig::Child(config) => try!(config.into_fern_logger()),
             OutputConfig::File(ref path) => Box::new(try!(
                 loggers::WriterLogger::<fs::File>::with_file(path))) as Box<api::Logger>,
+            OutputConfig::FileOptions(ref path, ref options) => Box::new(try!(
+                loggers::WriterLogger::<fs::File>::with_file_with_options(path, options)))
+                as Box<api::Logger>,
             OutputConfig::Stdout => Box::new(
                 loggers::WriterLogger::<io::Stdout>::with_stdout()) as Box<api::Logger>,
             OutputConfig::Stderr => Box::new(
@@ -70,6 +76,9 @@ impl IntoLog for OutputConfig {
             OutputConfig::Child(config) => try!(config.into_log()),
             OutputConfig::File(ref path) => Box::new(try!(
                 loggers::WriterLogger::<fs::File>::with_file(path))) as Box<log::Log>,
+            OutputConfig::FileOptions(ref path, ref options) => Box::new(try!(
+                loggers::WriterLogger::<fs::File>::with_file_with_options(path, options)))
+                as Box<log::Log>,
             OutputConfig::Stdout => Box::new(
                 loggers::WriterLogger::<io::Stdout>::with_stdout()) as Box<log::Log>,
             OutputConfig::Stderr => Box::new(

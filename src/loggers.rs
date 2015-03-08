@@ -96,6 +96,10 @@ impl <T: io::Write + Send> WriterLogger<T> {
         return Ok(WriterLogger::new(try!(fs::OpenOptions::new().write(true).append(true)
                                             .create(true).open(path))));
     }
+    pub fn with_file_with_options<P: path::AsPath + ?Sized>(path: &P, options: &fs::OpenOptions)
+            -> io::Result<WriterLogger<fs::File>> {
+        return Ok(WriterLogger::new(try!(options.open(path))));
+    }
 }
 
 impl <T: io::Write + Send> api::Logger for WriterLogger<T> {
