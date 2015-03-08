@@ -20,3 +20,6 @@ debug = false
 
 [dependencies]
 log = "0.2.*"
+
+[dev-dependencies]
+chrono = "0.2.*"
