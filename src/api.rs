@@ -6,7 +6,7 @@ use errors::LogError;
 /// log::Log, because we want errors to propagate upwards and only print in the outermost logger.
 #[unstable]
 pub trait Logger: Sync + Send {
-    /// Logs a given message - puts this message where ever this logger means to put it
+    /// Logs a given message in this logger.
     #[unstable]
     fn log(&self, msg: &str, level: &log::LogLevel, location: &log::LogLocation)
             -> Result<(), LogError>;

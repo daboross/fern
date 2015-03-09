@@ -50,7 +50,6 @@
 //! };
 //! ```
 //!
-//!
 //! In the above example, here's what each part does.
 //!
 //! `format:` is a closure which all messages will be run through. In this example, use a

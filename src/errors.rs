@@ -20,7 +20,7 @@ impl error::FromError<io::Error> for LogError {
         LogError::Io(error)
     }
 }
-#[unstable]
+
 impl <T> error::FromError<sync::PoisonError<T>> for LogError {
     fn from_error(error: sync::PoisonError<T>) -> LogError {
         LogError::Poison(format!("{}", error))

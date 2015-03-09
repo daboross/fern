@@ -63,7 +63,7 @@ impl log::Log for DispatchLogger {
         level <= self.level
     }
     fn log(&self, record: &log::LogRecord) {
-        // shortstop for checking level here, just so we don't have to do all the conversions in
+        // shortstop for checking level here, so we don't have to do any conversions in
         // log_with_fern_logger
         if record.level() > self.level {
             return;
