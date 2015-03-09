@@ -14,10 +14,10 @@
 //!   and only have warnings and above show up in the console.
 //! - You can also define your own custom logging endpoints - have messages end up where you need
 //!   them.
-//! - Acts as a backend to the `log` crate - use `trace!()` through `error!()` on your main logger
-//!   - Note that fern can also have loggers separate from the `log` crate's global system. It's
-//!     possible to just set your main logger as the global logger, then use other ones manually
-//!     as well.
+//! - Acts as a backend to the `log` crate - use `trace!()` through `error!()` to log to the global
+//!   fern logger.
+//!   - Note that fern can also have loggers separate from the global system. You can always set
+//!     your main logger as the global logger, then use other fern loggers manually.
 //!
 //! Although mostly stabilized, fern is still in development. The library is subject to
 //! change in non-backwards-compatible ways before the API is completely stabilized.
