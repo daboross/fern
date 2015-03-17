@@ -1,4 +1,3 @@
-#![feature(io, path)]
 #![deny(missing_docs)]
 //! Fern is a runtime-configurable rust logging library.
 //!
