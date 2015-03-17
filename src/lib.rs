@@ -54,6 +54,7 @@
 //! #[macro_use]
 //! extern crate log;
 //! extern crate fern;
+//! # fn main() {}
 //! ```
 //!
 //! Examples
