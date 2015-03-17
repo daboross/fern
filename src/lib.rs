@@ -23,6 +23,32 @@
 //!
 //! This library can only be used while complying to the license terms in the `LICENSE` file.
 //!
+//! Adding fern as a dependency
+//! ===========================
+//!
+//! In order to use fern, the first thing you'll need to add both the `fern` crate and the `log`
+//! crate to the dependencies in your project's `Cargo.toml` file:
+//!
+//! ```toml
+//! # ...
+//!
+//! [dependencies]
+//! # ...
+//! log = "0.2.*"
+//! fern = "0.2.*"
+//!
+//! # ...
+//! ```
+//!
+//! After this, you'll need to declare the `log` and `fern` to the top of your main.rs or lib.rs
+//! file:
+//!
+//! ```
+//! #[macro_use]
+//! extern crate log;
+//! extern crate fern;
+//! ```
+//!
 //! Examples
 //! ========
 //!
