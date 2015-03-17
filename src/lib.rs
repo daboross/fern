@@ -23,6 +23,13 @@
 //!
 //! This library can only be used while complying to the license terms in the `LICENSE` file.
 //!
+//! Upgrade note for fern `0.2.*`
+//! ====
+//!
+//! As of fern 0.2.0, fern depends on the `log` crate to provide the frontend logging macros and
+//! logging levels - you will need to depend on and use both the `fern` and `log` crates.
+//!
+//!
 //! Adding fern as a dependency
 //! ===========================
 //!
