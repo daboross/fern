@@ -1,3 +1,2 @@
 language: rust
-before_script: cargo update
 sudo: false
