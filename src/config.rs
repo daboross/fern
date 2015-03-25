@@ -102,7 +102,7 @@ impl IntoLog for DispatchConfig {
 }
 
 impl log::Log for Box<api::Logger> {
-    fn enabled(&self, _level: log::LogLevel, _module: &str) -> bool {
+    fn enabled(&self, _metadata: &log::LogMetadata) -> bool {
         true
     }
     fn log(&self, record: &log::LogRecord) {

@@ -68,6 +68,7 @@
 //! each message with the current date, time, and logging level.
 //!
 //! ```rust
+//! #![feature(convert)] // this is required for PathBuf::from()
 //! # extern crate fern;
 //! # extern crate log;
 //! extern crate chrono;
@@ -78,7 +79,7 @@
 //!         // This is a fairly simple format, though it's possible to do more complicated ones
 //!         format!("[{}][{}] {}", chrono::Local::now().format("%Y-%m-%d][%H:%M:%S"), level, msg)
 //!     }),
-//!     output: vec![fern::OutputConfig::Stdout, fern::OutputConfig::File(PathBuf::new("output.log"))],
+//!     output: vec![fern::OutputConfig::Stdout, fern::OutputConfig::File(PathBuf::from("output.log"))],
 //!     level: log::LogLevelFilter::Debug,
 //! };
 //! ```

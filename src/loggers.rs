@@ -59,8 +59,8 @@ impl api::Logger for DispatchLogger {
 }
 
 impl log::Log for DispatchLogger {
-    fn enabled(&self, level: log::LogLevel, _module: &str) -> bool {
-        level <= self.level
+    fn enabled(&self, metadata: &log::LogMetadata) -> bool {
+        metadata.level() <= self.level
     }
     fn log(&self, record: &log::LogRecord) {
         // shortstop for checking level here, so we don't have to do any conversions in
@@ -110,7 +110,7 @@ impl <T: io::Write + Send> api::Logger for WriterLogger<T> {
 }
 
 impl <T: io::Write + Send> log::Log for WriterLogger<T> {
-    fn enabled(&self, _level: log::LogLevel, _module: &str) -> bool {
+    fn enabled(&self, _metadata: &log::LogMetadata) -> bool {
         true
     }
     fn log(&self, record: &log::LogRecord) {
@@ -131,7 +131,7 @@ impl api::Logger for NullLogger {
 }
 
 impl log::Log for NullLogger {
-    fn enabled(&self, _level: log::LogLevel, _module: &str) -> bool {
+    fn enabled(&self, _metadata: &log::LogMetadata) -> bool {
         false
     }
     fn log(&self, record: &log::LogRecord) {
