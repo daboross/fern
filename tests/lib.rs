@@ -20,7 +20,7 @@ fn basic_usage_test() {
             format!("[{}] {}", level, msg)
         }),
         // Output to stdout and the log file in the temporary directory we made above to test
-        output: vec![fern::OutputConfig::Stdout, fern::OutputConfig::File(log_file)],
+        output: vec![fern::OutputConfig::stdout(), fern::OutputConfig::file(&log_file)],
         // Only log messages Info and above
         level: log::LogLevelFilter::Info,
     };

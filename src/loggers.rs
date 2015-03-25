@@ -62,6 +62,7 @@ impl log::Log for DispatchLogger {
     fn enabled(&self, metadata: &log::LogMetadata) -> bool {
         metadata.level() <= self.level
     }
+
     fn log(&self, record: &log::LogRecord) {
         // shortstop for checking level here, so we don't have to do any conversions in
         // log_with_fern_logger
@@ -95,6 +96,7 @@ impl <T: io::Write + Send> WriterLogger<T> {
         return Ok(WriterLogger::new(try!(fs::OpenOptions::new().write(true).append(true)
                                             .create(true).open(path))));
     }
+
     pub fn with_file_with_options(path: &path::Path, options: &fs::OpenOptions)
             -> io::Result<WriterLogger<fs::File>> {
         return Ok(WriterLogger::new(try!(options.open(path))));
@@ -113,6 +115,7 @@ impl <T: io::Write + Send> log::Log for WriterLogger<T> {
     fn enabled(&self, _metadata: &log::LogMetadata) -> bool {
         true
     }
+
     fn log(&self, record: &log::LogRecord) {
         log_with_fern_logger(self, record);
     }
@@ -134,6 +137,7 @@ impl log::Log for NullLogger {
     fn enabled(&self, _metadata: &log::LogMetadata) -> bool {
         false
     }
+
     fn log(&self, record: &log::LogRecord) {
         log_with_fern_logger(self, record);
     }

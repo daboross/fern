@@ -1,3 +1,4 @@
+#![feature(convert)] // for convert::AsRef<path::Path> used in config.rs
 #![deny(missing_docs)]
 //! Fern is a runtime-configurable rust logging library.
 //!
@@ -68,7 +69,6 @@
 //! each message with the current date, time, and logging level.
 //!
 //! ```rust
-//! #![feature(convert)] // this is required for PathBuf::from()
 //! # extern crate fern;
 //! # extern crate log;
 //! extern crate chrono;
@@ -79,7 +79,7 @@
 //!         // This is a fairly simple format, though it's possible to do more complicated ones
 //!         format!("[{}][{}] {}", chrono::Local::now().format("%Y-%m-%d][%H:%M:%S"), level, msg)
 //!     }),
-//!     output: vec![fern::OutputConfig::Stdout, fern::OutputConfig::File(PathBuf::from("output.log"))],
+//!     output: vec![fern::OutputConfig::stdout(), fern::OutputConfig::file("output.log")],
 //!     level: log::LogLevelFilter::Debug,
 //! };
 //! ```
@@ -153,7 +153,7 @@
 //! # /*
 //! fern::init_global_logger(...);
 //! # */
-//! # fern::init_global_logger(fern::OutputConfig::Null, log::LogLevelFilter::Trace);
+//! # fern::init_global_logger(fern::OutputConfig::null(), log::LogLevelFilter::Trace);
 //!
 //! trace!("Trace message");
 //! debug!("Debug message");

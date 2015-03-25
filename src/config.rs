@@ -1,4 +1,5 @@
 #![unstable]
+use std::convert::AsRef;
 use std::io;
 use std::fs;
 use std::path;
@@ -13,13 +14,13 @@ use errors::InitError;
 ///
 /// All DispatchConfig will do is filter log messages based on level, pass the message through the
 /// Formatter, and then pass on to any number of output loggers.
-pub struct DispatchConfig {
+pub struct DispatchConfig<'a> {
     /// The format for this logger. All log messages coming in will be sent through this closure
     /// before being sent to child loggers.
     pub format: Box<Formatter>,
     /// A list of loggers to send messages to. Any messages that are sent to this logger that
     /// aren't filtered are sent to each of these loggers in turn.
-    pub output: Vec<OutputConfig>,
+    pub output: Vec<OutputConfig<'a>>,
     /// The level of this logger. Any messages which have a lower level than this level won't be
     /// passed on.
     pub level: log::LogLevelFilter,
@@ -27,19 +28,17 @@ pub struct DispatchConfig {
 
 pub type Formatter = Fn(&str, &log::LogLevel, &log::LogLocation) -> String + Sync + Send;
 
+
 /// This enum contains various outputs that you can send messages to.
-///
-/// You can use this in conjunction with DispatchConfig for message formating and filtering, or
-/// just use this if you don't need to filter or format messages.
-pub enum OutputConfig {
+enum OutputConfigOptions<'a> {
     /// Child logger - send messages to another DispatchConfig.
-    Child(DispatchConfig),
+    Child(DispatchConfig<'a>),
     /// File logger - all messages sent to this will be output into the specified path. Note that
     /// the file will be opened appending, so nothing in the file will be overwritten.
-    File(path::PathBuf),
+    File(&'a path::Path),
     /// File logger with OpenOptions - all messages will be sent to the specified file. The file
     /// will be opened using the specified OpenOptions.
-    FileOptions(path::PathBuf, fs::OpenOptions),
+    FileOptions(&'a path::Path, &'a fs::OpenOptions),
     /// Stdout logger - all messages sent to this will be printed to stdout.
     Stdout,
     /// Stderr logger - all messages sent to this will be printed to stderr.
@@ -51,43 +50,92 @@ pub enum OutputConfig {
     Custom(Box<api::Logger>),
 }
 
-impl IntoLog for OutputConfig {
+/// This config struct contains various output options to send messages to.
+///
+/// You can use this in conjunction with DispatchConfig for message formating and filtering, or
+/// alone if you don't need to filter or format messages.
+pub struct OutputConfig<'a>(OutputConfigOptions<'a>);
+
+impl <'a> OutputConfig<'a> {
+    /// Returns a child logger that sends messages to another DispatchConfig.
+    pub fn child(config: DispatchConfig<'a>) -> OutputConfig<'a> {
+        return OutputConfig(OutputConfigOptions::Child(config));
+    }
+
+    /// Returns a file logger. All messages sent to this will be outputted to the specified path.
+    /// Note that the file will be opened with write(true), append(true) and create(true). If you
+    /// need to open with other options, use `OutputConfig::file_with_options()`
+    pub fn file<P: ?Sized + AsRef<path::Path>>(path: &'a P) -> OutputConfig<'a> {
+        return OutputConfig(OutputConfigOptions::File(path.as_ref()));
+    }
+
+    /// Returns a file logger with OpenOptions. All messages will be sent to the specified file.
+    /// The file will be opened using the specified OpenOptions.
+    pub fn file_with_options<P: ?Sized>(path: &'a P, options: &'a fs::OpenOptions)
+            -> OutputConfig<'a> where P: AsRef<path::Path> {
+        return OutputConfig(OutputConfigOptions::FileOptions(
+            path.as_ref(), options
+        ));
+    }
+
+    /// Returns an stdout logger. All messages sent to this will be printed to stdout.
+    pub fn stdout() -> OutputConfig<'static> {
+        return OutputConfig(OutputConfigOptions::Stdout);
+    }
+
+    /// Returns an stderr logger. All messages sent to this will be printed to stderr.
+    pub fn stderr() -> OutputConfig<'static> {
+        return OutputConfig(OutputConfigOptions::Stderr);
+    }
+
+    /// Returns a null logger. All messages sent to this logger will disappear into the void.
+    pub fn null() -> OutputConfig<'static> {
+        return OutputConfig(OutputConfigOptions::Null);
+    }
+
+    /// Custom implementation logger. All messages sent to this logger will be passed on to your
+    /// custom logger.
+    pub fn custom(log: Box<api::Logger>) -> OutputConfig<'static> {
+        return OutputConfig(OutputConfigOptions::Custom(log));
+    }
+
+}
+
+impl <'a> IntoLog for OutputConfig<'a> {
     fn into_fern_logger(self) -> io::Result<Box<api::Logger>> {
-        return Ok(match self {
-            OutputConfig::Child(config) => try!(config.into_fern_logger()),
-            OutputConfig::File(ref path) => Box::new(try!(
-                loggers::WriterLogger::<fs::File>::with_file(path))) as Box<api::Logger>,
-            OutputConfig::FileOptions(ref path, ref options) => Box::new(try!(
-                loggers::WriterLogger::<fs::File>::with_file_with_options(path, options)))
-                as Box<api::Logger>,
-            OutputConfig::Stdout => Box::new(
-                loggers::WriterLogger::<io::Stdout>::with_stdout()) as Box<api::Logger>,
-            OutputConfig::Stderr => Box::new(
-                loggers::WriterLogger::<io::Stderr>::with_stderr()) as Box<api::Logger>,
-            OutputConfig::Null => Box::new(loggers::NullLogger) as Box<api::Logger>,
-            OutputConfig::Custom(log) => log,
+        return Ok(match self.0 {
+            OutputConfigOptions::Child(config) => try!(config.into_fern_logger()),
+            OutputConfigOptions::File(path) => Box::new(try!(
+                loggers::WriterLogger::<fs::File>::with_file(path))),
+            OutputConfigOptions::FileOptions(path, options) => Box::new(try!(
+                loggers::WriterLogger::<fs::File>::with_file_with_options(path, options))),
+            OutputConfigOptions::Stdout => Box::new(
+                loggers::WriterLogger::<io::Stdout>::with_stdout()),
+            OutputConfigOptions::Stderr => Box::new(
+                loggers::WriterLogger::<io::Stderr>::with_stderr()),
+            OutputConfigOptions::Null => Box::new(loggers::NullLogger),
+            OutputConfigOptions::Custom(log) => log,
         });
     }
 
     fn into_log(self) -> io::Result<Box<log::Log>> {
-        return Ok(match self {
-            OutputConfig::Child(config) => try!(config.into_log()),
-            OutputConfig::File(ref path) => Box::new(try!(
-                loggers::WriterLogger::<fs::File>::with_file(path))) as Box<log::Log>,
-            OutputConfig::FileOptions(ref path, ref options) => Box::new(try!(
-                loggers::WriterLogger::<fs::File>::with_file_with_options(path, options)))
-                as Box<log::Log>,
-            OutputConfig::Stdout => Box::new(
-                loggers::WriterLogger::<io::Stdout>::with_stdout()) as Box<log::Log>,
-            OutputConfig::Stderr => Box::new(
-                loggers::WriterLogger::<io::Stderr>::with_stderr()) as Box<log::Log>,
-            OutputConfig::Null => Box::new(loggers::NullLogger) as Box<log::Log>,
-            OutputConfig::Custom(log) => Box::new(log) as Box<log::Log>,
+        return Ok(match self.0 {
+            OutputConfigOptions::Child(config) => try!(config.into_log()),
+            OutputConfigOptions::File(path) => Box::new(try!(
+                loggers::WriterLogger::<fs::File>::with_file(path))),
+            OutputConfigOptions::FileOptions(path, options) => Box::new(try!(
+                loggers::WriterLogger::<fs::File>::with_file_with_options(path, options))),
+            OutputConfigOptions::Stdout => Box::new(
+                loggers::WriterLogger::<io::Stdout>::with_stdout()),
+            OutputConfigOptions::Stderr => Box::new(
+                loggers::WriterLogger::<io::Stderr>::with_stderr()),
+            OutputConfigOptions::Null => Box::new(loggers::NullLogger),
+            OutputConfigOptions::Custom(log) => Box::new(log) as Box<log::Log>,
         });
     }
 }
 
-impl IntoLog for DispatchConfig {
+impl <'a> IntoLog for DispatchConfig<'a> {
     fn into_fern_logger(self) -> io::Result<Box<api::Logger>> {
         let DispatchConfig {format, level, output} = self;
         let log = try!(loggers::DispatchLogger::new(format, output, level));
