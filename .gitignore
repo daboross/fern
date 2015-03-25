@@ -1,2 +1,44 @@
-/target
+# Compiled source #
+###################
+target
+
+# Build files #
+###############
 /Cargo.lock
+
+# Packages #
+############
+*.7z
+*.dmg
+*.gz
+*.iso
+*.jar
+*.rar
+*.tar
+*.zip
+
+# OS generated files #
+######################
+.DS_Store
+ehthumbs.db
+Icon?
+Thumbs.db
+
+# Project files #
+#################
+.classpath
+.externalToolBuilders
+.idea
+.project
+.settings
+build
+dist
+nbproject
+atlassian-ide-plugin.xml
+build.xml
+nb-configuration.xml
+*.iml
+*.ipr
+*.iws
+*.sublime-project
+*.sublime-workspace
