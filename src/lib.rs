@@ -48,7 +48,7 @@
 //! # ...
 //! ```
 //!
-//! After this, you'll need to declare the `log` and `fern` to the top of your main.rs or lib.rs
+//! After this, you'll need to declare the `log` and `fern` at the top of your main.rs or lib.rs
 //! file:
 //!
 //! ```
