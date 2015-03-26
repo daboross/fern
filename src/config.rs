@@ -130,7 +130,7 @@ impl <'a> IntoLog for OutputConfig<'a> {
             OutputConfigOptions::Stderr => Box::new(
                 loggers::WriterLogger::<io::Stderr>::with_stderr()),
             OutputConfigOptions::Null => Box::new(loggers::NullLogger),
-            OutputConfigOptions::Custom(log) => Box::new(log) as Box<log::Log>,
+            OutputConfigOptions::Custom(log) => Box::new(log),
         });
     }
 }
@@ -139,13 +139,13 @@ impl <'a> IntoLog for DispatchConfig<'a> {
     fn into_fern_logger(self) -> io::Result<Box<api::Logger>> {
         let DispatchConfig {format, level, output} = self;
         let log = try!(loggers::DispatchLogger::new(format, output, level));
-        return Ok(Box::new(log) as Box<api::Logger>);
+        return Ok(Box::new(log));
     }
 
     fn into_log(self) -> io::Result<Box<log::Log>> {
         let DispatchConfig {format, level, output} = self;
         let log = try!(loggers::DispatchLogger::new(format, output, level));
-        return Ok(Box::new(log) as Box<log::Log>);
+        return Ok(Box::new(log));
     }
 }
 

@@ -73,7 +73,7 @@ impl log::Log for DispatchLogger {
     }
 }
 
-pub struct WriterLogger<T: io::Write> {
+pub struct WriterLogger<T: io::Write + Send> {
     writer: sync::Arc<sync::Mutex<T>>,
 }
 
