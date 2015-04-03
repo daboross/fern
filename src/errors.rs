@@ -2,6 +2,7 @@
 use std::io;
 use std::sync;
 use std::error;
+use std::convert;
 use std::fmt;
 
 use log;
@@ -15,15 +16,31 @@ pub enum LogError {
     Poison(String),
 }
 
-impl error::FromError<io::Error> for LogError {
-    fn from_error(error: io::Error) -> LogError {
+impl convert::From<io::Error> for LogError {
+    fn from(error: io::Error) -> LogError {
         LogError::Io(error)
     }
 }
 
-impl <T> error::FromError<sync::PoisonError<T>> for LogError {
-    fn from_error(error: sync::PoisonError<T>) -> LogError {
+impl <T> convert::From<sync::PoisonError<T>> for LogError {
+    fn from(error: sync::PoisonError<T>) -> LogError {
         LogError::Poison(format!("{}", error))
+    }
+}
+
+impl error::Error for LogError {
+    fn description(&self) -> &str {
+        match self {
+            &LogError::Io(..) => "IO error while logging",
+            &LogError::Poison(..) => "lock within logger poisoned",
+        }
+    }
+
+    fn cause(&self) -> Option<&error::Error> {
+        match self {
+            &LogError::Io(ref e) => Some(e),
+            &LogError::Poison(..) => None,
+        }
     }
 }
 
@@ -47,14 +64,14 @@ pub enum InitError {
     SetLoggerError(log::SetLoggerError),
 }
 
-impl error::FromError<io::Error> for InitError {
-    fn from_error(error: io::Error) -> InitError {
+impl convert::From<io::Error> for InitError {
+    fn from(error: io::Error) -> InitError {
         InitError::Io(error)
     }
 }
 
-impl error::FromError<log::SetLoggerError> for InitError {
-    fn from_error(error: log::SetLoggerError) -> InitError {
+impl convert::From<log::SetLoggerError> for InitError {
+    fn from(error: log::SetLoggerError) -> InitError {
         InitError::SetLoggerError(error)
     }
 }
@@ -65,6 +82,22 @@ impl fmt::Display for InitError {
         match self {
             &InitError::Io(ref e) => write!(f, "IO Error: {}", e),
             &InitError::SetLoggerError(ref e) => write!(f, "SetLoggerError: {}", e),
+        }
+    }
+}
+
+impl error::Error for InitError {
+    fn description(&self) -> &str {
+        match self {
+            &InitError::Io(..) => "IO error while initializing",
+            &InitError::SetLoggerError(..) => "global logger already initialized",
+        }
+    }
+
+    fn cause(&self) -> Option<&error::Error> {
+        match self {
+            &InitError::Io(ref e) => Some(e),
+            &InitError::SetLoggerError(ref e) => Some(e),
         }
     }
 }

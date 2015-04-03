@@ -1,4 +1,3 @@
-#![feature(convert)] // for convert::AsRef<path::Path> used in config.rs
 #![deny(missing_docs)]
 //! Fern is a runtime-configurable rust logging library.
 //!
@@ -71,7 +70,19 @@
 //! ```rust
 //! # extern crate fern;
 //! # extern crate log;
+//! # /*
 //! extern crate chrono;
+//! # */
+//! # // this is a workaround for https://github.com/rust-lang/cargo/issues/1474
+//! # // Since we can't have this test depend on chrono, here's a dummy implementation of what we
+//! # // use - just to compile code, and only what we actually use in this test
+//! # mod chrono {
+//! #     pub struct Local;
+//! #     impl Local {
+//! #          pub fn now() -> Local { Local }
+//! #          pub fn format<'a>(&self, format: &'a str) -> &'a str { format }
+//! #     }
+//! # }
 //! use std::path::PathBuf;
 //!
 //! let logger_config = fern::DispatchConfig {
