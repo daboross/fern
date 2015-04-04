@@ -123,7 +123,7 @@ impl <T: io::Write + Send> log::Log for WriterLogger<T> {
 
 /// A logger implementation which does nothing with logged messages.
 #[unstable]
-#[derive(Copy)]
+#[derive(Clone, Copy)]
 pub struct NullLogger;
 
 impl api::Logger for NullLogger {

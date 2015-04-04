@@ -67,31 +67,22 @@
 //! Here's a logger that simply logs all messages to stdout, and an output.log file, formatting
 //! each message with the current date, time, and logging level.
 //!
-//! ```rust
-//! # extern crate fern;
-//! # extern crate log;
-//! # /*
-//! extern crate chrono;
-//! # */
-//! # // this is a workaround for https://github.com/rust-lang/cargo/issues/1474
-//! # // Since we can't have this test depend on chrono, here's a dummy implementation of what we
-//! # // use - just to compile code, and only what we actually use in this test
-//! # mod chrono {
-//! #     pub struct Local;
-//! #     impl Local {
-//! #          pub fn now() -> Local { Local }
-//! #          pub fn format<'a>(&self, format: &'a str) -> &'a str { format }
-//! #     }
-//! # }
-//! use std::path::PathBuf;
+//! ```no_test
+//! # // as a workaround for https://github.com/rust-lang/cargo/issues/1474, this test is copied
+//! # // into `tests/doc_test_copy.rs` and tested there. Any changes to this doc code block should
+//! # // be duplicated there.
+//! extern crate fern;
+//! extern crate log;
+//! extern crate time;
 //!
 //! let logger_config = fern::DispatchConfig {
 //!     format: Box::new(|msg: &str, level: &log::LogLevel, _location: &log::LogLocation| {
-//!         // This is a fairly simple format, though it's possible to do more complicated ones
-//!         format!("[{}][{}] {}", chrono::Local::now().format("%Y-%m-%d][%H:%M:%S"), level, msg)
+//!         // This is a fairly simple format, though it's possible to do more complicated ones.
+//!         // This closure can contain any code, as long as it produces a String message.
+//!         format!("[{}][{}] {}", time::now().strftime("%Y-%m-%d][%H:%M:%S").unwrap(), level, msg)
 //!     }),
 //!     output: vec![fern::OutputConfig::stdout(), fern::OutputConfig::file("output.log")],
-//!     level: log::LogLevelFilter::Debug,
+//!     level: log::LogLevelFilter::Trace,
 //! };
 //! ```
 //!
@@ -100,22 +91,22 @@
 //! `format:` is a closure which all messages will be run through. In this example, use a
 //! format!() macro to format the messages using the logging level.
 //!
-//! Side note: `chrono::Local::now().format("%Y-%m-%d][%H:%M:%S")` is a usage of the chrono time
-//! library, and just returns the date in the format described. An output of this looks something
-//! like `2015-03-07][12:55:04`.
+//! Side note: `time::now().strftime("%Y-%m-%d][%H:%M:%S")` is a usage of the `time` library to
+//! format the current date/time into a readable string. This particular format will produce a
+//! string akin to `2015-01-20][12:55:04`
 //!
 //! With this formatting, the final output of the logger will look something like:
 //!
 //! ```text
-//! [2015-03-07][12:55:04][INFO] A message logged at the Info logging level.
+//! [2015-01-20][12:55:04][INFO] A message logged at the Info logging level.
 //! ```
 //!
 //! `output:` is a Vec<> of other configurations to send the messages to. In this example, we send
 //! messages to stdout (the console), and the file "output.log".
 //!
-//! `level:` is a `log::LogLevelFilter` which describes the minimum level that should be allowed to pass
-//! through this logger. Setting this to `Level::Debug` allows all messages to be logged, as Debug
-//! is the lowest logging level.
+//! `level:` is a `log::LogLevelFilter` which describes the minimum level that should be allowed
+//! to pass through this logger. Setting this to `LogLevelFilter::Trace` allows all messages to be
+//! logged, as `Trace` is the lowest logging level.
 //!
 //! After creating your logging config, you can pass it to `init_global_logger` to set it as the
 //! logger used with logging macros in the `log` crate. This function can only be called once, as
@@ -133,7 +124,7 @@
 //! #         format!("{}", msg)
 //! #     }),
 //! #     output: vec![],
-//! #     level: log::LogLevelFilter::Debug,
+//! #     level: log::LogLevelFilter::Trace,
 //! # };
 //! if let Err(e) = fern::init_global_logger(logger_config, log::LogLevelFilter::Trace) {
 //!     panic!("Failed to initialize global logger: {}", e);
