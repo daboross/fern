@@ -1,4 +1,3 @@
-#![unstable]
 use std::io;
 use std::sync;
 use std::error;
@@ -44,7 +43,6 @@ impl error::Error for LogError {
     }
 }
 
-#[stable]
 impl fmt::Display for LogError {
     fn fmt(&self, f: &mut fmt::Formatter) -> Result<(), fmt::Error> {
         match self {
@@ -76,7 +74,6 @@ impl convert::From<log::SetLoggerError> for InitError {
     }
 }
 
-#[stable]
 impl fmt::Display for InitError {
     fn fmt(&self, f: &mut fmt::Formatter) -> Result<(), fmt::Error> {
         match self {

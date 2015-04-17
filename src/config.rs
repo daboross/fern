@@ -1,4 +1,3 @@
-#![unstable]
 use std::convert::AsRef;
 use std::io;
 use std::fs;
