@@ -1,4 +1,5 @@
 #![deny(missing_docs)]
+#![doc(html_root_url = "http://dabo.guru/rust/fern/")]
 //! Fern is a runtime-configurable rust logging library.
 //!
 //! Current features:
