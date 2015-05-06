@@ -75,38 +75,40 @@ impl log::Log for DispatchLogger {
 
 pub struct WriterLogger<T: io::Write + Send> {
     writer: sync::Arc<sync::Mutex<T>>,
+    line_sep: String,
 }
 
 impl <T: io::Write + Send> WriterLogger<T> {
-    pub fn new(writer: T) -> WriterLogger<T> {
+    pub fn new(writer: T, line_sep: &str) -> WriterLogger<T> {
         return WriterLogger {
             writer: sync::Arc::new(sync::Mutex::new(writer)),
+            line_sep: line_sep.to_string(),
         };
     }
 
     pub fn with_stdout() -> WriterLogger<io::Stdout> {
-        return WriterLogger::new(io::stdout());
+        return WriterLogger::new(io::stdout(), "\n");
     }
 
     pub fn with_stderr() -> WriterLogger<io::Stderr> {
-        return WriterLogger::new(io::stderr());
+        return WriterLogger::new(io::stderr(), "\n");
     }
 
-    pub fn with_file(path: &path::Path) -> io::Result<WriterLogger<fs::File>> {
+    pub fn with_file(path: &path::Path, line_sep: &str) -> io::Result<WriterLogger<fs::File>> {
         return Ok(WriterLogger::new(try!(fs::OpenOptions::new().write(true).append(true)
-                                            .create(true).open(path))));
+                                            .create(true).open(path)), line_sep));
     }
 
-    pub fn with_file_with_options(path: &path::Path, options: &fs::OpenOptions)
+    pub fn with_file_with_options(path: &path::Path, options: &fs::OpenOptions, line_sep: &str)
             -> io::Result<WriterLogger<fs::File>> {
-        return Ok(WriterLogger::new(try!(options.open(path))));
+        return Ok(WriterLogger::new(try!(options.open(path)), line_sep));
     }
 }
 
 impl <T: io::Write + Send> api::Logger for WriterLogger<T> {
     fn log(&self, msg: &str, _level: &log::LogLevel, _location: &log::LogLocation)
             -> Result<(), LogError> {
-        try!(write!(try!(self.writer.lock()), "{}\n", msg));
+        try!(write!(try!(self.writer.lock()), "{}{}", msg, self.line_sep));
         return Ok(());
     }
 }

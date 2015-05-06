@@ -34,10 +34,10 @@ enum OutputConfigOptions<'a> {
     Child(DispatchConfig<'a>),
     /// File logger - all messages sent to this will be output into the specified path. Note that
     /// the file will be opened appending, so nothing in the file will be overwritten.
-    File(&'a path::Path),
+    File { path: &'a path::Path, line_sep: &'a str },
     /// File logger with OpenOptions - all messages will be sent to the specified file. The file
     /// will be opened using the specified OpenOptions.
-    FileOptions(&'a path::Path, &'a fs::OpenOptions),
+    FileOptions { path: &'a path::Path, options: &'a fs::OpenOptions, line_sep: &'a str },
     /// Stdout logger - all messages sent to this will be printed to stdout.
     Stdout,
     /// Stderr logger - all messages sent to this will be printed to stderr.
@@ -63,18 +63,53 @@ impl <'a> OutputConfig<'a> {
 
     /// Returns a file logger. All messages sent to this will be outputted to the specified path.
     /// Note that the file will be opened with write(true), append(true) and create(true). If you
-    /// need to open with other options, use `OutputConfig::file_with_options()`
+    /// need to open with other options, use `OutputConfig::file_with_options()`.
+    ///
+    /// Log files created using this function will use `\n` as the line separator. To specify a
+    /// different separator, use `file_with_line_sep`. `file(p)` behaves exactly the same as
+    /// `file_with_line_sep(p, "\n")`
     pub fn file<P: ?Sized + AsRef<path::Path>>(path: &'a P) -> OutputConfig<'a> {
-        return OutputConfig(OutputConfigOptions::File(path.as_ref()));
+        return OutputConfig(OutputConfigOptions::File { path: path.as_ref(), line_sep: "\n" });
+    }
+
+    /// Returns a file logger. All messages sent to this will be outputted to the specified path.
+    /// Note that the file will be opened with write(true), append(true) and create(true). If you
+    /// need to open with other options, use `OutputConfig::file_with_options()`.
+    ///
+    /// Log files created using this function will use the specified separator as the newline
+    /// separator character.
+    pub fn file_with_line_sep<P: ?Sized + AsRef<path::Path>>(path: &'a P, line_sep: &'a str)
+            -> OutputConfig<'a> {
+        return OutputConfig(OutputConfigOptions::File { path: path.as_ref(), line_sep: line_sep });
     }
 
     /// Returns a file logger with OpenOptions. All messages will be sent to the specified file.
     /// The file will be opened using the specified OpenOptions.
+    ///
+    /// Log files created using this function will use `\n` as the line separator. To specify a
+    /// different separator, use `file_with_options_and_line_sep`. `file_with_options(p, o)`
+    /// behaves exactly the same as `file_with_options_and_line_sep(p, o, "\n")`
     pub fn file_with_options<P: ?Sized>(path: &'a P, options: &'a fs::OpenOptions)
             -> OutputConfig<'a> where P: AsRef<path::Path> {
-        return OutputConfig(OutputConfigOptions::FileOptions(
-            path.as_ref(), options
-        ));
+        return OutputConfig(OutputConfigOptions::FileOptions {
+            path: path.as_ref(),
+            options: options,
+            line_sep: "\n",
+        });
+    }
+
+    /// Returns a file logger with OpenOptions. All messages will be sent to the specified file.
+    /// The file will be opened using the specified OpenOptions.
+    ///
+    /// Log files created using this function will use the specified separator as the newline
+    /// separator character.
+    pub fn file_with_options_and_line_sep<P: ?Sized>(path: &'a P, options: &'a fs::OpenOptions,
+            line_sep: &'a str) -> OutputConfig<'a> where P: AsRef<path::Path> {
+        return OutputConfig(OutputConfigOptions::FileOptions {
+            path: path.as_ref(),
+            options: options,
+            line_sep: line_sep,
+        });
     }
 
     /// Returns an stdout logger. All messages sent to this will be printed to stdout.
@@ -104,10 +139,11 @@ impl <'a> IntoLog for OutputConfig<'a> {
     fn into_fern_logger(self) -> io::Result<Box<api::Logger>> {
         return Ok(match self.0 {
             OutputConfigOptions::Child(config) => try!(config.into_fern_logger()),
-            OutputConfigOptions::File(path) => Box::new(try!(
-                loggers::WriterLogger::<fs::File>::with_file(path))),
-            OutputConfigOptions::FileOptions(path, options) => Box::new(try!(
-                loggers::WriterLogger::<fs::File>::with_file_with_options(path, options))),
+            OutputConfigOptions::File{path, line_sep} => Box::new(try!(
+                loggers::WriterLogger::<fs::File>::with_file(path, line_sep))),
+            OutputConfigOptions::FileOptions{path, options, line_sep} => Box::new(try!(
+                loggers::WriterLogger::<fs::File>::with_file_with_options(
+                    path, options, line_sep))),
             OutputConfigOptions::Stdout => Box::new(
                 loggers::WriterLogger::<io::Stdout>::with_stdout()),
             OutputConfigOptions::Stderr => Box::new(
@@ -120,10 +156,11 @@ impl <'a> IntoLog for OutputConfig<'a> {
     fn into_log(self) -> io::Result<Box<log::Log>> {
         return Ok(match self.0 {
             OutputConfigOptions::Child(config) => try!(config.into_log()),
-            OutputConfigOptions::File(path) => Box::new(try!(
-                loggers::WriterLogger::<fs::File>::with_file(path))),
-            OutputConfigOptions::FileOptions(path, options) => Box::new(try!(
-                loggers::WriterLogger::<fs::File>::with_file_with_options(path, options))),
+            OutputConfigOptions::File{path, line_sep} => Box::new(try!(
+                loggers::WriterLogger::<fs::File>::with_file(path, line_sep))),
+            OutputConfigOptions::FileOptions{path, options, line_sep} => Box::new(try!(
+                loggers::WriterLogger::<fs::File>::with_file_with_options(
+                    path, options, line_sep))),
             OutputConfigOptions::Stdout => Box::new(
                 loggers::WriterLogger::<io::Stdout>::with_stdout()),
             OutputConfigOptions::Stderr => Box::new(
