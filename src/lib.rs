@@ -68,10 +68,7 @@
 //! Here's a logger that simply logs all messages to stdout, and an output.log file, formatting
 //! each message with the current date, time, and logging level.
 //!
-//! ```ignore
-//! # // as a workaround for https://github.com/rust-lang/cargo/issues/1474, this test is copied
-//! # // into `tests/doc_test_copy.rs` and tested there. Any changes to this doc code block should
-//! # // be duplicated there.
+//! ```rust
 //! extern crate fern;
 //! extern crate log;
 //! extern crate time;

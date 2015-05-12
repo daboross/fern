@@ -6,8 +6,6 @@ extern crate tempdir;
 use std::io::prelude::*;
 use std::fs;
 
-mod doc_test_copy;
-
 #[test]
 fn basic_usage_test() {
     // Create a temporary directory to put a log file into for testing
