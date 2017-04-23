@@ -21,7 +21,7 @@ impl convert::From<io::Error> for LogError {
     }
 }
 
-impl <T> convert::From<sync::PoisonError<T>> for LogError {
+impl<T> convert::From<sync::PoisonError<T>> for LogError {
     fn from(error: sync::PoisonError<T>) -> LogError {
         LogError::Poison(format!("{}", error))
     }
@@ -29,25 +29,25 @@ impl <T> convert::From<sync::PoisonError<T>> for LogError {
 
 impl error::Error for LogError {
     fn description(&self) -> &str {
-        match self {
-            &LogError::Io(..) => "IO error while logging",
-            &LogError::Poison(..) => "lock within logger poisoned",
+        match *self {
+            LogError::Io(_) => "IO error while logging",
+            LogError::Poison(_) => "lock within logger poisoned",
         }
     }
 
     fn cause(&self) -> Option<&error::Error> {
-        match self {
-            &LogError::Io(ref e) => Some(e),
-            &LogError::Poison(..) => None,
+        match *self {
+            LogError::Io(ref e) => Some(e),
+            LogError::Poison(_) => None,
         }
     }
 }
 
 impl fmt::Display for LogError {
     fn fmt(&self, f: &mut fmt::Formatter) -> Result<(), fmt::Error> {
-        match self {
-            &LogError::Io(ref e) => write!(f, "IO Error: {}", e),
-            &LogError::Poison(ref e) => write!(f, "Poison Error: {}", e),
+        match *self {
+            LogError::Io(ref e) => write!(f, "IO Error: {}", e),
+            LogError::Poison(ref e) => write!(f, "Poison Error: {}", e),
         }
     }
 }
@@ -76,25 +76,25 @@ impl convert::From<log::SetLoggerError> for InitError {
 
 impl fmt::Display for InitError {
     fn fmt(&self, f: &mut fmt::Formatter) -> Result<(), fmt::Error> {
-        match self {
-            &InitError::Io(ref e) => write!(f, "IO Error: {}", e),
-            &InitError::SetLoggerError(ref e) => write!(f, "SetLoggerError: {}", e),
+        match *self {
+            InitError::Io(ref e) => write!(f, "IO Error: {}", e),
+            InitError::SetLoggerError(ref e) => write!(f, "SetLoggerError: {}", e),
         }
     }
 }
 
 impl error::Error for InitError {
     fn description(&self) -> &str {
-        match self {
-            &InitError::Io(..) => "IO error while initializing",
-            &InitError::SetLoggerError(..) => "global logger already initialized",
+        match *self {
+            InitError::Io(..) => "IO error while initializing",
+            InitError::SetLoggerError(..) => "global logger already initialized",
         }
     }
 
     fn cause(&self) -> Option<&error::Error> {
-        match self {
-            &InitError::Io(ref e) => Some(e),
-            &InitError::SetLoggerError(ref e) => Some(e),
+        match *self {
+            InitError::Io(ref e) => Some(e),
+            InitError::SetLoggerError(ref e) => Some(e),
         }
     }
 }
