@@ -1,19 +1,14 @@
 #![deny(missing_docs)]
 #![doc(html_root_url = "https://dabo.guru/rust/fern/")]
-//! Fern is a runtime-configurable rust logging library.
+//! Fern: efficient builder based runtime configurable logging.
 //!
 //! Current features:
-//!
-//! - Multiple loggers. You can create as many loggers as you need, and configure them separately.
-//! - Configurable output format via closures.
-//! - Multiple outputs per logger - output to any combination of:
-//!   - log files
-//!   - stdout or stderr
-//!   - your own custom implementation
-//! - Each output can have a Level configured, so you can output all log messages to a log file,
-//!   and only have warnings and above show up in the console.
-//! - You can also define your own custom logging endpoints - have messages end up where you need
-//!   them.
+//! - Chain loggers indefinitely - each 'Dispatch' can have any number of outputs
+//! - Log formatting via formatting closures
+//! - Output to stdout, stderr, log files or a custom destination
+//! - Configure default minimum log level and log level per-crate for each log destination or for all of them.
+//! - All configuration is based off of 'chaining' loggers, so that you can configure filters or levels at each step of
+//! the way.
 //! - Acts as a backend to the `log` crate - use `trace!()` through `error!()` to log to the global
 //!   fern logger.
 //!   - Note that fern can also have loggers separate from the global system. You can always set
@@ -21,15 +16,6 @@
 //!
 //! Although mostly stabilized, fern is still in development. The library is subject to
 //! change in non-backwards-compatible ways before the API is completely stabilized.
-//!
-//! This library can only be used while complying to the license terms in the `LICENSE` file.
-//!
-//! Upgrade note for fern `0.2.*`
-//! ====
-//!
-//! As of fern 0.2.0, fern depends on the `log` crate to provide the frontend logging macros and
-//! logging levels - you will need to depend on and use both the `fern` and `log` crates.
-//!
 //!
 //! Adding fern as a dependency
 //! ===========================
@@ -42,8 +28,8 @@
 //!
 //! [dependencies]
 //! # ...
-//! log = "0.2.*"
-//! fern = "0.2.*"
+//! log = "0.3"
+//! fern = "0.4"
 //!
 //! # ...
 //! ```
@@ -58,102 +44,94 @@
 //! # fn main() {}
 //! ```
 //!
-//! Examples
+//! Usage example
 //! ========
 //!
+//! In fern 0.4, creating, configuring, and establishing a logger as the global logger are all merged
+//! into builder methods on the `Dispatch` struct.
 //!
-//! Usually, the first thing you want to do is create a logger. In fern, you can do this by first
-//! creating a LoggerConfig struct, and then calling `.into_logger()` to turn it into a logger.
+//! Here's an example logger which formats messages, limits to Debug level, and puts everything into both stdout and
+//! an output.log file.
 //!
-//! Here's a logger that simply logs all messages to stdout, and an output.log file, formatting
-//! each message with the current date, time, and logging level.
-//!
-//! ```rust
+//! ```no_run
+//! # // no_run because this creates an output.log file.
 //! extern crate fern;
 //! extern crate log;
 //! extern crate time;
 //!
-//! let logger_config = fern::DispatchConfig {
-//!     format: Box::new(|msg: &str, level: &log::LogLevel, _location: &log::LogLocation| {
-//!         // This is a fairly simple format, though it's possible to do more complicated ones.
-//!         // This closure can contain any code, as long as it produces a String message.
-//!         format!("[{}][{}] {}", time::now().strftime("%Y-%m-%d][%H:%M:%S").unwrap(), level, msg)
-//!     }),
-//!     output: vec![fern::OutputConfig::stdout(), fern::OutputConfig::file("output.log")],
-//!     level: log::LogLevelFilter::Trace,
-//! };
+//! fern::Dispatch::new()
+//!     .format(|output, message, record| {
+//!         // bring in Write to allow using `write!`
+//!         use ::std::fmt::Write;
+//!
+//!         write!(output, "[{}][{}][{}] {}",
+//!                time::now().strftime("%Y-%m-%d][%H:%M:%S").expect("code contained invalid time format"),
+//!                record.target(),
+//!                record.level(),
+//!                message)
+//!     })
+//!     .level(log::LogLevelFilter::Debug)
+//!     .chain(std::io::stdout())
+//!     .chain(fern::log_file("output.log").expect("failed to open log file"))
+//!     .set_global()
+//!     .expect("global logger already initialized");
 //! ```
 //!
-//! In the above example, here's what each part does.
+//! Let's unwrap the above example:
 //!
-//! `format:` is a closure which all messages will be run through. In this example, use a
-//! format!() macro to format the messages using the logging level.
+//! `fern::Dispatch::new()` creates our logger configuration, with no options and no outputs.
 //!
-//! Side note: `time::now().strftime("%Y-%m-%d][%H:%M:%S")` is a usage of the `time` library to
-//! format the current date/time into a readable string. This particular format will produce a
-//! string akin to `2015-01-20][12:55:04`
+//! `.format(...` adds a formatter to our logger. All messages sent through this logger will be formatted
+//! with this format macro. For the best performance, the format macro writes directly to the underlying
+//! stream, avoiding any intermediate allocation.
 //!
-//! With this formatting, the final output of the logger will look something like:
+//! If expanded, the type of the format closure would be
+//! `|output: &mut std::fmt::Write, message: &std::fmt::Arguments, record: &log::LogRecord| -> std::fmt::Result`
+//! - this is left out for simplicity, rust can infer from where you put the closure.
+//!
+//! `time::now().strftim(...` uses the [`time`] library to make a readable string. The final output
+//! of the format will be like:
 //!
 //! ```text
-//! [2015-01-20][12:55:04][INFO] A message logged at the Info logging level.
+//! [2015-01-20][12:55:04][crate-name][INFO] Something happened.
 //! ```
 //!
-//! `output:` is a Vec<> of other configurations to send the messages to. In this example, we send
-//! messages to stdout (the console), and the file "output.log".
+//! `.level(log::LogLevelFilter::Debug)` sets the minimum level needed to output to Debug. With log's 5-level system,
+//! this accepts all messages besides `trace!()`.
 //!
-//! `level:` is a `log::LogLevelFilter` which describes the minimum level that should be allowed
-//! to pass through this logger. Setting this to `LogLevelFilter::Trace` allows all messages to be
-//! logged, as `Trace` is the lowest logging level.
+//! `.chain(...)` adds a child logger to the dispatch - something that messages which match the level are sent
+//! to after being formatted. You can output to any other dispatch, an Stdout or Stderr instance, a File or a
+//! `Box<fern::FernLog>` for all other uses.
 //!
-//! After creating your logging config, you can pass it to `init_global_logger` to set it as the
-//! logger used with logging macros in the `log` crate. This function can only be called once, as
-//! the log crate may only be set up once.
+//! In this example, we chain to stdout and to a log file "output.log".
 //!
-//! Note that this function also accepts a `LogLevelFilter`. This is so that you can set a global
-//! minimum log level separate from the logger configuration. If you don't have any reason for
-//! anything else, just set this to `log::LogLevelFilter::Trace`.
-//!
-//! ```rust
-//! # extern crate fern;
-//! # extern crate log;
-//! # let logger_config = fern::DispatchConfig {
-//! #     format: Box::new(|msg: &str, _level: &log::LogLevel, _location: &log::LogLocation| {
-//! #         format!("{}", msg)
-//! #     }),
-//! #     output: vec![],
-//! #     level: log::LogLevelFilter::Trace,
-//! # };
-//! if let Err(e) = fern::init_global_logger(logger_config, log::LogLevelFilter::Trace) {
-//!     panic!("Failed to initialize global logger: {}", e);
-//! }
-//! ```
-//!
-//! This uses the `if let Err(e) =` syntax to catch any errors that happen when initializing
-//! the logger.
+//! `fern::log_file()` is simply a convenience method to open a writable file without truncating the contents.
+//! It is equivalent to `OpenOptions::new().write(true).append(true).create(true).open(x)`
 //!
 //!
-//! Eventually, this section will contain a few more examples as well. For now though, the above
-//! tutorial paired with the fern docs should be enough to get you started on configuring a logger
-//! for your project.
+//! Once you've added all the configuration options, `set_global()` consumes the `Dispatch` configuration, constructs
+//! a logger and hands that logger off to the `log` crate. It will only fail if you've already initialized a global
+//! logger - with fern, or another `log` backend.
+//!
+//! More documentation can be found on the methods of `fern::Dispatch` - more full examples may be added in the future,
+//!  but this should be enough to get you started!
 //!
 //! #### Logging
 //!
-//! With the `log` crate, outputting messages is fairly simple. As long as you are using the log
-//! crate with `#[macro_use]`, and you have initialized the global logger as shown above, you can
-//! use the log macros to log messages.
+//! Ensure you are using `#[macro_use] extern crate log;`, and you should be set! You can use the 5 macros included in
+//! `log` to log to your fern logger:
 //!
 //! ```rust
-//! // You need to have #[macro_use] to use log macros
 //! #[macro_use]
 //! extern crate log;
 //! extern crate fern;
 //!
 //! # fn main() {
 //! # /*
-//! fern::init_global_logger(...);
+//! fern::Dispatch::new() /*...*/ .set_global();
 //! # */
-//! # fern::init_global_logger(fern::OutputConfig::null(), log::LogLevelFilter::Trace);
+//! # // ignore the error case, we're ok if this isn't the logger we've initialized.
+//! # fern::Dispatch::new().set_global().ok();
 //!
 //! trace!("Trace message");
 //! debug!("Debug message");
@@ -162,15 +140,49 @@
 //! error!("Error message");
 //! # }
 //! ```
+//!
+//! [time]: https://crates.io/crates/time
+//! [time-docs]: https://doc.rust-lang.org/time/time/index.html
 
 extern crate log;
 
-pub use errors::{LogError, InitError};
-pub use api::Logger;
-pub use config::{DispatchConfig, OutputConfig, IntoLog, init_global_logger};
-pub use loggers::NullLogger;
+pub use log::LogLevelFilter;
 
-mod api;
-mod config;
-mod loggers;
+use std::convert::AsRef;
+use std::path::Path;
+use std::fs::{File, OpenOptions};
+use std::{io, fmt};
+
+pub use builders::{Dispatch, Output};
+
+mod builders;
+mod log_impl;
 mod errors;
+
+/// A type alias for a log formatter.
+pub type Formatter = Fn(&mut fmt::Write, &fmt::Arguments, &log::LogRecord) -> fmt::Result + Sync + Send;
+
+/// A type alias for a log filter. Returning true means the record should succeed - false means it should fail.
+pub type Filter = Fn(&log::LogMetadata) -> bool + Send + Sync;
+
+/// Fern logging trait. This is necessary in order to allow for custom loggers taking in arguments that have already had
+/// a custom format applied to them.
+///
+/// The original `log::Log` trait's `log` method only accepts messages that were created using the log macros - this
+/// trait also accepts records which have had additional formatting applied to them.
+pub trait FernLog: Sync + Send {
+    /// Logs a log record, but with the given fmt::Arguments instead of the one contained in the LogRecord.
+    ///
+    /// This has access to the original record, but _should ignore_ the original `record.args()` and instead
+    /// use the passed in payload.
+    fn log_args(&self, payload: &fmt::Arguments, record: &log::LogRecord);
+}
+
+/// Utility for opening a log file with write, create and append options.
+///
+/// Exactly equivalent to
+/// `std::fs::OpenOptions::new().write(true).append(true).truncate(false).create(true).open(path)`.
+#[inline]
+pub fn log_file<P: AsRef<Path>>(path: P) -> Result<File, io::Error> {
+    OpenOptions::new().write(true).append(true).truncate(false).create(true).open(path)
+}

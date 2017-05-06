@@ -9,8 +9,9 @@ documentation = "https://dabo.guru/rust/fern/"
 repository = "https://github.com/daboross/fern-rs"
 
 readme = "README.md"
-keywords = ["log", "logging", "logger", "fern"]
+keywords = ["log", "logging", "logger"]
 license = "MIT"
+categories = ["development-tools::debugging"]
 
 [dependencies]
 log = "0.3"
