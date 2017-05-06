@@ -30,7 +30,7 @@ fn test1_basic_usage() {
             write!(out, "[{}] {}", record.level(), msg)
         })
         // Only log messages Info and above
-        .level(fern::LogLevelFilter::Info)
+        .level(log::LogLevelFilter::Info)
         // Output to stdout and the log file in the temporary directory we made above to test
         .chain(io::stdout())
         .chain(fern::log_file(log_file).expect("failed to open log file"))

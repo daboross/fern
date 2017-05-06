@@ -1,51 +1,42 @@
 #![deny(missing_docs)]
 #![doc(html_root_url = "https://dabo.guru/rust/fern/")]
-//! Fern: efficient builder based runtime configurable logging.
+//! Efficient, configurable logging in rust
 //!
-//! Current features:
-//! - Chain loggers indefinitely - each 'Dispatch' can have any number of outputs
-//! - Log formatting via formatting closures
-//! - Output to stdout, stderr, log files or a custom destination
-//! - Configure default minimum log level and log level per-crate for each log destination or for all of them.
-//! - All configuration is based off of 'chaining' loggers, so that you can configure filters or levels at each step of
-//! the way.
-//! - Acts as a backend to the `log` crate - use `trace!()` through `error!()` to log to the global
-//!   fern logger.
-//!   - Note that fern can also have loggers separate from the global system. You can always set
-//!     your main logger as the global logger, then use other fern loggers manually.
+//! With Fern, you can:
 //!
-//! Although mostly stabilized, fern is still in development. The library is subject to
-//! change in non-backwards-compatible ways before the API is completely stabilized.
+//! - Configure logging at runtime; make changes based off of user arguments or configuration
+//! - Format log records without allocating intermediate results
+//! - Output to stdout, stderr, log files and custom destinations
+//! - Apply a blanket level filter and per-crate/per-module overrides
+//! - Intuitively apply filters and formats to groups of loggers via builder chaining
+//! - Log using the standard `log` crate macros
 //!
-//! Adding fern as a dependency
-//! ===========================
+//! Fern, while feature-complete, does not have a mature API. The library may be changed
+//! in backwards incompatible ways to make it more ergonomic in the future.
 //!
-//! In order to use fern, the first thing you'll need to add both the `fern` crate and the `log`
-//! crate to the dependencies in your project's `Cargo.toml` file:
+//! Depending on Fern
+//! =================
+//!
+//! To use fern effectively, depend on the `fern` and `log` crates in your project's `Cargo.toml`:
 //!
 //! ```toml
-//! # ...
-//!
 //! [dependencies]
-//! # ...
 //! log = "0.3"
 //! fern = "0.4"
-//!
-//! # ...
 //! ```
 //!
-//! After this, you'll need to declare the `log` and `fern` at the top of your main.rs or lib.rs
-//! file:
+//! Then declare as an extern crates at your program's root file:
 //!
 //! ```
+//! // main.rs or lib.rs:
 //! #[macro_use]
 //! extern crate log;
 //! extern crate fern;
 //! # fn main() {}
 //! ```
 //!
-//! Usage example
-//! ========
+//! Example usage:
+//! ==============
 //!
 //! In fern 0.4, creating, configuring, and establishing a logger as the global logger are all merged
 //! into builder methods on the `Dispatch` struct.
@@ -61,11 +52,11 @@
 //!
 //! fern::Dispatch::new()
 //!     .format(|output, message, record| {
-//!         // bring in Write to allow using `write!`
 //!         use ::std::fmt::Write;
 //!
-//!         write!(output, "[{}][{}][{}] {}",
-//!                time::now().strftime("%Y-%m-%d][%H:%M:%S").expect("code contained invalid time format"),
+//!         write!(output,
+//!                "[{}][{}][{}] {}",
+//!                time::now().strftime("%Y-%m-%d][%H:%M:%S").unwrap(),
 //!                record.target(),
 //!                record.level(),
 //!                message)
@@ -79,47 +70,63 @@
 //!
 //! Let's unwrap the above example:
 //!
-//! `fern::Dispatch::new()` creates our logger configuration, with no options and no outputs.
+//! ### `fern::Dispatch::new()`
 //!
-//! `.format(...` adds a formatter to our logger. All messages sent through this logger will be formatted
-//! with this format macro. For the best performance, the format macro writes directly to the underlying
-//! stream, avoiding any intermediate allocation.
+//! Create an empty logger config.
 //!
-//! If expanded, the type of the format closure would be
-//! `|output: &mut std::fmt::Write, message: &std::fmt::Arguments, record: &log::LogRecord| -> std::fmt::Result`
-//! - this is left out for simplicity, rust can infer from where you put the closure.
+//! ### `.format(|...| ...)`
 //!
-//! `time::now().strftim(...` uses the [`time`] library to make a readable string. The final output
-//! of the format will be like:
+//!
+//! Add a formatter to the logger, modifying all messages sent through.
+//!
+//! ### `time::now().strftim(...)`
+//!
+//!
+//! This uses the [`time`] library to make a readable string. The final output of the format will be like:
 //!
 //! ```text
 //! [2015-01-20][12:55:04][crate-name][INFO] Something happened.
 //! ```
 //!
-//! `.level(log::LogLevelFilter::Debug)` sets the minimum level needed to output to Debug. With log's 5-level system,
-//! this accepts all messages besides `trace!()`.
+//! ### `.level(log::LogLevelFilter::Debug)`
 //!
-//! `.chain(...)` adds a child logger to the dispatch - something that messages which match the level are sent
-//! to after being formatted. You can output to any other dispatch, an Stdout or Stderr instance, a File or a
-//! `Box<fern::FernLog>` for all other uses.
+//! Set the minimum level needed to output to Debug, accepting Debug, Info, Warn, and Error-level messages
+//! and denying Trace-level messages.
 //!
-//! In this example, we chain to stdout and to a log file "output.log".
+//! ### `.chain(std::io::stdout())`
 //!
-//! `fern::log_file()` is simply a convenience method to open a writable file without truncating the contents.
-//! It is equivalent to `OpenOptions::new().write(true).append(true).create(true).open(x)`
+//! Add a child to the logger; send all messages to stdout.
 //!
+//! `.chain()` accepts Stdout, Stderr, Files and other Dispatch instances.
 //!
-//! Once you've added all the configuration options, `set_global()` consumes the `Dispatch` configuration, constructs
-//! a logger and hands that logger off to the `log` crate. It will only fail if you've already initialized a global
-//! logger - with fern, or another `log` backend.
+//! ### `.chain(fern::log_file(...).expect(...))`
 //!
-//! More documentation can be found on the methods of `fern::Dispatch` - more full examples may be added in the future,
-//!  but this should be enough to get you started!
+//! Add a second child; send all messages to the file "output.log".
 //!
-//! #### Logging
+//! `fern::log_file()` is simply a convenience method equivalent to:
 //!
-//! Ensure you are using `#[macro_use] extern crate log;`, and you should be set! You can use the 5 macros included in
-//! `log` to log to your fern logger:
+//! ```no_run
+//! # use std::fs::OpenOptions;
+//! # drop(
+//! OpenOptions::new()
+//!     .write(true)
+//!     .create(true)
+//!     .append(true)
+//!     .open("filename")
+//! # )
+//! ```
+//!
+//! ### `.set_global()`
+//!
+//! Consume the Dispatch instance, create a `log`-crate logger, and instantiate it as the current runtime's logger.
+//!
+//! This will fail if and only if another fern or `log` logger has already been set as the global logger.
+//!
+//! Logging
+//! ===
+//!
+//! Once the logger has been set using set_global, it will pick up all `log`-crate log calls from your crate and
+//! all your libraries.
 //!
 //! ```rust
 //! #[macro_use]
@@ -127,11 +134,9 @@
 //! extern crate fern;
 //!
 //! # fn main() {
-//! # /*
-//! fern::Dispatch::new() /*...*/ .set_global();
-//! # */
-//! # // ignore the error case, we're ok if this isn't the logger we've initialized.
-//! # fern::Dispatch::new().set_global().ok();
+//! fern::Dispatch::new()
+//!     // ...
+//!     .set_global();
 //!
 //! trace!("Trace message");
 //! debug!("Debug message");
@@ -141,12 +146,16 @@
 //! # }
 //! ```
 //!
+//! More configuration
+//! ===
+//!
+//! The example above annotates a a basic configuration, but more is allowed! The documentation for `Dispatch` contains
+//! a complete set of configurations, and an example using all possible options.
+//!
 //! [time]: https://crates.io/crates/time
 //! [time-docs]: https://doc.rust-lang.org/time/time/index.html
 
 extern crate log;
-
-pub use log::LogLevelFilter;
 
 use std::convert::AsRef;
 use std::path::Path;
@@ -178,11 +187,20 @@ pub trait FernLog: Sync + Send {
     fn log_args(&self, payload: &fmt::Arguments, record: &log::LogRecord);
 }
 
-/// Utility for opening a log file with write, create and append options.
+/// Convenience method for opening a log file with common options.
 ///
-/// Exactly equivalent to
-/// `std::fs::OpenOptions::new().write(true).append(true).truncate(false).create(true).open(path)`.
+/// Exactly equivalent to:
+///
+/// ```no_run
+/// # use std::fs::OpenOptions;
+/// OpenOptions::new()
+///     .write(true)
+///     .create(true)
+///     .append(true)
+///     .open("filename")
+/// # ;
+/// ```
 #[inline]
 pub fn log_file<P: AsRef<Path>>(path: P) -> Result<File, io::Error> {
-    OpenOptions::new().write(true).append(true).truncate(false).create(true).open(path)
+    OpenOptions::new().write(true).create(true).append(true).open(path)
 }

@@ -1,27 +1,31 @@
-fern
+Fern: efficient, configurable logging in rust
 ====
 
-fern is a runtime-configurable logging library written for [rust](http://www.rust-lang.org/).
+With fern, you can:
 
-Current features are:
-- Multiple loggers. You can create as many loggers as you need, and configure them separately.
-- Configurable output format via closures.
-- Multiple outputs per logger - output to any combination of:
-  - log files
-  - stdout or stderr
-  - your own custom implementation
-- Each output can have a Level configured, so you can output all log messages to a log file,
-  and only have warnings and above show up in the console.
-- You can also define your own custom logging endpoints - have messages end up where you need
-  them.
-- Acts as a backend to the `log` crate - use `trace!()` through `error!()` on your main logger
-  - Note that fern can also have loggers separate from the `log` crate's global system. It's
-    possible to just set your main logger as the global logger, then use other ones manually
-    as well.
+- Configure logging at runtime; make changes based off of user arguments or configuration
+- Format log records without allocating intermediate results
+- Output to stdout, stderr, log files and custom destinations
+- Apply a blanket level filter and per-crate/per-module overrides
+- Intuitively apply filters and formats to groups of loggers via builder chaining
+- Log using the standard `log` crate macros
 
-Although mostly stabilized, fern is still in development. The library is subject to
-change in non-backwards-compatible ways before the API is completely stabilized.
+API Docs: https://dabo.guru/rust/fern-dev/fern/
+
+Stability warning:
+
+Fern, while feature-complete, does not have a mature API. The library may be changed
+in backwards incompatible ways to make it more ergonomic in the future.
 
 This library can only be used while complying to the license terms in the `LICENSE` file.
 
 The more information, and examples on how to use fern, see [the fern docs](https://dabo.guru/rust/fern/).
+
+### Testing
+
+Fern has two separate tests which both require initializing the global logger, so the tests must be run separately. To test, use:
+
+```sh
+cargo test -- --skip test2
+cargo test test2
+```

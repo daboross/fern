@@ -300,18 +300,23 @@ enum OutputInner {
 pub struct Output(OutputInner);
 
 impl From<Dispatch> for Output {
+    /// Creates an output logger forwarding all messages to the dispatch.
     fn from(log: Dispatch) -> Self {
         Output(OutputInner::Dispatch(log))
     }
 }
 
 impl From<Box<FernLog>> for Output {
+    /// Creates an output logger forwarding all messages to the custom logger.
     fn from(log: Box<FernLog>) -> Self {
         Output(OutputInner::Other(log))
     }
 }
 
 impl From<fs::File> for Output {
+    /// Creates an output logger which writes all messages to the file with `\n` as the separator.
+    ///
+    /// File writes are buffered and flushed once per log record.
     fn from(file: fs::File) -> Self {
         Output(OutputInner::File {
             stream: file,
@@ -321,6 +326,7 @@ impl From<fs::File> for Output {
 }
 
 impl From<io::Stdout> for Output {
+    /// Creates an output logger which writes all messages to stdout with the given handle and `\n` as the separator.
     fn from(stream: io::Stdout) -> Self {
         Output(OutputInner::Stdout {
             stream: stream,
@@ -330,6 +336,7 @@ impl From<io::Stdout> for Output {
 }
 
 impl From<io::Stderr> for Output {
+    /// Creates an output logger which writes all messages to stderr with the given handle and `\n` as the separator.
     fn from(stream: io::Stderr) -> Self {
         Output(OutputInner::Stderr {
             stream: stream,
@@ -342,7 +349,17 @@ impl Output {
     /// Returns a file logger using a custom separator.
     ///
     /// If the default separator of `\n` is acceptable, an `fs::File` instance can be passed into
-    /// `Dispatch::chain()` directly. (`...chain(std::fs::File::create("log"))` or `...chain(fern::log_file("log"))`)
+    /// `Dispatch::chain()` directly.
+    ///
+    /// ```
+    /// Dispatch::new().chain(std::fs::File::create("log").unwrap())
+    /// # ;
+    /// ```
+    ///
+    /// ```
+    /// Dispatch::new().chain(fern::log_file("log").unwrap())
+    /// # ;
+    /// ```
     pub fn file<T: Into<Cow<'static, str>>>(file: fs::File, line_sep: T) -> Self {
         Output(OutputInner::File {
             stream: file,
@@ -353,7 +370,12 @@ impl Output {
     /// Returns an stdout logger using a custom separator.
     ///
     /// If the default separator of `\n` is acceptable, an `io::Stdout` instance can be passed into
-    /// `Dispatch::chain()` directly. (`...chain(std::io:;stdout())`)
+    /// `Dispatch::chain()` directly.
+    ///
+    /// ```
+    /// Dispatch::new().chain(std::io::stdout())
+    /// # ;
+    /// ```
     pub fn stdout<T: Into<Cow<'static, str>>>(line_sep: T) -> Self {
         Output(OutputInner::Stdout {
             stream: io::stdout(),
@@ -364,7 +386,12 @@ impl Output {
     /// Returns an stderr logger using a custom separator.
     ///
     /// If the default separator of `\n` is acceptable, an `io::Stderr` instance can be passed into
-    /// `Dispatch::chain()` directly. (`...chain(std::io:;stderr())`)
+    /// `Dispatch::chain()` directly.
+    ///
+    /// ```
+    /// Dispatch::new().chain(std::io::stderr())
+    /// # ;
+    /// ```
     pub fn stderr<T: Into<Cow<'static, str>>>(line_sep: T) -> Self {
         Output(OutputInner::Stderr {
             stream: io::stderr(),
