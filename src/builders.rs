@@ -494,6 +494,17 @@ impl Output {
     }
 }
 
+impl Default for Dispatch {
+    /// Returns a logger configuration that does nothing with log records.
+    ///
+    /// Equivalent to [`Dispatch::new`].
+    ///
+    /// [`Dispatch::new`]: struct.Dispatch.html#method.new
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl fmt::Debug for Dispatch {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         struct LevelsDebug<'a>(&'a [(Cow<'static, str>, log::LogLevelFilter)]);
