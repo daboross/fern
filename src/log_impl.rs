@@ -164,8 +164,19 @@ impl<'a> FormatCallback<'a> {
     /// This will call the rest of the logging chain using the given formatted message
     /// as the new payload message.
     ///
-    /// Note: if this is not called, the log message will still be processed, but the
-    /// original message will be used, not the reformatted version.
+    /// Example usage:
+    ///
+    /// ```
+    /// # fern::Dispatch::new()
+    /// # .format(|callback: fern::FormatCallback, message, record| {
+    /// callback.finish(format_args!("[{}] {}", record.level(), message))
+    /// # })
+    /// # .into_log();
+    /// ```
+    ///
+    /// See [`format_args!`]
+    ///
+    /// [`format_args!`]: https://doc.rust-lang.org/std/macro.format_args.html
     pub fn finish(self, formatted_message: fmt::Arguments) {
         let FormatCallback(InnerFormatCallback(callback_called_flag, dispatch, record)) = self;
 

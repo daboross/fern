@@ -309,7 +309,7 @@ impl Dispatch {
     /// The returned LogLevelFilter is a calculation for all level filters of this logger and child loggers, and is the
     /// minimum log level needed to for a record to have any chance of passing through this logger.
     ///
-    /// [`Dispatch::into_global_logger`]: struct.Dispatch.html#method.into_global_logger
+    /// [`Dispatch::into_global_logger`]: #method.into_global_logger
     ///
     /// Example usage:
     ///
@@ -428,8 +428,8 @@ impl From<io::Stderr> for Output {
 impl Output {
     /// Returns a file logger using a custom separator.
     ///
-    /// If the default separator of `\n` is acceptable, an `fs::File` instance can be passed into
-    /// `Dispatch::chain()` directly.
+    /// If the default separator of `\n` is acceptable, an [`fs::File`] instance can be passed into
+    /// [`Dispatch::chain`] directly.
     ///
     /// ```no_run
     /// # fn setup_logger() -> Result<(), fern::InitError> {
@@ -451,7 +451,24 @@ impl Output {
     /// # }
     ///
     /// # fn main() { setup_logger().expect("failed to set up logger"); }
+    ///
     /// ```
+    ///
+    /// Example usage (using [`fern::log_file`]):
+    ///
+    /// ```no_run
+    /// # fn setup_logger() -> Result<(), fern::InitError> {
+    /// fern::Dispatch::new()
+    ///     .chain(fern::Output::file(fern::log_file("log")?, "\r\n")
+    ///     # .into_log();
+    /// # }
+    ///
+    /// # fn main() { setup_logger().expect("failed to set up logger"); }
+    /// ```
+    ///
+    /// [`fs::File`]: https://doc.rust-lang.org/std/fs/struct.File.html
+    /// [`Dispatch::chain`]: struct.Dispatch.html#method.chain
+    /// [`fern::log_file`]: fn.log_file.html
     pub fn file<T: Into<Cow<'static, str>>>(file: fs::File, line_sep: T) -> Self {
         Output(OutputInner::File {
             stream: file,
@@ -499,7 +516,7 @@ impl Default for Dispatch {
     ///
     /// Equivalent to [`Dispatch::new`].
     ///
-    /// [`Dispatch::new`]: struct.Dispatch.html#method.new
+    /// [`Dispatch::new`]: #method.new
     fn default() -> Self {
         Self::new()
     }

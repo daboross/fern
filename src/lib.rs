@@ -14,8 +14,7 @@
 //! Fern, while feature-complete, does not have a mature API. The library may be changed
 //! in backwards incompatible ways to make it more ergonomic in the future.
 //!
-//! Depending on Fern
-//! =================
+//! # Depending on Fern
 //!
 //! To use fern effectively, depend on the `fern` and `log` crates in your project's `Cargo.toml`:
 //!
@@ -25,18 +24,16 @@
 //! fern = "0.4"
 //! ```
 //!
-//! Then declare as an extern crates at your program's root file:
+//! Then declare both in your program's `main.rs` or `lib.rs`:
 //!
 //! ```
-//! // main.rs or lib.rs:
 //! #[macro_use]
 //! extern crate log;
 //! extern crate fern;
 //! # fn main() {}
 //! ```
 //!
-//! Example usage:
-//! ==============
+//! # Example usage:
 //!
 //! In fern 0.4, creating, configuring, and establishing a logger as the global logger are all merged
 //! into builder methods on the `Dispatch` struct.
@@ -71,23 +68,33 @@
 //!
 //! Let's unwrap the above example:
 //!
-//! ### `fern::Dispatch::new()`
+//! ---
+//!
+//! [`fern::Dispatch::new()`]
 //!
 //! Create an empty logger config.
 //!
-//! ### `.format(|...| ...)`
+//! ---
+//!
+//! [`.format(|...| ...)`]
 //!
 //! Add a formatter to the logger, modifying all messages sent through.
 //!
-//! #### `chrono::Local::now()`
+//! ___
+//!
+//! [`chrono::Local::now()`]
 //!
 //! Get the current time in the local timezone using the [`chrono`] library. See the [time-and-date docs].
 //!
-//! #### `.format("[%Y-%m-%d][%H:%M:%S]")`
+//! ___
+//!
+//! [`.format(`]`"[%Y-%m-%d][%H:%M:%S]`[`")`]
 //!
 //! Use chrono's lazy format specifier to turn the time into a readable string.
 //!
-//! #### `out.finish(format_args!(...))`
+//! ---
+//!
+//! [`out.finish(format_args!(...))`]
 //!
 //! Call the `fern::FormattingCallback` to submit the formatted message.
 //!
@@ -102,44 +109,41 @@
 //! [2017-01-20][12:55:04][crate-name][INFO] Something happened.
 //! ```
 //!
-//! ### `.level(log::LogLevelFilter::Debug)`
+//! ---
+//!
+//! [`.level(log::LogLevelFilter::Debug)`]
 //!
 //! Set the minimum level needed to output to Debug, accepting Debug, Info, Warn, and Error-level messages
 //! and denying Trace-level messages.
 //!
-//! ### `.chain(std::io::stdout())`
+//! ---
+//!
+//! [`.chain(std::io::stdout())`]
 //!
 //! Add a child to the logger; send all messages to stdout.
 //!
-//! `.chain()` accepts Stdout, Stderr, Files and other Dispatch instances.
+//! [`Dispatch::chain`] accepts Stdout, Stderr, Files and other Dispatch instances.
 //!
-//! ### `.chain(fern::log_file(...)?)`
+//! ---
+//!
+//! [`.chain(fern::log_file(...)?)`]
 //!
 //! Add a second child; send all messages to the file "output.log".
 //!
-//! `fern::log_file()` is simply a convenience method equivalent to:
+//! See [`fern::log_file()`] for more info on file output.
 //!
-//! ```no_run
-//! std::fs::OpenOptions::new()
-//!     .write(true)
-//!     .create(true)
-//!     .append(true)
-//!     .open("filename")
-//! # ;
-//! ```
+//! ---
 //!
-//! ### `.into_global_logger()`
+//! [`.into_global_logger()`]
 //!
-//! Consume the Dispatch instance, create a `log`-crate logger, and instantiate it as the current runtime's logger.
+//! Consume the Dispatch configuration and instantiate it as the current runtime global logger.
 //!
-//! This will fail if and only if another fern or `log` logger has already been set as the global logger.
+//! This will fail if and only if another fern or [`log`] logger has already been set as the global logger.
 //!
-//! Logging
-//! ===
+//! # Logging
 //!
-//! Once the logger has been set using [`into_global_logger`], it will pick up all `log`-crate log calls from your
-//! crate and
-//! all your libraries.
+//! Once the logger has been set using [`into_global_logger`] it will pick up all [`log`] macro calls from your
+//! crate and all your libraries.
 //!
 //! ```rust
 //! #[macro_use]
@@ -163,11 +167,22 @@
 //! # }
 //! ```
 //!
-//! More configuration
-//! ===
+//! # More configuration
 //!
 //! Check out the [`Dispatch` documentation] and the [full example program] for more examples!
 //!
+//! [`fern::Dispatch::new()`]: struct.Dispatch.html#method.new
+//! [`.format(|...| ...)`]: struct.Dispatch.html#method.format
+//! [`chrono::Local::now()`]: https://docs.rs/chrono/0.3/chrono/offset/local/struct.Local.html#method.now
+//! [`.format(`]: https://docs.rs/chrono/0.3/chrono/datetime/struct.DateTime.html#method.format
+//! [`")`]: https://docs.rs/chrono/0.3/chrono/datetime/struct.DateTime.html#method.format
+//! [`out.finish(format_args!(...))`]: struct.FormatCallback.html#method.finish
+//! [`.level(log::LogLevelFilter::Debug)`]: struct.Dispatch.html#method.level
+//! [`Dispatch::chain`]: struct.Dispatch.html#method.chain
+//! [`.chain(std::io::stdout())`]: struct.Dispatch.html#method.chain
+//! [`.chain(fern::log_file(...)?)`]: struct.Dispatch.html#method.chain
+//! [`fern::log_file()`]: fn.log_file.html
+//! [`.into_global_logger()`]: struct.Dispatch.html#method.into_global_logger
 //! [`format_args!()`]: https://doc.rust-lang.org/std/macro.format_args.html
 //! [`println!()`]: https://doc.rust-lang.org/std/macro.println.html
 //! [`std::fmt`]: https://doc.rust-lang.org/std/fmt/
@@ -177,6 +192,7 @@
 //! [`Dispatch` documentation]: struct.Dispatch.html
 //! [full example program]: https://github.com/daboross/fern-rs/tree/master/examples/cmd-program.rs
 //! [`into_global_logger`]: struct.Dispatch.html#method.into_global_logger
+//! [`log`]: doc.rust-lang.org/log/
 extern crate log;
 
 use std::convert::AsRef;
@@ -213,7 +229,7 @@ pub trait FernLog: Sync + Send {
 
 /// Convenience method for opening a log file with common options.
 ///
-/// Exactly equivalent to:
+/// Equivalent to:
 ///
 /// ```no_run
 /// std::fs::OpenOptions::new()
@@ -223,7 +239,11 @@ pub trait FernLog: Sync + Send {
 ///     .open("filename")
 /// # ;
 /// ```
+///
+/// See [`OpenOptions`] for more information.
+///
+/// [`OpenOptions`]: https://doc.rust-lang.org/std/fs/struct.OpenOptions.html
 #[inline]
-pub fn log_file<P: AsRef<Path>>(path: P) -> Result<File, io::Error> {
+pub fn log_file<P: AsRef<Path>>(path: P) -> io::Result<File> {
     OpenOptions::new().write(true).create(true).append(true).open(path)
 }
