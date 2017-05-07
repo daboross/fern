@@ -1,5 +1,4 @@
 use std::io;
-use std::sync;
 use std::error;
 use std::convert;
 use std::fmt;

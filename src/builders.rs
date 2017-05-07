@@ -74,6 +74,7 @@ use {log_impl, FernLog, Formatter, Filter};
 ///     // this can also fail (only happens if global logger has been set before.)
 ///     .unwrap()
 /// ```
+#[must_use = "this is only a logger configuration, and will do nothing if not registered using set_global()"]
 pub struct Dispatch {
     format: Option<Box<Formatter>>,
     children: Vec<OutputInner>,
@@ -351,13 +352,15 @@ impl Output {
     /// If the default separator of `\n` is acceptable, an `fs::File` instance can be passed into
     /// `Dispatch::chain()` directly.
     ///
-    /// ```
-    /// Dispatch::new().chain(std::fs::File::create("log").unwrap())
+    /// ```no_run
+    /// fern::Dispatch::new()
+    ///     .chain(std::fs::File::create("log").unwrap())
     /// # ;
     /// ```
     ///
-    /// ```
-    /// Dispatch::new().chain(fern::log_file("log").unwrap())
+    /// ```no_run
+    /// fern::Dispatch::new()
+    ///     .chain(fern::log_file("log").unwrap())
     /// # ;
     /// ```
     pub fn file<T: Into<Cow<'static, str>>>(file: fs::File, line_sep: T) -> Self {
@@ -373,7 +376,8 @@ impl Output {
     /// `Dispatch::chain()` directly.
     ///
     /// ```
-    /// Dispatch::new().chain(std::io::stdout())
+    /// fern::Dispatch::new()
+    ///     .chain(std::io::stdout())
     /// # ;
     /// ```
     pub fn stdout<T: Into<Cow<'static, str>>>(line_sep: T) -> Self {
@@ -389,7 +393,8 @@ impl Output {
     /// `Dispatch::chain()` directly.
     ///
     /// ```
-    /// Dispatch::new().chain(std::io::stderr())
+    /// fern::Dispatch::new()
+    ///     .chain(std::io::stderr())
     /// # ;
     /// ```
     pub fn stderr<T: Into<Cow<'static, str>>>(line_sep: T) -> Self {
