@@ -16,6 +16,7 @@ With fern, you can:
 - Intuitively apply filters and formats to groups of loggers via builder chaining
 - Log using the standard `log` crate macros
 
+Links:
 
 - [`fern` documentation](https://dabo.guru/rust/fern/)
 - [`fern` on crates.io](crates.io/crates/fern/)
