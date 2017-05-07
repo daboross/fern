@@ -190,7 +190,7 @@
 //! [time-and-date docs]: https://docs.rs/chrono/0.3.1/chrono/index.html#date-and-time
 //! [the format specifier docs]: https://docs.rs/chrono/0.3.1/chrono/format/strftime/index.html#specifiers
 //! [`Dispatch` documentation]: struct.Dispatch.html
-//! [full example program]: https://github.com/daboross/fern-rs/tree/master/examples/cmd-program.rs
+//! [full example program]: https://github.com/daboross/fern/tree/master/examples/cmd-program.rs
 //! [`into_global_logger`]: struct.Dispatch.html#method.into_global_logger
 //! [`log`]: doc.rust-lang.org/log/
 extern crate log;

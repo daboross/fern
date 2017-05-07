@@ -12,7 +12,7 @@ With fern, you can:
 
 API Docs: https://dabo.guru/rust/fern-dev/fern/
 
-Full example program: https://github.com/daboross/fern-rs/tree/master/examples/cmd-program.rs
+Full example program: https://github.com/daboross/fern/tree/master/examples/cmd-program.rs
 
 Stability warning:
 
