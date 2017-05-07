@@ -23,22 +23,24 @@ pub struct Dispatch {
     pub filters: Vec<Box<Filter>>,
 }
 
-/// A format callback, for use within a formatter closure
+/// Callback struct for use within a formatter closure
 ///
-/// Callbacks are used for formatting in order to allow usage of rust's macro-based formatting efficiently
-/// and without any extra allocations for intermediate string results.
+/// Callbacks are used for formatting in order to allow usage of [`std::fmt`]-based formatting without
+/// the allocation of the formatted result which would be required to return it.
 ///
 /// Example usage:
 ///
 /// ```
 /// fern::Dispatch::new()
 ///     .format(|callback: fern::FormatCallback, message, record| {
-///         callback.finish(format_args!("[{}] {}", record.level(), message));
+///         callback.finish(format_args!("[{}] {}", record.level(), message))
 ///     })
 ///     # ;
 /// ```
 #[must_use = "format callback must be used for log to process correctly"]
-pub struct FormatCallback<'a>(&'a mut bool, &'a Dispatch, &'a log::LogRecord<'a>);
+pub struct FormatCallback<'a>(InnerFormatCallback<'a>);
+
+struct InnerFormatCallback<'a>(&'a mut bool, &'a Dispatch, &'a log::LogRecord<'a>);
 
 pub enum Output {
     Stdout(Stdout),
@@ -132,7 +134,7 @@ impl FernLog for Dispatch {
                     // flag to ensure the log message is completed even if the formatter doesn't complete the callback.
                     let mut callback_called_flag = false;
 
-                    (format)(FormatCallback(&mut callback_called_flag, self, record),
+                    (format)(FormatCallback(InnerFormatCallback(&mut callback_called_flag, self, record)),
                              message,
                              record);
 
@@ -165,7 +167,7 @@ impl<'a> FormatCallback<'a> {
     /// Note: if this is not called, the log message will still be processed, but the
     /// original message will be used, not the reformatted version.
     pub fn finish(self, formatted_message: fmt::Arguments) {
-        let FormatCallback(callback_called_flag, dispatch, record) = self;
+        let FormatCallback(InnerFormatCallback(callback_called_flag, dispatch, record)) = self;
 
         // let the dispatch know that we did in fact get called.
         *callback_called_flag = true;

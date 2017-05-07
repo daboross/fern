@@ -27,7 +27,7 @@ use {log_impl, FernLog, FormatCallback, Formatter, Filter};
 /// # fn setup_logger() -> Result<(), fern::InitError> {
 /// fern::Dispatch::new()
 ///     .format(|out, message, record| {
-///         out.finish(format_args!("[{}][{}] {}", record.level(), record.target(), message));
+///         out.finish(format_args!("[{}][{}] {}", record.level(), record.target(), message))
 ///     })
 ///     .chain(
 ///         fern::Dispatch::new()
@@ -114,7 +114,7 @@ impl Dispatch {
     /// ```
     /// fern::Dispatch::new()
     ///     .format(|out, message, record| {
-    ///         out.finish(format_args!("[{}][{}] {}", record.level(), record.target(), message));
+    ///         out.finish(format_args!("[{}][{}] {}", record.level(), record.target(), message))
     ///     })
     ///     # .into_log();
     /// ```
