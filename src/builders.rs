@@ -459,8 +459,9 @@ impl Output {
     /// ```no_run
     /// # fn setup_logger() -> Result<(), fern::InitError> {
     /// fern::Dispatch::new()
-    ///     .chain(fern::Output::file(fern::log_file("log")?, "\r\n")
+    ///     .chain(fern::Output::file(fern::log_file("log")?, "\r\n"))
     ///     # .into_log();
+    /// # Ok(())
     /// # }
     ///
     /// # fn main() { setup_logger().expect("failed to set up logger"); }
