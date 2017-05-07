@@ -26,8 +26,7 @@ fn test1_basic_usage() {
     // Create a basic logger configuration
     fern::Dispatch::new()
         .format(|out, msg, record| {
-            // This format just displays [{level}] {message}
-            write!(out, "[{}] {}", record.level(), msg)
+            out.finish(format_args!("[{}] {}", record.level(), msg))
         })
         // Only log messages Info and above
         .level(log::LogLevelFilter::Info)

@@ -51,15 +51,14 @@
 //! extern crate time;
 //!
 //! fern::Dispatch::new()
-//!     .format(|output, message, record| {
-//!         use ::std::fmt::Write;
-//!
-//!         write!(output,
-//!                "[{}][{}][{}] {}",
-//!                time::now().strftime("%Y-%m-%d][%H:%M:%S").unwrap(),
-//!                record.target(),
-//!                record.level(),
-//!                message)
+//!     .format(|out, message, record| {
+//!         out.finish(format_args!("{}[{}][{}] {}",
+//!             time::now()
+//!                 .strftime("[%Y-%m-%d][%H:%M:%S]")
+//!                 .expect("expected format literal to be valid"),
+//!             record.target(),
+//!             record.level(),
+//!             message))
 //!     })
 //!     .level(log::LogLevelFilter::Debug)
 //!     .chain(std::io::stdout())
@@ -163,6 +162,7 @@ use std::fs::{File, OpenOptions};
 use std::{io, fmt};
 
 pub use builders::{Dispatch, Output};
+pub use log_impl::FormatCallback;
 pub use errors::InitError;
 
 mod builders;
@@ -170,10 +170,10 @@ mod log_impl;
 mod errors;
 
 /// A type alias for a log formatter.
-pub type Formatter = Fn(&mut fmt::Write, &fmt::Arguments, &log::LogRecord) -> fmt::Result + Sync + Send;
+pub type Formatter = Fn(FormatCallback, &fmt::Arguments, &log::LogRecord) + Sync + Send + 'static;
 
 /// A type alias for a log filter. Returning true means the record should succeed - false means it should fail.
-pub type Filter = Fn(&log::LogMetadata) -> bool + Send + Sync;
+pub type Filter = Fn(&log::LogMetadata) -> bool + Send + Sync + 'static;
 
 /// Fern logging trait. This is necessary in order to allow for custom loggers taking in arguments that have already had
 /// a custom format applied to them.

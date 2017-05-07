@@ -4,7 +4,7 @@ use std::{io, fs, cmp, fmt};
 
 use log;
 
-use {log_impl, FernLog, Formatter, Filter};
+use {log_impl, FernLog, FormatCallback, Formatter, Filter};
 
 /// The base dispatch logger.
 ///
@@ -26,9 +26,7 @@ use {log_impl, FernLog, Formatter, Filter};
 ///
 /// fern::Dispatch::new()
 ///     .format(|out, message, record| {
-///         use std::fmt::Write;
-///
-///         write!(out, "[{}][{}] {}", record.level(), record.target(), message)
+///         out.finish(format_args!("[{}][{}] {}", record.level(), record.target(), message));
 ///     })
 ///     .chain(
 ///         fern::Dispatch::new()
@@ -97,7 +95,7 @@ impl Dispatch {
         }
     }
 
-    /// Sets the formatter of this dispatch. The closure should accept a writer, a message and a log record, and
+    /// Sets the formatter of this dispatch. The closure should accept a callback, a message and a log record, and
     /// write the resulting format to the writer.
     ///
     /// The log record is passed for completeness, but the 'args' method of the record should be ignored, and the
@@ -105,20 +103,18 @@ impl Dispatch {
     /// but in order to allow for true log chaining, formatters should use the given message instead whenever including
     /// the message in the output.
     ///
-    /// In order to avoid allocation of intermediate results, the closure will be called once per endpoint per log
-    /// record. For instance, if you have messages going to both the console and to a file, the formatter will be
-    /// called twice per log record. For this reason it is recommended not to do any heavy calculations within the
-    /// formatter.
+    /// To avoid all allocation of intermediate results, the formatter is "completed" by calling a callback, which then
+    /// calls the rest of the logging chain with the new formatted message. The callback object keeps track of if it was
+    /// called or not via a stack boolean as well, so if you don't use `out.finish` the log message will continue down
+    /// the logger chain unformatted.
     ///
     /// Example usage:
     ///
     /// ```
     /// fern::Dispatch::new()
     ///     // ...
-    ///     .format(|writer, message, record| {
-    ///         use std::fmt::Write;
-    ///
-    ///         write!(writer, "[{}][{}] {}", record.target(), record.level(), message)
+    ///     .format(|out, message, record| {
+    ///         out.finish(format_args!("[{}][{}] {}", record.level(), record.target(), message));
     ///     })
     ///     // ...
     ///     # /*
@@ -128,7 +124,7 @@ impl Dispatch {
     /// ```
     #[inline]
     pub fn format<F>(mut self, formatter: F) -> Self
-        where F: Fn(&mut fmt::Write, &fmt::Arguments, &log::LogRecord) -> fmt::Result + Sync + Send + 'static
+        where F: Fn(FormatCallback, &fmt::Arguments, &log::LogRecord) + Sync + Send + 'static
     {
         self.format = Some(Box::new(formatter));
         self

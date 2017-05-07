@@ -24,6 +24,23 @@ pub struct Dispatch {
     pub filters: Vec<Box<Filter>>,
 }
 
+/// A format callback, for use within a formatter closure
+///
+/// Callbacks are used for formatting in order to allow usage of rust's macro-based formatting efficiently
+/// and without any extra allocations for intermediate string results.
+///
+/// Example usage:
+///
+/// ```
+/// fern::Dispatch::new()
+///     .format(|callback: fern::FormatCallback, message, record| {
+///         callback.finish(format_args!("[{}] {}", record.level(), message));
+///     })
+///     # ;
+/// ```
+#[must_use = "format callback must be used for log to process correctly"]
+pub struct FormatCallback<'a>(&'a mut bool, &'a Dispatch, &'a log::LogRecord<'a>);
+
 pub enum Output {
     Stdout(Stdout),
     Stderr(Stderr),
@@ -111,37 +128,50 @@ impl log::Log for Null {
 impl FernLog for Dispatch {
     fn log_args(&self, message: &fmt::Arguments, record: &log::LogRecord) {
         if self.enabled(record.metadata()) {
-            // Utility structure for formatted log records which uses a given closure to implement Display.
-            struct FormattedLogMessage<'a>(&'a Formatter, &'a fmt::Arguments<'a>, &'a log::LogRecord<'a>);
-
-            impl<'a> fmt::Display for FormattedLogMessage<'a> {
-                fn fmt(&self, formatter: &mut fmt::Formatter) -> fmt::Result {
-                    let &FormattedLogMessage(ref format, ref args, ref record) = self;
-
-                    format(formatter, args, record)
-                }
-            }
-
-
-            // Separate for loops within each scope are needed in order to manage the temp_display_struct and
-            // reformatted lifetimes correctly.
             match self.format {
                 Some(ref format) => {
-                    let formatted_log_message = FormattedLogMessage(&**format, message, record);
+                    // flag to ensure the log message is completed even if the formatter doesn't complete the callback.
+                    let mut callback_called_flag = false;
 
-                    // Weird things we need to do to get lifetimes to work with fmt::Arguments and format_args!.
-                    // I super hope that this closure is just totally optimized out.
-                    (|message| for log in &self.output {
-                        log.log_args(message, record);
-                    })(&format_args!("{}", formatted_log_message));
+                    (format)(FormatCallback(&mut callback_called_flag, self, record),
+                             message,
+                             record);
+
+                    if !callback_called_flag {
+                        self.finish_logging(message, record);
+                    }
                 }
                 None => {
-                    for log in &self.output {
-                        log.log_args(message, record);
-                    }
+                    self.finish_logging(message, record);
                 }
             }
         }
+    }
+}
+
+impl Dispatch {
+    fn finish_logging(&self, formatted_message: &fmt::Arguments, record: &log::LogRecord) {
+        for log in &self.output {
+            log.log_args(formatted_message, record);
+        }
+    }
+}
+
+impl<'a> FormatCallback<'a> {
+    /// Complete the formatting call that this FormatCallback was created for.
+    ///
+    /// This will call the rest of the logging chain using the given formatted message
+    /// as the new payload message.
+    ///
+    /// Note: if this is not called, the log message will still be processed, but the
+    /// original message will be used, not the reformatted version.
+    pub fn finish(self, formatted_message: fmt::Arguments) {
+        let FormatCallback(callback_called_flag, dispatch, record) = self;
+
+        // let the dispatch know that we did in fact get called.
+        *callback_called_flag = true;
+
+        dispatch.finish_logging(&formatted_message, record);
     }
 }
 
