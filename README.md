@@ -12,6 +12,8 @@ With fern, you can:
 
 API Docs: https://dabo.guru/rust/fern-dev/fern/
 
+Full example program: https://github.com/daboross/fern-rs/tree/master/examples/cmd-program.rs
+
 Stability warning:
 
 Fern, while feature-complete, does not have a mature API. The library may be changed
@@ -28,4 +30,11 @@ Fern has two separate tests which both require initializing the global logger, s
 ```sh
 cargo test -- --skip test2
 cargo test test2
+```
+
+To run the example program, use:
+
+```sh
+cargo run --example cmd-program
+cargo run --example cmd-program -- --verbose
 ```

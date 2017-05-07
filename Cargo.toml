@@ -18,4 +18,4 @@ log = "0.3"
 
 [dev-dependencies]
 tempdir = "0.3"
-time = "0.1"
+chrono = "0.3"

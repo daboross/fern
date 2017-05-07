@@ -1,7 +1,4 @@
-use std::io;
-use std::error;
-use std::convert;
-use std::fmt;
+use std::{io, error, fmt};
 
 use log;
 
@@ -17,13 +14,13 @@ pub enum InitError {
     SetLoggerError(log::SetLoggerError),
 }
 
-impl convert::From<io::Error> for InitError {
+impl From<io::Error> for InitError {
     fn from(error: io::Error) -> InitError {
         InitError::Io(error)
     }
 }
 
-impl convert::From<log::SetLoggerError> for InitError {
+impl From<log::SetLoggerError> for InitError {
     fn from(error: log::SetLoggerError) -> InitError {
         InitError::SetLoggerError(error)
     }

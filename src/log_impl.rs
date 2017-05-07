@@ -1,8 +1,7 @@
 use std::io::{self, Write, BufWriter};
 use std::borrow::Cow;
 use std::sync::Mutex;
-use std::fs;
-use std::fmt;
+use std::{fs, fmt};
 
 use std::collections::HashMap;
 

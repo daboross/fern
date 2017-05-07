@@ -21,8 +21,7 @@ use {log_impl, FernLog, FormatCallback, Formatter, Filter};
 /// extern crate log;
 /// extern crate fern;
 ///
-/// use std::io;
-/// use std::fs;
+/// use std::{io, fs};
 ///
 /// fern::Dispatch::new()
 ///     .format(|out, message, record| {

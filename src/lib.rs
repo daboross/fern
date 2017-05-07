@@ -45,17 +45,16 @@
 //! an output.log file.
 //!
 //! ```no_run
-//! # // no_run because this creates an output.log file.
 //! extern crate fern;
+//! #[macro_use]
 //! extern crate log;
-//! extern crate time;
+//! extern crate chrono;
 //!
 //! fern::Dispatch::new()
 //!     .format(|out, message, record| {
 //!         out.finish(format_args!("{}[{}][{}] {}",
-//!             time::now()
-//!                 .strftime("[%Y-%m-%d][%H:%M:%S]")
-//!                 .expect("expected format literal to be valid"),
+//!             chrono::Local::now()
+//!                 .format("[%Y-%m-%d][%H:%M:%S]"),
 //!             record.target(),
 //!             record.level(),
 //!             message))
@@ -78,13 +77,19 @@
 //!
 //! Add a formatter to the logger, modifying all messages sent through.
 //!
-//! ### `time::now().strftim(...)`
+//! #### `chrono::Local::now()`
 //!
+//! Uses the [`chrono`] time library to get the current time in the local timezone. See the [chrono docs] for more
+//! options.
 //!
-//! This uses the [`time`] library to make a readable string. The final output of the format will be like:
+//! #### `.format("[%Y-%m-%d][%H:%M:%S]")`
+//!
+//! Uses chrono's lazy format specifier to turn the time into a readable string.
+//!
+//! The final output of this format will be:
 //!
 //! ```text
-//! [2015-01-20][12:55:04][crate-name][INFO] Something happened.
+//! [2017-01-20][12:55:04][crate-name][INFO] Something happened.
 //! ```
 //!
 //! ### `.level(log::LogLevelFilter::Debug)`
@@ -105,14 +110,12 @@
 //! `fern::log_file()` is simply a convenience method equivalent to:
 //!
 //! ```no_run
-//! # use std::fs::OpenOptions;
-//! # drop(
-//! OpenOptions::new()
+//! std::fs::OpenOptions::new()
 //!     .write(true)
 //!     .create(true)
 //!     .append(true)
 //!     .open("filename")
-//! # )
+//! # ;
 //! ```
 //!
 //! ### `.set_global()`
@@ -148,12 +151,13 @@
 //! More configuration
 //! ===
 //!
-//! The example above annotates a a basic configuration, but more is allowed! The documentation for `Dispatch` contains
-//! a complete set of configurations, and an example using all possible options.
+//! Check out the [`Dispatch` documentation] and the [full example program] for more examples!
 //!
-//! [time]: https://crates.io/crates/time
-//! [time-docs]: https://doc.rust-lang.org/time/time/index.html
-
+//! [chrono]: https://github.com/chronotope/chrono
+//! [chrono docs]: https://docs.rs/chrono/0.3.1/chrono/index.html#date-and-time
+//! [the format specifier docs]: https://docs.rs/chrono/0.3.1/chrono/format/strftime/index.html#specifiers
+//! [`Dispatch` documentation]: struct.Dispatch.html
+//! [full example program]: https://github.com/daboross/fern-rs/tree/master/examples/cmd-program.rs
 extern crate log;
 
 use std::convert::AsRef;
@@ -193,8 +197,7 @@ pub trait FernLog: Sync + Send {
 /// Exactly equivalent to:
 ///
 /// ```no_run
-/// # use std::fs::OpenOptions;
-/// OpenOptions::new()
+/// std::fs::OpenOptions::new()
 ///     .write(true)
 ///     .create(true)
 ///     .append(true)
