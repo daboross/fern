@@ -5,7 +5,10 @@ use log;
 /// Convenience error which combines possible which could occur while initializing logging.
 ///
 /// Fern does not use this error natively, but functions which set up fern and open log files will
-/// often need to return both io::Error and SetLoggerError. This error is for that purpose.
+/// often need to return both [`io::Error`] and [`SetLoggerError`]. This error is for that purpose.
+///
+/// [`io::Error`]: https://doc.rust-lang.org/std/io/struct.Error.html
+/// [`SetLoggerError`]: ../log/struct.SetLoggerError.html
 #[derive(Debug)]
 pub enum InitError {
     /// IO error.
