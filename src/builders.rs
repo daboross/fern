@@ -68,13 +68,13 @@ use {log_impl, FernLog, FormatCallback, Formatter, Filter};
 ///             .chain(io::stderr())
 ///     )
 ///     // and finally, set as the global logger! This fails if and only if the global logger has already been set.
-///     .set_global()?;
+///     .into_global_logger()?;
 /// # Ok(())
 /// # }
 ///
 /// # fn main() { setup_logger().expect("failed to set up logger") }
 /// ```
-#[must_use = "this is only a logger configuration, and will do nothing if not registered using set_global()"]
+#[must_use = "this is only a logger configuration and must be consumed with into_log() or into_global_logger()"]
 pub struct Dispatch {
     format: Option<Box<Formatter>>,
     children: Vec<OutputInner>,
@@ -126,8 +126,25 @@ impl Dispatch {
         self
     }
 
-    /// Adds an output to this logger. Any log record which passes through all filters will be sent through the
-    /// formatter (if any) then be passed to all chained loggers.
+    /// Adds a child to this dispatch.
+    ///
+    /// All log records which pass all filters will be formatted and then sent to all child loggers in sequence.
+    ///
+    /// Note: If the child logger is also a Dispatch, and cannot accept any log records, it will be dropped. This
+    /// only happens if the child either has no children itself, or has a minimum log level of [`LogLevelFilter::Off`]
+    ///
+    /// [`LogLevelFilter::Off`]: https://doc.rust-lang.org/log/log/enum.LogLevelFilter.html
+    ///
+    /// Example usage:
+    ///
+    /// ```
+    /// fern::Dispatch::new()
+    ///     .chain(
+    ///         fern::Dispatch::new()
+    ///             .chain(std::io::stdout())
+    ///     )
+    ///     # .into_log();
+    /// ```
     #[inline]
     pub fn chain<T: Into<Output>>(mut self, logger: T) -> Self {
         self.children.push(logger.into().0);
@@ -138,14 +155,47 @@ impl Dispatch {
     /// filter set by `level_for`.
     ///
     /// Default level is `LogLevelFilter::Trace`.
+    ///
+    /// Example usage:
+    ///
+    /// ```
+    /// # extern crate log;
+    /// # extern crate fern;
+    ///
+    /// # fn main() {
+    /// fern::Dispatch::new()
+    ///     .level(log::LogLevelFilter::Info)
+    ///     # .into_log();
+    /// # }
+    /// ```
     #[inline]
     pub fn level(mut self, level: log::LogLevelFilter) -> Self {
         self.default_level = level;
         self
     }
 
-    /// Sets the level filter for a specific module, overwriting any previous filter for that module name. This will
-    /// overwrite the level set by `level` for this module, if any.
+    /// Sets a per-target log level filter. Targets are by default module or crate names, but can also be set with
+    /// `target:` in the `log!()` usage.
+    ///
+    /// If a log record matches this target, it will be filtered by this level _instead of the level set by level()`.
+    ///
+    /// Example usage:
+    ///
+    /// ```
+    /// # #[macro_use]
+    /// # extern crate log;
+    /// # extern crate fern;
+    ///
+    /// # fn main() {
+    /// fern::Dispatch::new()
+    ///     .level(log::LogLevelFilter::Warn)
+    ///     .level_for("info-target", log::LogLevelFilter::Info)
+    ///     .level_for("a-warning-happy-crate", log::LogLevelFilter::Error)
+    ///     # .into_log();
+    ///
+    /// info!(target: "info-target", "Here's some information.");
+    /// # }
+    /// ```
     #[inline]
     pub fn level_for<T: Into<Cow<'static, str>>>(mut self, module: T, level: log::LogLevelFilter) -> Self {
         let module = module.into();
@@ -158,14 +208,29 @@ impl Dispatch {
         self
     }
 
-    /// Adds a filter for all log records passing through this logger. The filter will be called if the log record is
-    /// successfully enabled by all other measures (level set or level for the specific module set).
+    /// Adds a custom filter which can reject messages passing through this logger.
     ///
-    /// Note that setting `level` and/or `level_for` is preferred to this method for loggers that aren't top level, as
-    /// those can be propagated up to the top level crate to avoid processing messages that won't be consumed. Using
-    /// `filter` forces log records to go through all loggers up to the one with filters in it.
+    /// The logger will continue to process log records only if all filters return `true`.
     ///
-    /// Any record for which the filter returns `false` will be dropped and not sent to any chained loggers.
+    /// [`Dispatch::level`] and [`Dispatch::level_for`] are preferred if applicable.
+    ///
+    /// Example usage:
+    ///
+    /// ```
+    /// # extern crate log;
+    /// # extern crate fern;
+    ///
+    /// # fn main() {
+    /// fern::Dispatch::new()
+    ///     .level(log::LogLevelFilter::Info)
+    ///     .filter(|metadata| {
+    ///         // Reject messages with the `Error` log level.
+    ///         //
+    ///         // This could be useful for sending Error messages to stderr and avoiding duplicate messages in stdout.
+    ///         metadata.level() != log::LogLevelFilter::Error
+    ///     })
+    ///     # .into_log();
+    /// # }
     #[inline]
     pub fn filter<F>(mut self, filter: F) -> Self
         where F: Fn(&log::LogMetadata) -> bool + Send + Sync + 'static
@@ -174,8 +239,9 @@ impl Dispatch {
         self
     }
 
-    /// Internal build method. This does the grunt of the work, and probably could be refactored into multiple methods
-    /// in the future.
+    /// Builds this into the actual logger implementation.
+    ///
+    /// This could probably be refactored, but having everything in one place is also nice.
     fn into_dispatch(self) -> (log::LogLevelFilter, log_impl::Dispatch) {
         let Dispatch { format, children, default_level, levels, mut filters } = self;
 
@@ -236,14 +302,30 @@ impl Dispatch {
         (real_min, dispatch)
     }
 
-    /// Builds this logger into a `Box<log::Log>` and calculates the maximum level that this logger will accept. This is
-    /// typically only called internally, though it can be used publicly for interacting with other log crates.
+    /// Builds this logger into a `Box<log::Log>` and calculates the minimum log level needed to have any effect.
     ///
-    /// The returned LogLevelFilter is a calculation from this logger and all chained loggers, and will be the minimum
-    /// level which might have some impact - this takes into account all per-module and global levels of all children.
+    /// While this method is exposed publicly, [`Dispatch::into_global_logger`] is typically used instead.
     ///
-    /// The recommended endpoint for a logger builder is `set_global()`, which consumes this configuration and sets it
-    /// as the global logger for the `log` crate.
+    /// The returned LogLevelFilter is a calculation for all level filters of this logger and child loggers, and is the
+    /// minimum log level needed to for a record to have any chance of passing through this logger.
+    ///
+    /// [`Dispatch::into_global_logger`]: struct.Dispatch.html#method.into_global_logger
+    ///
+    /// Example usage:
+    ///
+    /// ```
+    /// # extern crate log;
+    /// # extern crate fern;
+    ///
+    /// # fn main() {
+    /// let (min_level, log) = fern::Dispatch::new()
+    ///     .level(log::LogLevelFilter::Info)
+    ///     .chain(std::io::stdout())
+    ///     .into_log();
+    ///
+    /// assert_eq!(min_level, log::LogLevelFilter::Info);
+    /// # }
+    /// ```
     pub fn into_log(self) -> (log::LogLevelFilter, Box<log::Log>) {
         let (level, logger) = self.into_dispatch();
         if level == log::LogLevelFilter::Off {
@@ -253,9 +335,14 @@ impl Dispatch {
         }
     }
 
-    /// Builds this logger and sets it as the `log` crates global logger. This method will fail if a logger has already
-    /// been set for the `log` crate or if an IO error occurs opening any target files or streams.
-    pub fn set_global(self) -> Result<(), log::SetLoggerError> {
+    /// Builds this logger and instantiates it as the global [`log`] logger.
+    ///
+    /// # Errors:
+    ///
+    /// This function will return an error if a global logger has already been set to a previous logger.
+    ///
+    /// [`log`]: https://github.com/rust-lang-nursery/log
+    pub fn into_global_logger(self) -> Result<(), log::SetLoggerError> {
         let (max_level, log) = self.into_log();
 
         log::set_logger(|max_level_storage| {

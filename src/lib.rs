@@ -63,7 +63,7 @@
 //!     .level(log::LogLevelFilter::Debug)
 //!     .chain(std::io::stdout())
 //!     .chain(fern::log_file("output.log")?)
-//!     .set_global()?;
+//!     .into_global_logger()?;
 //! # Ok(())
 //! # }
 //! # fn main() { setup_logger().expect("failed to set up logger") }
@@ -128,7 +128,7 @@
 //! # ;
 //! ```
 //!
-//! ### `.set_global()`
+//! ### `.into_global_logger()`
 //!
 //! Consume the Dispatch instance, create a `log`-crate logger, and instantiate it as the current runtime's logger.
 //!
@@ -137,7 +137,8 @@
 //! Logging
 //! ===
 //!
-//! Once the logger has been set using set_global, it will pick up all `log`-crate log calls from your crate and
+//! Once the logger has been set using [`into_global_logger`], it will pick up all `log`-crate log calls from your
+//! crate and
 //! all your libraries.
 //!
 //! ```rust
@@ -145,11 +146,15 @@
 //! extern crate log;
 //! extern crate fern;
 //!
-//! # fn main() {
+//! # fn setup_logger() -> Result<(), fern::InitError> {
 //! fern::Dispatch::new()
 //!     // ...
-//!     .set_global();
+//!     .into_global_logger()?;
+//! # Ok(())
+//! # }
 //!
+//! # fn main() {
+//! # setup_logger().ok(); // we're ok with this not succeeding.
 //! trace!("Trace message");
 //! debug!("Debug message");
 //! info!("Info message");
@@ -171,6 +176,7 @@
 //! [the format specifier docs]: https://docs.rs/chrono/0.3.1/chrono/format/strftime/index.html#specifiers
 //! [`Dispatch` documentation]: struct.Dispatch.html
 //! [full example program]: https://github.com/daboross/fern-rs/tree/master/examples/cmd-program.rs
+//! [`into_global_logger`]: struct.Dispatch.html#method.into_global_logger
 extern crate log;
 
 use std::convert::AsRef;
