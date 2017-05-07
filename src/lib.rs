@@ -163,6 +163,7 @@ use std::fs::{File, OpenOptions};
 use std::{io, fmt};
 
 pub use builders::{Dispatch, Output};
+pub use errors::InitError;
 
 mod builders;
 mod log_impl;

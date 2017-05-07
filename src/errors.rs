@@ -6,59 +6,15 @@ use std::fmt;
 
 use log;
 
-/// Error that may occur within logging
-#[derive(Debug)]
-pub enum LogError {
-    /// IO Error
-    Io(io::Error),
-    /// Poison error - this will only occur within fern logger implementations if write!() panics.
-    Poison(String),
-}
-
-impl convert::From<io::Error> for LogError {
-    fn from(error: io::Error) -> LogError {
-        LogError::Io(error)
-    }
-}
-
-impl<T> convert::From<sync::PoisonError<T>> for LogError {
-    fn from(error: sync::PoisonError<T>) -> LogError {
-        LogError::Poison(format!("{}", error))
-    }
-}
-
-impl error::Error for LogError {
-    fn description(&self) -> &str {
-        match *self {
-            LogError::Io(_) => "IO error while logging",
-            LogError::Poison(_) => "lock within logger poisoned",
-        }
-    }
-
-    fn cause(&self) -> Option<&error::Error> {
-        match *self {
-            LogError::Io(ref e) => Some(e),
-            LogError::Poison(_) => None,
-        }
-    }
-}
-
-impl fmt::Display for LogError {
-    fn fmt(&self, f: &mut fmt::Formatter) -> Result<(), fmt::Error> {
-        match *self {
-            LogError::Io(ref e) => write!(f, "IO Error: {}", e),
-            LogError::Poison(ref e) => write!(f, "Poison Error: {}", e),
-        }
-    }
-}
-
-/// Error that may occur within init_global_logger()
+/// Convenience error which combines possible which could occur while initializing logging.
+///
+/// Fern does not use this error natively, but functions which set up fern and open log files will
+/// often need to return both io::Error and SetLoggerError. This error is for that purpose.
 #[derive(Debug)]
 pub enum InitError {
-    /// IO Error - this will only occur within fern logger implementations when opening files
+    /// IO error.
     Io(io::Error),
-    /// SetLoggerError - this occurs if the log crate has already been initialized when
-    /// init_global_logger() is called.
+    /// The log crate's global logger was already initialized when trying to initialize a logger.
     SetLoggerError(log::SetLoggerError),
 }
 
@@ -77,8 +33,8 @@ impl convert::From<log::SetLoggerError> for InitError {
 impl fmt::Display for InitError {
     fn fmt(&self, f: &mut fmt::Formatter) -> Result<(), fmt::Error> {
         match *self {
-            InitError::Io(ref e) => write!(f, "IO Error: {}", e),
-            InitError::SetLoggerError(ref e) => write!(f, "SetLoggerError: {}", e),
+            InitError::Io(ref e) => write!(f, "IO Error initializing logger: {}", e),
+            InitError::SetLoggerError(ref e) => write!(f, "logging initialization failed: {}", e),
         }
     }
 }
@@ -86,8 +42,8 @@ impl fmt::Display for InitError {
 impl error::Error for InitError {
     fn description(&self) -> &str {
         match *self {
-            InitError::Io(..) => "IO error while initializing",
-            InitError::SetLoggerError(..) => "global logger already initialized",
+            InitError::Io(..) => "IO error while initializing logging",
+            InitError::SetLoggerError(..) => "logging system already initialized with different logger",
         }
     }
 
