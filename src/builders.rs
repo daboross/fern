@@ -406,3 +406,52 @@ impl Output {
         })
     }
 }
+
+impl fmt::Debug for Dispatch {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        struct LevelsDebug<'a>(&'a [(Cow<'static, str>, log::LogLevelFilter)]);
+        impl<'a> fmt::Debug for LevelsDebug<'a> {
+            fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+                f.debug_map().entries(self.0.iter().map(|t| (t.0.as_ref(), t.1))).finish()
+            }
+        }
+        struct FiltersDebug<'a>(&'a [Box<Filter>]);
+        impl<'a> fmt::Debug for FiltersDebug<'a> {
+            fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+                f.debug_list().entries(self.0.iter().map(|_| "<filter closure>")).finish()
+            }
+        }
+        f.debug_struct("Dispatch")
+            .field("format",
+                   &self.format.as_ref().map(|_| "<formatter closure>"))
+            .field("children", &self.children)
+            .field("default_level", &self.default_level)
+            .field("levels", &LevelsDebug(&self.levels))
+            .field("filters", &FiltersDebug(&self.filters))
+            .finish()
+    }
+}
+
+impl fmt::Debug for OutputInner {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        match *self {
+            OutputInner::Stdout { ref stream, ref line_sep } => {
+                f.debug_struct("Output::Stdout").field("stream", stream).field("line_sep", line_sep).finish()
+            }
+            OutputInner::Stderr { ref stream, ref line_sep } => {
+                f.debug_struct("Output::Stderr").field("stream", stream).field("line_sep", line_sep).finish()
+            }
+            OutputInner::File { ref stream, ref line_sep } => {
+                f.debug_struct("Output::File").field("stream", stream).field("line_sep", line_sep).finish()
+            }
+            OutputInner::Dispatch(ref dispatch) => f.debug_tuple("Output::Dispatch").field(dispatch).finish(),
+            OutputInner::Other { .. } => f.debug_tuple("Output::Other").field(&"<boxed logger>").finish(),
+        }
+    }
+}
+
+impl fmt::Debug for Output {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        self.0.fmt(f)
+    }
+}
