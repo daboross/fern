@@ -37,6 +37,8 @@ pub struct Dispatch {
 ///     })
 ///     # ;
 /// ```
+///
+/// [`std::fmt`]: https://doc.rust-lang.org/std/fmt/index.html
 #[must_use = "format callback must be used for log to process correctly"]
 pub struct FormatCallback<'a>(InnerFormatCallback<'a>);
 
@@ -174,7 +176,7 @@ impl<'a> FormatCallback<'a> {
     /// # .into_log();
     /// ```
     ///
-    /// See [`format_args!`]
+    /// See [`format_args!`].
     ///
     /// [`format_args!`]: https://doc.rust-lang.org/std/macro.format_args.html
     pub fn finish(self, formatted_message: fmt::Arguments) {
