@@ -1,0 +1,61 @@
+# Based on the "trust" template v0.1.1
+# https://github.com/japaric/trust/tree/v0.1.1
+
+# Note: we're explicitly only supporting MSVC and not MinGW here due to ring's support for MSCV.
+environment:
+    matrix:
+    # Stable
+    - TARGET: i686-pc-windows-msvc
+      RUST_VERSION: stable
+    - TARGET: x86_64-pc-windows-msvc
+      RUST_VERSION: stable
+    - TARGET: i686-pc-windows-gnu
+      RUST_VERSION: stable
+    - TARGET: x86_64-pc-windows-gnu
+      RUST_VERSION: stable
+
+    # Beta
+    - TARGET: i686-pc-windows-msvc
+      RUST_VERSION: beta
+    - TARGET: x86_64-pc-windows-msvc
+      RUST_VERSION: beta
+    - TARGET: i686-pc-windows-gnu
+      RUST_VERSION: beta
+    - TARGET: x86_64-pc-windows-gnu
+      RUST_VERSION: beta
+
+    # Nightly
+    - TARGET: i686-pc-windows-msvc
+      RUST_VERSION: nightly
+    - TARGET: x86_64-pc-windows-msvc
+      RUST_VERSION: nightly
+    - TARGET: i686-pc-windows-gnu
+      RUST_VERSION: nightly
+    - TARGET: x86_64-pc-windows-gnu
+      RUST_VERSION: nightly
+
+matrix:
+    fast_finish: true
+    allow_failures:
+    - RUST_VERSION: nightly
+
+install:
+- curl -sSf -o rustup-init.exe https://win.rustup.rs/
+- rustup-init.exe -y --default-host %TARGET% --default-toolchain %RUST_VERSION%
+- set PATH=%PATH%;C:\Users\appveyor\.cargo\bin
+- rustc -Vv
+- cargo -V
+
+test_script:
+- cargo build --verbose
+- cargo test --verbose -- --skip test2
+- cargo test test2
+- cargo run --example cmd-program
+- cargo run --example cmd-program -- --verbose
+
+cache:
+- C:\Users\appveyor\.cargo\registry
+- target
+
+# Disable the appveyor build step so we can just build the rust project instead.
+build: off

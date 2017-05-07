@@ -13,6 +13,10 @@ keywords = ["log", "logging", "logger"]
 license = "MIT"
 categories = ["development-tools::debugging"]
 
+[badges]
+travis-ci = { repository = "daboross/fern" }
+appveyor = { repository = "daboross/fern" }
+
 [dependencies]
 log = "0.3"
 

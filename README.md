@@ -1,5 +1,7 @@
 Fern: efficient, configurable logging in rust
 ====
+[![Linux Build Status][travis-image]][travis-builds]
+[![Windows Build Status][appveyor-image]][appveyor-builds]
 
 With fern, you can:
 
@@ -38,3 +40,8 @@ To run the example program, use:
 cargo run --example cmd-program
 cargo run --example cmd-program -- --verbose
 ```
+
+[travis-image]: https://travis-ci.org/daboross/fern.svg?branch=master
+[travis-builds]: https://travis-ci.org/daboross/fern
+[appveyor-image]: https://ci.appveyor.com/api/projects/status/github/daboross/fern?branch=master&svg=true
+[appveyor-builds]: https://ci.appveyor.com/project/daboross/fern
