@@ -1,7 +1,11 @@
-Fern: efficient, configurable logging in rust
+fern
 ====
 [![Linux Build Status][travis-image]][travis-builds]
 [![Windows Build Status][appveyor-image]][appveyor-builds]
+
+Efficient + configurable logging in rust.
+
+---
 
 With fern, you can:
 
@@ -12,18 +16,12 @@ With fern, you can:
 - Intuitively apply filters and formats to groups of loggers via builder chaining
 - Log using the standard `log` crate macros
 
-API Docs: https://dabo.guru/rust/fern-dev/fern/
 
-Full example program: https://github.com/daboross/fern/tree/master/examples/cmd-program.rs
-
-Stability warning:
-
-Fern, while feature-complete, does not have a mature API. The library may be changed
-in backwards incompatible ways to make it more ergonomic in the future.
+- [`fern` documentation](https://dabo.guru/rust/fern/)
+- [`fern` on crates.io](crates.io/crates/fern/)
+- [`fern` in use (example program)](https://github.com/daboross/fern/tree/master/examples/cmd-program.rs)
 
 This library can only be used while complying to the license terms in the `LICENSE` file.
-
-The more information, and examples on how to use fern, see [the fern docs](https://dabo.guru/rust/fern/).
 
 ### Testing
 
