@@ -45,11 +45,12 @@
 //! an output.log file.
 //!
 //! ```no_run
-//! extern crate fern;
-//! #[macro_use]
-//! extern crate log;
+//! # extern crate fern;
+//! # #[macro_use]
+//! # extern crate log;
 //! extern crate chrono;
 //!
+//! # fn setup_logger() -> Result<(), fern::InitError> {
 //! fern::Dispatch::new()
 //!     .format(|out, message, record| {
 //!         out.finish(format_args!("{}[{}][{}] {}",
@@ -61,9 +62,11 @@
 //!     })
 //!     .level(log::LogLevelFilter::Debug)
 //!     .chain(std::io::stdout())
-//!     .chain(fern::log_file("output.log").expect("failed to open log file"))
-//!     .set_global()
-//!     .expect("global logger already initialized");
+//!     .chain(fern::log_file("output.log")?)
+//!     .set_global()?;
+//! # Ok(())
+//! # }
+//! # fn main() { setup_logger().expect("failed to set up logger") }
 //! ```
 //!
 //! Let's unwrap the above example:
@@ -74,19 +77,26 @@
 //!
 //! ### `.format(|...| ...)`
 //!
-//!
 //! Add a formatter to the logger, modifying all messages sent through.
 //!
 //! #### `chrono::Local::now()`
 //!
-//! Uses the [`chrono`] time library to get the current time in the local timezone. See the [chrono docs] for more
-//! options.
+//! Get the current time in the local timezone using the [`chrono`] library. See the [time-and-date docs].
 //!
 //! #### `.format("[%Y-%m-%d][%H:%M:%S]")`
 //!
-//! Uses chrono's lazy format specifier to turn the time into a readable string.
+//! Use chrono's lazy format specifier to turn the time into a readable string.
 //!
-//! The final output of this format will be:
+//! #### `out.finish(format_args!(...))`
+//!
+//! Call the `fern::FormattingCallback` to submit the formatted message.
+//!
+//! Fern uses this callback style to allow usage of [`std::fmt`] formatting without the allocation that would
+//! be needed to return the formatted result.
+//!
+//! [`format_args!()`] has the same arguments as [`println!()`] or any other [`std::fmt`]-based macro.
+//!
+//! The final output of this formatter will be:
 //!
 //! ```text
 //! [2017-01-20][12:55:04][crate-name][INFO] Something happened.
@@ -103,7 +113,7 @@
 //!
 //! `.chain()` accepts Stdout, Stderr, Files and other Dispatch instances.
 //!
-//! ### `.chain(fern::log_file(...).expect(...))`
+//! ### `.chain(fern::log_file(...)?)`
 //!
 //! Add a second child; send all messages to the file "output.log".
 //!
@@ -153,8 +163,11 @@
 //!
 //! Check out the [`Dispatch` documentation] and the [full example program] for more examples!
 //!
-//! [chrono]: https://github.com/chronotope/chrono
-//! [chrono docs]: https://docs.rs/chrono/0.3.1/chrono/index.html#date-and-time
+//! [`format_args!()`]: https://doc.rust-lang.org/std/macro.format_args.html
+//! [`println!()`]: https://doc.rust-lang.org/std/macro.println.html
+//! [`std::fmt`]: https://doc.rust-lang.org/std/fmt/
+//! [`chrono`]: https://github.com/chronotope/chrono
+//! [time-and-date docs]: https://docs.rs/chrono/0.3.1/chrono/index.html#date-and-time
 //! [the format specifier docs]: https://docs.rs/chrono/0.3.1/chrono/format/strftime/index.html#specifiers
 //! [`Dispatch` documentation]: struct.Dispatch.html
 //! [full example program]: https://github.com/daboross/fern-rs/tree/master/examples/cmd-program.rs

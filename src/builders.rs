@@ -18,11 +18,13 @@ use {log_impl, FernLog, FormatCallback, Formatter, Filter};
 ///
 /// ```no_run
 /// # // no_run because this creates log files.
+/// #[macro_use]
 /// extern crate log;
 /// extern crate fern;
 ///
 /// use std::{io, fs};
 ///
+/// # fn setup_logger() -> Result<(), fern::InitError> {
 /// fern::Dispatch::new()
 ///     .format(|out, message, record| {
 ///         out.finish(format_args!("[{}][{}] {}", record.level(), record.target(), message));
@@ -44,15 +46,14 @@ use {log_impl, FernLog, FormatCallback, Formatter, Filter};
 ///             .level_for("hyper", log::LogLevelFilter::Info)
 ///             // in a real application, you'd probably want to handle this error.
 ///             // `log_file(x)` equates to `OpenOptions::new().write(true).append(true).create(true).open(x)`
-///             .chain(fern::log_file("persistent-log.log").expect("failed to open log file"))
+///             .chain(fern::log_file("persistent-log.log")?)
 ///             // chain accepts io::File objects, so you can provide your own options too.
 ///             .chain(fs::OpenOptions::new()
 ///                 .write(true)
 ///                 .create(true)
 ///                 .truncate(true)
 ///                 .create(true)
-///                 .open("/tmp/temp.log")
-///                 .expect("failed to open log file"))
+///                 .open("/tmp/temp.log")?)
 ///     )
 ///     .chain(
 ///         fern::Dispatch::new()
@@ -66,10 +67,12 @@ use {log_impl, FernLog, FormatCallback, Formatter, Filter};
 ///             })
 ///             .chain(io::stderr())
 ///     )
-///     // and finally, set as the global logger!
-///     .set_global()
-///     // this can also fail (only happens if global logger has been set before.)
-///     .unwrap()
+///     // and finally, set as the global logger! This fails if and only if the global logger has already been set.
+///     .set_global()?;
+/// # Ok(())
+/// # }
+///
+/// # fn main() { setup_logger().expect("failed to set up logger") }
 /// ```
 #[must_use = "this is only a logger configuration, and will do nothing if not registered using set_global()"]
 pub struct Dispatch {
@@ -79,7 +82,6 @@ pub struct Dispatch {
     levels: Vec<(Cow<'static, str>, log::LogLevelFilter)>,
     filters: Vec<Box<Filter>>,
 }
-
 
 impl Dispatch {
     /// Creates a dispatch, which will initially do nothing.
@@ -111,14 +113,9 @@ impl Dispatch {
     ///
     /// ```
     /// fern::Dispatch::new()
-    ///     // ...
     ///     .format(|out, message, record| {
     ///         out.finish(format_args!("[{}][{}] {}", record.level(), record.target(), message));
     ///     })
-    ///     // ...
-    ///     # /*
-    ///     .set_global();
-    ///     # */
     ///     # .into_log();
     /// ```
     #[inline]
@@ -348,15 +345,25 @@ impl Output {
     /// `Dispatch::chain()` directly.
     ///
     /// ```no_run
+    /// # fn setup_logger() -> Result<(), fern::InitError> {
     /// fern::Dispatch::new()
-    ///     .chain(std::fs::File::create("log").unwrap())
-    /// # ;
+    ///     .chain(std::fs::File::create("log")?)
+    ///     # .into_log();
+    /// # Ok(())
+    /// # }
+    ///
+    /// # fn main() { setup_logger().expect("failed to set up logger"); }
     /// ```
     ///
     /// ```no_run
+    /// # fn setup_logger() -> Result<(), fern::InitError> {
     /// fern::Dispatch::new()
-    ///     .chain(fern::log_file("log").unwrap())
-    /// # ;
+    ///     .chain(fern::log_file("log")?)
+    ///     # .into_log();
+    /// # Ok(())
+    /// # }
+    ///
+    /// # fn main() { setup_logger().expect("failed to set up logger"); }
     /// ```
     pub fn file<T: Into<Cow<'static, str>>>(file: fs::File, line_sep: T) -> Self {
         Output(OutputInner::File {
@@ -373,7 +380,7 @@ impl Output {
     /// ```
     /// fern::Dispatch::new()
     ///     .chain(std::io::stdout())
-    /// # ;
+    ///     # .into_log();
     /// ```
     pub fn stdout<T: Into<Cow<'static, str>>>(line_sep: T) -> Self {
         Output(OutputInner::Stdout {
@@ -390,7 +397,7 @@ impl Output {
     /// ```
     /// fern::Dispatch::new()
     ///     .chain(std::io::stderr())
-    /// # ;
+    ///     # .into_log();
     /// ```
     pub fn stderr<T: Into<Cow<'static, str>>>(line_sep: T) -> Self {
         Output(OutputInner::Stderr {
