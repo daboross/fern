@@ -85,8 +85,42 @@ impl From<Vec<(Cow<'static, str>, log::LogLevelFilter)>> for LevelConfiguration 
 }
 
 impl LevelConfiguration {
+    // inline since we use it literally once.
     #[inline]
-    fn find(&self, module: &str) -> Option<log::LogLevelFilter> {
+    fn find_module(&self, module: &str) -> Option<log::LogLevelFilter> {
+        match *self {
+            LevelConfiguration::JustDefault => None,
+            _ => {
+                if let Some(level) = self.find_exact(module) {
+                    return Some(level);
+                }
+
+                // The manual for loop here lets us just iterate over the module string once while
+                // still finding each sub-module. For the module string "hyper::http::h1", this loop
+                // will test first "hyper::http" then "hyper".
+                let mut last_char_colon = false;
+
+                for (index, ch) in module.char_indices().rev() {
+                    if last_char_colon {
+                        last_char_colon = false;
+                        if ch == ':' {
+                            let sub_module = &module[0..index];
+
+                            if let Some(level) = self.find_exact(sub_module) {
+                                return Some(level);
+                            }
+                        }
+                    } else if ch == ':' {
+                        last_char_colon = true;
+                    }
+                }
+
+                return None;
+            }
+        }
+    }
+
+    fn find_exact(&self, module: &str) -> Option<log::LogLevelFilter> {
         match *self {
             LevelConfiguration::JustDefault => None,
             LevelConfiguration::Minimal(ref levels) => {
@@ -111,7 +145,7 @@ impl FernLog for Output {
 
 impl log::Log for Dispatch {
     fn enabled(&self, metadata: &log::LogMetadata) -> bool {
-        metadata.level() <= self.levels.find(metadata.target()).unwrap_or(self.default_level) &&
+        metadata.level() <= self.levels.find_module(metadata.target()).unwrap_or(self.default_level) &&
         self.filters.iter().all(|f| f(metadata))
     }
 
@@ -248,5 +282,142 @@ fn backup_logging(payload: &fmt::Arguments, record: &log::LogRecord, error: io::
                record.location(),
                error,
                second_error);
+    }
+}
+
+#[cfg(test)]
+mod test {
+    use super::LevelConfiguration;
+    use log::LogLevelFilter::*;
+
+    #[test]
+    fn test_level_config_find_exact_minimal() {
+        let config = LevelConfiguration::Minimal(vec![("mod1", Info), ("mod2", Debug), ("mod3", Off)]
+            .into_iter()
+            .map(|(k, v)| (k.into(), v))
+            .collect());
+
+        assert_eq!(config.find_exact("mod1"), Some(Info));
+        assert_eq!(config.find_exact("mod2"), Some(Debug));
+        assert_eq!(config.find_exact("mod3"), Some(Off));
+    }
+
+    #[test]
+    fn test_level_config_find_exact_many() {
+        let config = LevelConfiguration::Many(vec![("mod1", Info), ("mod2", Debug), ("mod3", Off)]
+            .into_iter()
+            .map(|(k, v)| (k.into(), v))
+            .collect());
+
+        assert_eq!(config.find_exact("mod1"), Some(Info));
+        assert_eq!(config.find_exact("mod2"), Some(Debug));
+        assert_eq!(config.find_exact("mod3"), Some(Off));
+    }
+
+    #[test]
+    fn test_level_config_simple_hierarchy() {
+        let config = LevelConfiguration::Minimal(vec![("mod1", Info), ("mod2::sub_mod", Debug), ("mod3", Off)]
+            .into_iter()
+            .map(|(k, v)| (k.into(), v))
+            .collect());
+
+        assert_eq!(config.find_module("mod1::sub_mod"), Some(Info));
+        assert_eq!(config.find_module("mod2::sub_mod::sub_mod_2"), Some(Debug));
+        assert_eq!(config.find_module("mod3::sub_mod::sub_mod_2"), Some(Off));
+    }
+
+    #[test]
+    fn test_level_config_hierarchy_correct() {
+        let config = LevelConfiguration::Minimal(vec![("root", Trace),
+                                                      ("root::sub1", Debug),
+                                                      ("root::sub2", Info),
+                                                      // should work with all insertion orders
+                                                      ("root::sub2::sub2.3::sub2.4", Error),
+                                                      ("root::sub2::sub2.3", Warn),
+                                                      ("root::sub3", Off)]
+            .into_iter()
+            .map(|(k, v)| (k.into(), v))
+            .collect());
+
+
+        assert_eq!(config.find_module("root"), Some(Trace));
+        assert_eq!(config.find_module("root::other_module"), Some(Trace));
+
+        // We want to ensure that it does pick up most specific level before trying anything more general.
+        assert_eq!(config.find_module("root::sub1"), Some(Debug));
+        assert_eq!(config.find_module("root::sub1::other_module"), Some(Debug));
+
+        assert_eq!(config.find_module("root::sub2"), Some(Info));
+        assert_eq!(config.find_module("root::sub2::other"), Some(Info));
+
+        assert_eq!(config.find_module("root::sub2::sub2.3"), Some(Warn));
+        assert_eq!(config.find_module("root::sub2::sub2.3::sub2.4"),
+                   Some(Error));
+
+        assert_eq!(config.find_module("root::sub3"), Some(Off));
+        assert_eq!(config.find_module("root::sub3::any::children::of::sub3"),
+                   Some(Off));
+    }
+
+    #[test]
+    fn test_level_config_similar_names_are_not_same() {
+        let config = LevelConfiguration::Minimal(vec![("root", Trace), ("rootay", Info)]
+            .into_iter()
+            .map(|(k, v)| (k.into(), v))
+            .collect());
+
+
+        assert_eq!(config.find_module("root"), Some(Trace));
+        assert_eq!(config.find_module("root::sub"), Some(Trace));
+        assert_eq!(config.find_module("rooty"), None);
+        assert_eq!(config.find_module("rooty::sub"), None);
+        assert_eq!(config.find_module("rootay"), Some(Info));
+        assert_eq!(config.find_module("rootay::sub"), Some(Info));
+    }
+
+    #[test]
+    fn test_level_config_single_colon_is_not_double_colon() {
+        let config = LevelConfiguration::Minimal(vec![("root", Trace),
+                                                      ("root::su", Debug),
+                                                      ("root::su:b2", Info),
+                                                      ("root::sub2", Warn)]
+            .into_iter()
+            .map(|(k, v)| (k.into(), v))
+            .collect());
+
+
+        assert_eq!(config.find_module("root"), Some(Trace));
+
+        assert_eq!(config.find_module("root::su"), Some(Debug));
+        assert_eq!(config.find_module("root::su::b2"), Some(Debug));
+
+        assert_eq!(config.find_module("root::su:b2"), Some(Info));
+        assert_eq!(config.find_module("root::su:b2::b3"), Some(Info));
+
+        assert_eq!(config.find_module("root::sub2"), Some(Warn));
+        assert_eq!(config.find_module("root::sub2::b3"), Some(Warn));
+    }
+
+    #[test]
+    fn test_level_config_all_chars() {
+        let config =
+            LevelConfiguration::Minimal(vec![("♲", Trace), ("☸", Debug), ("♲::☸", Info), ("♲::\t", Debug)]
+                .into_iter()
+                .map(|(k, v)| (k.into(), v))
+                .collect());
+
+
+        assert_eq!(config.find_module("♲"), Some(Trace));
+        assert_eq!(config.find_module("♲::other"), Some(Trace));
+
+        assert_eq!(config.find_module("☸"), Some(Debug));
+        assert_eq!(config.find_module("☸::any"), Some(Debug));
+
+        assert_eq!(config.find_module("♲::☸"), Some(Info));
+        assert_eq!(config.find_module("♲☸"), None);
+
+        assert_eq!(config.find_module("♲::\t"), Some(Debug));
+        assert_eq!(config.find_module("♲::\t::\n\n::\t"), Some(Debug));
+        assert_eq!(config.find_module("♲::\t\t"), Some(Trace));
     }
 }

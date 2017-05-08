@@ -174,27 +174,57 @@ impl Dispatch {
         self
     }
 
-    /// Sets a per-target log level filter. Targets are by default module or crate names, but can also be set with
-    /// `target:` in the `log!()` usage.
+    /// Sets a per-target log level filter. Default target for log messages is `crate_name::module_name` or
+    /// `crate_name` for logs in the crate root. Targets can also be set with `info!(target: "target-name", ...)`.
     ///
-    /// If a log record matches this target, it will be filtered by this level _instead of the level set by level()`.
+    /// For each log record fern will first try to match the most specific level_for, and then progressively more
+    /// general ones until either a matching level is found, or the default level is used.
     ///
-    /// Example usage:
+    /// For example, a log for the target `hyper::http::h1` will first test a level_for for `hyper::http::h1`, then
+    /// for `hyper::http`, then for `hyper`, then use the default level.
+    ///
+    /// Examples:
+    ///
+    /// A program wants to include a lot of debugging output, but the library "hyper" is known to work well, so
+    /// debug output from it should be excluded:
     ///
     /// ```
-    /// # #[macro_use]
     /// # extern crate log;
     /// # extern crate fern;
     ///
     /// # fn main() {
     /// fern::Dispatch::new()
-    ///     .level(log::LogLevelFilter::Warn)
-    ///     .level_for("info-target", log::LogLevelFilter::Info)
-    ///     .level_for("a-warning-happy-crate", log::LogLevelFilter::Error)
+    ///     .level(log::LogLevelFilter::Trace)
+    ///     .level_for("hyper", log::LogLevelFilter::Info)
     ///     # .into_log();
-    ///
-    /// info!(target: "info-target", "Here's some information.");
     /// # }
+    /// ```
+    ///
+    /// A program has a ton of debug output per-module, but there is so much that debugging more than one module at a
+    /// time is not very useful. The command line accepts a list of modules to debug, while keeping the rest of the
+    /// program at info level:
+    ///
+    /// ```
+    /// # extern crate log;
+    /// # extern crate fern;
+    ///
+    /// fn setup_logging<T, I>(verbose_modules: T) -> Result<(), fern::InitError>
+    ///     where I: AsRef<str>,
+    ///           T: IntoIterator<Item = I>
+    /// {
+    ///     let mut config = fern::Dispatch::new().level(log::LogLevelFilter::Info);
+    ///
+    ///     for module_name in verbose_modules {
+    ///         config = config.level_for(format!("my_crate_name::{}", module_name.as_ref()),
+    ///                                   log::LogLevelFilter::Debug);
+    ///     }
+    ///
+    ///     config.chain(std::io::stdout()).apply()?;
+    ///
+    ///     Ok(())
+    /// }
+    ///
+    /// # fn main() { let _ = setup_logging(&["hi"]); } // we're ok with apply() failing.
     /// ```
     #[inline]
     pub fn level_for<T: Into<Cow<'static, str>>>(mut self, module: T, level: log::LogLevelFilter) -> Self {
