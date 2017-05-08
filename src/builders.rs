@@ -68,13 +68,13 @@ use {log_impl, FernLog, FormatCallback, Formatter, Filter};
 ///             .chain(io::stderr())
 ///     )
 ///     // and finally, set as the global logger! This fails if and only if the global logger has already been set.
-///     .into_global_logger()?;
+///     .apply()?;
 /// # Ok(())
 /// # }
 ///
 /// # fn main() { setup_logger().expect("failed to set up logger") }
 /// ```
-#[must_use = "this is only a logger configuration and must be consumed with into_log() or into_global_logger()"]
+#[must_use = "this is only a logger configuration and must be consumed with into_log() or apply()"]
 pub struct Dispatch {
     format: Option<Box<Formatter>>,
     children: Vec<OutputInner>,
@@ -304,12 +304,12 @@ impl Dispatch {
 
     /// Builds this logger into a `Box<log::Log>` and calculates the minimum log level needed to have any effect.
     ///
-    /// While this method is exposed publicly, [`Dispatch::into_global_logger`] is typically used instead.
+    /// While this method is exposed publicly, [`Dispatch::apply`] is typically used instead.
     ///
     /// The returned LogLevelFilter is a calculation for all level filters of this logger and child loggers, and is the
     /// minimum log level needed to for a record to have any chance of passing through this logger.
     ///
-    /// [`Dispatch::into_global_logger`]: #method.into_global_logger
+    /// [`Dispatch::apply`]: #method.apply
     ///
     /// Example usage:
     ///
@@ -342,7 +342,7 @@ impl Dispatch {
     /// This function will return an error if a global logger has already been set to a previous logger.
     ///
     /// [`log`]: https://github.com/rust-lang-nursery/log
-    pub fn into_global_logger(self) -> Result<(), log::SetLoggerError> {
+    pub fn apply(self) -> Result<(), log::SetLoggerError> {
         let (max_level, log) = self.into_log();
 
         log::set_logger(|max_level_storage| {

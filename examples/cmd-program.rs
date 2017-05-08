@@ -46,7 +46,7 @@ fn setup_logging(verbose: bool) -> Result<(), fern::InitError> {
         })
         .chain(io::stdout());
 
-    base_config.chain(file_config).chain(stdout_config).into_global_logger()?;
+    base_config.chain(file_config).chain(stdout_config).apply()?;
 
     Ok(())
 }

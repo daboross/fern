@@ -60,7 +60,7 @@
 //!     .level(log::LogLevelFilter::Debug)
 //!     .chain(std::io::stdout())
 //!     .chain(fern::log_file("output.log")?)
-//!     .into_global_logger()?;
+//!     .apply()?;
 //! # Ok(())
 //! # }
 //! # fn main() { setup_logger().expect("failed to set up logger") }
@@ -134,15 +134,18 @@
 //!
 //! ---
 //!
-//! [`.into_global_logger()`]
+//! [`.apply()`][`.apply`]
 //!
-//! Consume the Dispatch configuration and instantiate it as the current runtime global logger.
+//! Consume the configuration and instantiate it as the current runtime global logger.
 //!
 //! This will fail if and only if another fern or [`log`] logger has already been set as the global logger.
 //!
+//! Since it's really up to the binary-producing crate to set up logging, the [`apply`] result can be reasonably
+//! unwrapped.
+//!
 //! # Logging
 //!
-//! Once the logger has been set using [`into_global_logger`] it will pick up all [`log`] macro calls from your
+//! Once the logger has been set using [`apply`] it will pick up all [`log`] macro calls from your
 //! crate and all your libraries.
 //!
 //! ```rust
@@ -153,7 +156,7 @@
 //! # fn setup_logger() -> Result<(), fern::InitError> {
 //! fern::Dispatch::new()
 //!     // ...
-//!     .into_global_logger()?;
+//!     .apply()?;
 //! # Ok(())
 //! # }
 //!
@@ -182,7 +185,7 @@
 //! [`.chain(std::io::stdout())`]: struct.Dispatch.html#method.chain
 //! [`.chain(fern::log_file(...)?)`]: struct.Dispatch.html#method.chain
 //! [`fern::log_file()`]: fn.log_file.html
-//! [`.into_global_logger()`]: struct.Dispatch.html#method.into_global_logger
+//! [`.apply`]: struct.Dispatch.html#method.apply
 //! [`format_args!()`]: https://doc.rust-lang.org/std/macro.format_args.html
 //! [`println!()`]: https://doc.rust-lang.org/std/macro.println.html
 //! [`std::fmt`]: https://doc.rust-lang.org/std/fmt/
@@ -191,7 +194,7 @@
 //! [the format specifier docs]: https://docs.rs/chrono/0.3.1/chrono/format/strftime/index.html#specifiers
 //! [`Dispatch` documentation]: struct.Dispatch.html
 //! [full example program]: https://github.com/daboross/fern/tree/master/examples/cmd-program.rs
-//! [`into_global_logger`]: struct.Dispatch.html#method.into_global_logger
+//! [`apply`]: struct.Dispatch.html#method.apply
 //! [`log`]: doc.rust-lang.org/log/
 extern crate log;
 

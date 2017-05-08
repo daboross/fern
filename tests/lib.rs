@@ -33,7 +33,7 @@ fn test1_basic_usage() {
         // Output to stdout and the log file in the temporary directory we made above to test
         .chain(io::stdout())
         .chain(fern::log_file(log_file).expect("failed to open log file"))
-        .into_global_logger()
+        .apply()
         .expect("Failed to initialize logger: global logger already set!");
 
     trace!("SHOULD NOT DISPLAY");
@@ -85,7 +85,7 @@ fn test2_line_seps() {
         // default log level is 'trace' if not specified (logs all messages)
         // output to the log file with the "\r\n" line separator.
         .chain(fern::Output::file(fern::log_file(&log_file).expect("failed to open log file"), "\r\n"))
-        .into_global_logger()
+        .apply()
         .expect("Failed to initialize logger: global logger already set!");
 
     info!("message1");
