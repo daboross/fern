@@ -1,5 +1,5 @@
 use std::borrow::Cow;
-use std::sync::Mutex;
+use std::sync::{Arc, Mutex};
 use std::{io, fs, cmp, fmt};
 
 use log;
@@ -81,6 +81,20 @@ pub struct Dispatch {
     default_level: log::LogLevelFilter,
     levels: Vec<(Cow<'static, str>, log::LogLevelFilter)>,
     filters: Vec<Box<Filter>>,
+}
+
+/// Logger which is usable as an output for multiple other loggers.
+///
+/// This struct contains a built logger stored in an [`Arc`], and can be safely cloned.
+///
+/// See [`Dispatch::into_shared`].
+///
+/// [`Arc`]: https://doc.rust-lang.org/std/sync/struct.Arc.html
+/// [`Dispatch::into_shared`]: struct.Dispatch.html#method.into_shared
+#[derive(Clone)]
+pub struct SharedDispatch {
+    inner: Arc<log_impl::Dispatch>,
+    min_level: log::LogLevelFilter,
 }
 
 impl Dispatch {
@@ -269,6 +283,61 @@ impl Dispatch {
         self
     }
 
+    /// Builds this dispatch and stores it in a clonable structure containing an [`Arc`].
+    ///
+    /// Once "shared", the dispatch can be used as an output for multiple other dispatch loggers.
+    ///
+    /// Example usage:
+    ///
+    /// This separates info and warn messages, sending info to stdout + a log file, and
+    /// warn to stderr + the same log file. Shared is used so the program only opens "file.log"
+    /// once.
+    ///
+    /// ```no_run
+    /// # extern crate log;
+    /// # extern crate fern;
+    ///
+    /// # fn setup_logger() -> Result<(), fern::InitError> {
+    ///
+    /// let file_out = fern::Dispatch::new()
+    ///     .chain(fern::log_file("file.log")?)
+    ///     .into_shared();
+    ///
+    /// let info_out = fern::Dispatch::new()
+    ///     .level(log::LogLevelFilter::Debug)
+    ///     .filter(|metadata|
+    ///         // keep only info and debug (reject warn and error)
+    ///         metadata.level() <= log::LogLevel::Info
+    ///     )
+    ///     .chain(std::io::stdout())
+    ///     .chain(file_out.clone());
+    ///
+    /// let warn_out = fern::Dispatch::new()
+    ///     .level(log::LogLevelFilter::Warn)
+    ///     .chain(std::io::stderr())
+    ///     .chain(file_out);
+    ///
+    /// fern::Dispatch::new()
+    ///     .chain(info_out)
+    ///     .chain(warn_out)
+    ///     .apply();
+    ///
+    /// # Ok(())
+    /// # }
+    ///
+    /// # fn main() { setup_logger().expect("failed to set up logger"); }
+    /// ```
+    ///
+    /// [`Arc`]: https://doc.rust-lang.org/std/sync/struct.Arc.html
+    pub fn into_shared(self) -> SharedDispatch {
+        let (min_level, dispatch) = self.into_dispatch();
+
+        SharedDispatch {
+            inner: Arc::new(dispatch),
+            min_level: min_level,
+        }
+    }
+
     /// Builds this into the actual logger implementation.
     ///
     /// This could probably be refactored, but having everything in one place is also nice.
@@ -305,6 +374,16 @@ impl Dispatch {
                     if child_level > log::LogLevelFilter::Off {
                         max_child_level = cmp::max(max_child_level, child_level);
                         Some(log_impl::Output::Dispatch(child))
+                    } else {
+                        None
+                    }
+                }
+                OutputInner::SharedDispatch(child_dispatch) => {
+                    let SharedDispatch { inner: child, min_level: child_level } = child_dispatch;
+
+                    if child_level > log::LogLevelFilter::Off {
+                        max_child_level = cmp::max(max_child_level, child_level);
+                        Some(log_impl::Output::SharedDispatch(child))
                     } else {
                         None
                     }
@@ -402,6 +481,8 @@ enum OutputInner {
     },
     /// Passes all messages to other dispatch.
     Dispatch(Dispatch),
+    /// Passes all messages to other dispatch that's shared.
+    SharedDispatch(SharedDispatch),
     /// Passes all messages to other logger.
     Other(Box<FernLog>),
 }
@@ -413,6 +494,13 @@ impl From<Dispatch> for Output {
     /// Creates an output logger forwarding all messages to the dispatch.
     fn from(log: Dispatch) -> Self {
         Output(OutputInner::Dispatch(log))
+    }
+}
+
+impl From<SharedDispatch> for Output {
+    /// Creates an output logger forwarding all messages to the dispatch.
+    fn from(log: SharedDispatch) -> Self {
+        Output(OutputInner::SharedDispatch(log))
     }
 }
 
@@ -591,6 +679,9 @@ impl fmt::Debug for OutputInner {
                 f.debug_struct("Output::File").field("stream", stream).field("line_sep", line_sep).finish()
             }
             OutputInner::Dispatch(ref dispatch) => f.debug_tuple("Output::Dispatch").field(dispatch).finish(),
+            OutputInner::SharedDispatch(_) => {
+                f.debug_tuple("Output::SharedDispatch").field(&"<built Dispatch logger>").finish()
+            }
             OutputInner::Other { .. } => f.debug_tuple("Output::Other").field(&"<boxed logger>").finish(),
         }
     }

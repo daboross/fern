@@ -1,6 +1,6 @@
 use std::io::{self, Write, BufWriter};
 use std::borrow::Cow;
-use std::sync::Mutex;
+use std::sync::{Arc, Mutex};
 use std::{fs, fmt};
 
 use std::collections::HashMap;
@@ -49,6 +49,7 @@ pub enum Output {
     Stderr(Stderr),
     File(File),
     Dispatch(Dispatch),
+    SharedDispatch(Arc<Dispatch>),
     Other(Box<FernLog>),
 }
 
@@ -138,6 +139,7 @@ impl FernLog for Output {
             Output::Stderr(ref s) => s.log_args(input, record),
             Output::File(ref s) => s.log_args(input, record),
             Output::Dispatch(ref s) => s.log_args(input, record),
+            Output::SharedDispatch(ref s) => s.log_args(input, record),
             Output::Other(ref s) => s.log_args(input, record),
         }
     }
