@@ -3,7 +3,7 @@ fern
 [![Linux Build Status][travis-image]][travis-builds]
 [![Windows Build Status][appveyor-image]][appveyor-builds]
 
-Efficient + configurable logging in rust.
+Simple, efficient logging for [Rust].
 
 ---
 
@@ -16,13 +16,11 @@ With fern, you can:
 - Intuitively apply filters and formats to groups of loggers via builder chaining
 - Log using the standard `log` crate macros
 
-Links:
+---
 
 - [`fern` documentation](https://dabo.guru/rust/fern/)
 - [`fern` on crates.io](crates.io/crates/fern/)
 - [`fern` in use (example program)](https://github.com/daboross/fern/tree/master/examples/cmd-program.rs)
-
-This library can only be used while complying to the license terms in the `LICENSE` file.
 
 ### Testing
 
@@ -40,6 +38,7 @@ cargo run --example cmd-program
 cargo run --example cmd-program -- --verbose
 ```
 
+[Rust]: https://www.rust-lang.org/
 [travis-image]: https://travis-ci.org/daboross/fern.svg?branch=master
 [travis-builds]: https://travis-ci.org/daboross/fern
 [appveyor-image]: https://ci.appveyor.com/api/projects/status/github/daboross/fern?branch=master&svg=true

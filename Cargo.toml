@@ -2,8 +2,8 @@
 
 name = "fern"
 version = "0.3.6-dev"
-authors = ["Dabo Ross <daboross@daboross.net>"]
-description = "Simple efficient configurable logging"
+authors = ["David Ross <daboross@daboross.net>"]
+description = "Simple, efficient logging"
 
 documentation = "https://dabo.guru/rust/fern/"
 repository = "https://github.com/daboross/fern"
