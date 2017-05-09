@@ -2,7 +2,7 @@ use std::{io, error, fmt};
 
 use log;
 
-/// Convenience error which combines possible which could occur while initializing logging.
+/// Convenience error combining possible errors which could occur while initializing logging.
 ///
 /// Fern does not use this error natively, but functions which set up fern and open log files will
 /// often need to return both [`io::Error`] and [`SetLoggerError`]. This error is for that purpose.

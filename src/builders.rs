@@ -71,7 +71,7 @@ use {log_impl, FernLog, FormatCallback, Formatter, Filter};
 ///     .apply()?;
 /// # Ok(())
 /// # }
-///
+/// #
 /// # fn main() { setup_logger().expect("failed to set up logger") }
 /// ```
 #[must_use = "this is only a logger configuration and must be consumed with into_log() or apply()"]
@@ -175,7 +175,7 @@ impl Dispatch {
     /// ```
     /// # extern crate log;
     /// # extern crate fern;
-    ///
+    /// #
     /// # fn main() {
     /// fern::Dispatch::new()
     ///     .level(log::LogLevelFilter::Info)
@@ -205,7 +205,7 @@ impl Dispatch {
     /// ```
     /// # extern crate log;
     /// # extern crate fern;
-    ///
+    /// #
     /// # fn main() {
     /// fern::Dispatch::new()
     ///     .level(log::LogLevelFilter::Trace)
@@ -221,7 +221,7 @@ impl Dispatch {
     /// ```
     /// # extern crate log;
     /// # extern crate fern;
-    ///
+    /// #
     /// fn setup_logging<T, I>(verbose_modules: T) -> Result<(), fern::InitError>
     ///     where I: AsRef<str>,
     ///           T: IntoIterator<Item = I>
@@ -237,7 +237,7 @@ impl Dispatch {
     ///
     ///     Ok(())
     /// }
-    ///
+    /// #
     /// # fn main() { let _ = setup_logging(&["hi"]); } // we're ok with apply() failing.
     /// ```
     #[inline]
@@ -263,7 +263,7 @@ impl Dispatch {
     /// ```
     /// # extern crate log;
     /// # extern crate fern;
-    ///
+    /// #
     /// # fn main() {
     /// fern::Dispatch::new()
     ///     .level(log::LogLevelFilter::Info)
@@ -296,7 +296,7 @@ impl Dispatch {
     /// ```no_run
     /// # extern crate log;
     /// # extern crate fern;
-    ///
+    /// #
     /// # fn setup_logger() -> Result<(), fern::InitError> {
     ///
     /// let file_out = fern::Dispatch::new()
@@ -324,7 +324,7 @@ impl Dispatch {
     ///
     /// # Ok(())
     /// # }
-    ///
+    /// #
     /// # fn main() { setup_logger().expect("failed to set up logger"); }
     /// ```
     ///
@@ -425,7 +425,7 @@ impl Dispatch {
     /// ```
     /// # extern crate log;
     /// # extern crate fern;
-    ///
+    /// #
     /// # fn main() {
     /// let (min_level, log) = fern::Dispatch::new()
     ///     .level(log::LogLevelFilter::Info)
@@ -556,7 +556,7 @@ impl Output {
     ///     # .into_log();
     /// # Ok(())
     /// # }
-    ///
+    /// #
     /// # fn main() { setup_logger().expect("failed to set up logger"); }
     /// ```
     ///
@@ -567,7 +567,7 @@ impl Output {
     ///     # .into_log();
     /// # Ok(())
     /// # }
-    ///
+    /// #
     /// # fn main() { setup_logger().expect("failed to set up logger"); }
     ///
     /// ```
@@ -581,7 +581,7 @@ impl Output {
     ///     # .into_log();
     /// # Ok(())
     /// # }
-    ///
+    /// #
     /// # fn main() { setup_logger().expect("failed to set up logger"); }
     /// ```
     ///

@@ -1,6 +1,6 @@
 #![deny(missing_docs)]
 #![doc(html_root_url = "https://dabo.guru/rust/fern/")]
-//! Efficient, configurable logging in rust
+//! Efficient, configurable logging in Rust.
 //!
 //! With Fern, you can:
 //!
@@ -14,7 +14,7 @@
 //! Fern, while feature-complete, does not have a mature API. The library may be changed
 //! in backwards incompatible ways to make it more ergonomic in the future.
 //!
-//! # Depending on Fern
+//! # Depending on `fern`
 //!
 //! To use fern effectively, depend on the `fern` and `log` crates in your project's `Cargo.toml`:
 //!
