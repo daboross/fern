@@ -1,22 +1,28 @@
+extern crate clap;
 extern crate fern;
 #[macro_use]
 extern crate log;
 extern crate chrono;
 
-use std::{io, env};
+use std::io;
 
-fn setup_logging(verbose: bool) -> Result<(), fern::InitError> {
-    let mut base_config = fern::Dispatch::new().level(if verbose {
-        log::LogLevelFilter::Debug
-    } else {
-        log::LogLevelFilter::Info
-    });
+fn setup_logging(verbosity: u64) -> Result<(), fern::InitError> {
+    let mut base_config = fern::Dispatch::new();
 
-    if !verbose {
-        // Let's say we depend on something which whose "info" level messages are too verbose
-        // to include in end-user output. If we don't need them, let's not include them.
-        base_config = base_config.level_for("overly-verbose-target", log::LogLevelFilter::Warn);
-    }
+    base_config = match verbosity {
+        0 => {
+            // Let's say we depend on something which whose "info" level messages are too verbose
+            // to include in end-user output. If we don't need them, let's not include them.
+            base_config.level(log::LogLevelFilter::Info)
+                .level_for("overly-verbose-target", log::LogLevelFilter::Warn)
+        }
+        1 => {
+            base_config.level(log::LogLevelFilter::Debug)
+                .level_for("overly-verbose-target", log::LogLevelFilter::Info)
+        }
+        2 => base_config.level(log::LogLevelFilter::Debug),
+        _3_or_more => base_config.level(log::LogLevelFilter::Trace),
+    };
 
     // Separate file config so we can include year, month and day in file logs
     let file_config = fern::Dispatch::new()
@@ -52,15 +58,22 @@ fn setup_logging(verbose: bool) -> Result<(), fern::InitError> {
 }
 
 fn main() {
-    let verbose = env::args().any(|arg| arg == "-v" || arg == "--verbose");
+    let cmd_arguments = clap::App::new("cmd-program")
+        .arg(clap::Arg::with_name("verbose")
+            .short("v")
+            .long("verbose")
+            .multiple(true)
+            .help("Increases logging verbosity each use for up to 3 times"))
+        .get_matches();
 
-    setup_logging(verbose).expect("failed to initialize logging.");
+    let verbosity: u64 = cmd_arguments.occurrences_of("verbose");
+
+    setup_logging(verbosity).expect("failed to initialize logging.");
 
     info!("MyProgram v0.0.1 starting up!");
 
-    if verbose {
-        info!("DEBUG output enabled.")
-    }
+    debug!("DEBUG output enabled.");
+    trace!("TRACE output enabled.");
 
     // Emulate a library we're using which has tons of debugging on the 'info' level.
     info!(target: "overly-verbose-target", "hey, another library here, we're starting.");

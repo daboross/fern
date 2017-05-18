@@ -23,3 +23,4 @@ log = "0.3"
 [dev-dependencies]
 tempdir = "0.3"
 chrono = "0.3"
+clap = "2.22"
