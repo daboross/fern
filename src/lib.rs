@@ -11,9 +11,6 @@
 //! - Intuitively apply filters and formats to groups of loggers via builder chaining
 //! - Log using the standard `log` crate macros
 //!
-//! Fern, while feature-complete, does not have a mature API. The library may be changed
-//! in backwards incompatible ways to make it more ergonomic in the future.
-//!
 //! # Depending on `fern`
 //!
 //! To use fern effectively, depend on the `fern` and `log` crates in your project's `Cargo.toml`:
@@ -113,8 +110,9 @@
 //!
 //! [`.level(log::LogLevelFilter::Debug)`]
 //!
-//! Set the minimum level needed to output to Debug, accepting Debug, Info, Warn, and Error-level messages
-//! and denying Trace-level messages.
+//! Set the minimum level needed to output to `Debug`.
+//!
+//! This accepts `Debug`, `Info`, `Warn` and `Error` level messages, and denies the lowest level, `Trace`.
 //!
 //! ---
 //!
@@ -122,7 +120,7 @@
 //!
 //! Add a child to the logger; send all messages to stdout.
 //!
-//! [`Dispatch::chain`] accepts Stdout, Stderr, Files and other Dispatch instances.
+//! [`Dispatch::chain`] accepts [`Stdout`], [`Stderr`], [`File`]s and other [`Dispatch`] instances.
 //!
 //! ---
 //!
@@ -141,7 +139,7 @@
 //! This will fail if and only if another fern or [`log`] logger has already been set as the global logger.
 //!
 //! Since it's really up to the binary-producing crate to set up logging, the [`apply`] result can be reasonably
-//! unwrapped.
+//! unwrapped or ignored.
 //!
 //! # Logging
 //!
@@ -183,6 +181,10 @@
 //! [`.level(log::LogLevelFilter::Debug)`]: struct.Dispatch.html#method.level
 //! [`Dispatch::chain`]: struct.Dispatch.html#method.chain
 //! [`.chain(std::io::stdout())`]: struct.Dispatch.html#method.chain
+//! [`Stdout`]: https://doc.rust-lang.org/std/io/struct.Stdout.html
+//! [`Stderr`]: https://doc.rust-lang.org/std/io/struct.Stderr.html
+//! [`File`]: https://doc.rust-lang.org/std/fs/struct.File.html
+//! [`Dispatch`]: struct.Dispatch.html
 //! [`.chain(fern::log_file(...)?)`]: struct.Dispatch.html#method.chain
 //! [`fern::log_file()`]: fn.log_file.html
 //! [`.apply`]: struct.Dispatch.html#method.apply

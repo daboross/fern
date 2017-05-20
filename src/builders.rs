@@ -113,15 +113,17 @@ impl Dispatch {
     /// Sets the formatter of this dispatch. The closure should accept a callback, a message and a log record, and
     /// write the resulting format to the writer.
     ///
-    /// The log record is passed for completeness, but the 'args' method of the record should be ignored, and the
-    /// fmt::Arguments given should be used instead. `record.args()` may be used to retrieve the _original_ log message,
-    /// but in order to allow for true log chaining, formatters should use the given message instead whenever including
-    /// the message in the output.
+    /// The log record is passed for completeness, but the `args()` method of the record should be ignored, and the
+    /// [`fmt::Arguments`] given should be used instead. `record.args()` may be used to retrieve the _original_ log
+    /// message, but in order to allow for true log chaining, formatters should use the given message instead whenever
+    /// including the message in the output.
     ///
     /// To avoid all allocation of intermediate results, the formatter is "completed" by calling a callback, which then
     /// calls the rest of the logging chain with the new formatted message. The callback object keeps track of if it was
     /// called or not via a stack boolean as well, so if you don't use `out.finish` the log message will continue down
     /// the logger chain unformatted.
+    ///
+    /// [`fmt::Arguments`]: https://doc.rust-lang.org/std/fmt/struct.Arguments.html
     ///
     /// Example usage:
     ///
@@ -168,7 +170,9 @@ impl Dispatch {
     /// Sets the overarching level filter for this logger. This will filter all messages which do not fit under another
     /// filter set by `level_for`.
     ///
-    /// Default level is `LogLevelFilter::Trace`.
+    /// Default level is [`LogLevelFilter::Trace`].
+    ///
+    /// [`LogLevelFilter::Trace`]: https://doc.rust-lang.org/log/log/enum.LogLevelFilter.html
     ///
     /// Example usage:
     ///
@@ -257,6 +261,9 @@ impl Dispatch {
     /// The logger will continue to process log records only if all filters return `true`.
     ///
     /// [`Dispatch::level`] and [`Dispatch::level_for`] are preferred if applicable.
+    ///
+    /// [`Dispatch::level`]: #method.level
+    /// [`Dispatch::level_for`]: #method.level_for
     ///
     /// Example usage:
     ///
