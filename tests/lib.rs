@@ -19,7 +19,6 @@ use std::{fs, io};
 fn test1_basic_usage() {
     // Create a temporary directory to put a log file into for testing
     let temp_log_dir = tempdir::TempDir::new("fern")
-        .ok()
         .expect("Failed to set up temporary directory");
     let log_file = temp_log_dir.path().join("test.log");
 
@@ -32,7 +31,7 @@ fn test1_basic_usage() {
         .level(log::LogLevelFilter::Info)
         // Output to stdout and the log file in the temporary directory we made above to test
         .chain(io::stdout())
-        .chain(fern::log_file(log_file).expect("failed to open log file"))
+        .chain(fern::log_file(log_file).expect("Failed to open log file"))
         .apply()
         .expect("Failed to initialize logger: global logger already set!");
 
@@ -43,7 +42,7 @@ fn test1_basic_usage() {
     error!("Test error message");
 
     // shutdown the logger, to ensure all File objects are dropped and OS buffers are flushed.
-    log::shutdown_logger().expect("failed to shutdown logger");
+    log::shutdown_logger().expect("Failed to shutdown logger");
 
     {
         let result = {
@@ -75,7 +74,6 @@ fn test1_basic_usage() {
 fn test2_line_seps() {
     // Create a temporary directory to put a log file into for testing
     let temp_log_dir = tempdir::TempDir::new("fern")
-        .ok()
         .expect("Failed to set up temporary directory");
     let log_file = temp_log_dir.path().join("test_custom_line_sep.log");
 
@@ -84,7 +82,7 @@ fn test2_line_seps() {
         // default format is just the message if not specified
         // default log level is 'trace' if not specified (logs all messages)
         // output to the log file with the "\r\n" line separator.
-        .chain(fern::Output::file(fern::log_file(&log_file).expect("failed to open log file"), "\r\n"))
+        .chain(fern::Output::file(fern::log_file(&log_file).expect("Failed to open log file"), "\r\n"))
         .apply()
         .expect("Failed to initialize logger: global logger already set!");
 
@@ -92,7 +90,7 @@ fn test2_line_seps() {
     info!("message2");
 
     // shutdown the logger, to ensure all File objects are dropped and OS buffers are flushed.
-    log::shutdown_logger().expect("failed to shutdown logger");
+    log::shutdown_logger().expect("Failed to shutdown logger");
 
     {
         let result = {

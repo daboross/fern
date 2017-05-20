@@ -116,7 +116,7 @@ impl LevelConfiguration {
                     }
                 }
 
-                return None;
+                None
             }
         }
     }
@@ -260,11 +260,11 @@ fn fallback_on_error<F>(payload: &fmt::Arguments, record: &log::LogRecord, log_f
     where F: FnOnce(&fmt::Arguments, &log::LogRecord) -> io::Result<()>
 {
     if let Err(error) = log_func(payload, record) {
-        backup_logging(payload, record, error)
+        backup_logging(payload, record, &error)
     }
 }
 
-fn backup_logging(payload: &fmt::Arguments, record: &log::LogRecord, error: io::Error) {
+fn backup_logging(payload: &fmt::Arguments, record: &log::LogRecord, error: &io::Error) {
     let second = write!(io::stderr(),
                         "Error performing logging.\
                             \n\tattempted to log: {}\
