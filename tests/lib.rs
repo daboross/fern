@@ -18,8 +18,7 @@ use std::{fs, io};
 #[test]
 fn test1_basic_usage() {
     // Create a temporary directory to put a log file into for testing
-    let temp_log_dir = tempdir::TempDir::new("fern")
-        .expect("Failed to set up temporary directory");
+    let temp_log_dir = tempdir::TempDir::new("fern").expect("Failed to set up temporary directory");
     let log_file = temp_log_dir.path().join("test.log");
 
     // Create a basic logger configuration
@@ -73,8 +72,7 @@ fn test1_basic_usage() {
 #[test]
 fn test2_line_seps() {
     // Create a temporary directory to put a log file into for testing
-    let temp_log_dir = tempdir::TempDir::new("fern")
-        .expect("Failed to set up temporary directory");
+    let temp_log_dir = tempdir::TempDir::new("fern").expect("Failed to set up temporary directory");
     let log_file = temp_log_dir.path().join("test_custom_line_sep.log");
 
     // Create a basic logger configuration
