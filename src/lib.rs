@@ -174,9 +174,9 @@
 //!
 //! [`fern::Dispatch::new()`]: struct.Dispatch.html#method.new
 //! [`.format(|...| ...)`]: struct.Dispatch.html#method.format
-//! [`chrono::Local::now()`]: https://docs.rs/chrono/0.3/chrono/offset/local/struct.Local.html#method.now
-//! [`.format(`]: https://docs.rs/chrono/0.3/chrono/datetime/struct.DateTime.html#method.format
-//! [`")`]: https://docs.rs/chrono/0.3/chrono/datetime/struct.DateTime.html#method.format
+//! [`chrono::Local::now()`]: https://docs.rs/chrono/0.4/chrono/offset/local/struct.Local.html#method.now
+//! [`.format(`]: https://docs.rs/chrono/0.4/chrono/datetime/struct.DateTime.html#method.format
+//! [`")`]: https://docs.rs/chrono/0.4/chrono/datetime/struct.DateTime.html#method.format
 //! [`out.finish(format_args!(...))`]: struct.FormatCallback.html#method.finish
 //! [`.level(log::LogLevelFilter::Debug)`]: struct.Dispatch.html#method.level
 //! [`Dispatch::chain`]: struct.Dispatch.html#method.chain
@@ -192,8 +192,8 @@
 //! [`println!()`]: https://doc.rust-lang.org/std/macro.println.html
 //! [`std::fmt`]: https://doc.rust-lang.org/std/fmt/
 //! [`chrono`]: https://github.com/chronotope/chrono
-//! [time-and-date docs]: https://docs.rs/chrono/0.3.1/chrono/index.html#date-and-time
-//! [the format specifier docs]: https://docs.rs/chrono/0.3.1/chrono/format/strftime/index.html#specifiers
+//! [time-and-date docs]: https://docs.rs/chrono/0.4/chrono/index.html#date-and-time
+//! [the format specifier docs]: https://docs.rs/chrono/0.4/chrono/format/strftime/index.html#specifiers
 //! [`Dispatch` documentation]: struct.Dispatch.html
 //! [full example program]: https://github.com/daboross/fern/tree/master/examples/cmd-program.rs
 //! [`apply`]: struct.Dispatch.html#method.apply
