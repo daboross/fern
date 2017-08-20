@@ -71,4 +71,4 @@ See [CONTRIBUTING](./CONTRIBUTING.md) for more information on technical details.
 [appveyor-builds]: https://ci.appveyor.com/project/daboross/fern
 [fern-docs]: https://dabo.guru/rust/fern/
 [fern-example]: https://github.com/daboross/fern/tree/master/examples/cmd-program.rs
-[log]: https://github.com/rust-lang-nursery/log
+[`log`]: https://github.com/rust-lang-nursery/log
