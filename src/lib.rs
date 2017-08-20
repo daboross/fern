@@ -13,7 +13,7 @@
 //!
 //! # Depending on `fern`
 //!
-//! To use fern effectively, depend on the `fern` and `log` crates in your project's `Cargo.toml`:
+//! First, depend on the `fern` and `log` crates in your project's `Cargo.toml`:
 //!
 //! ```toml
 //! [dependencies]
@@ -30,7 +30,7 @@
 //! # fn main() {}
 //! ```
 //!
-//! # Example usage:
+//! # Example setup:
 //!
 //! In fern 0.4, creating, configuring, and establishing a logger as the global logger are all merged
 //! into builder methods on the `Dispatch` struct.
@@ -173,7 +173,7 @@
 //!
 //! # More configuration
 //!
-//! Check out the [`Dispatch` documentation] and the [full example program] for more examples!
+//! Check out the [`Dispatch` documentation] and the [full example program] for more usages.
 //!
 //! [`fern::Dispatch::new()`]: struct.Dispatch.html#method.new
 //! [`.format(|...| ...)`]: struct.Dispatch.html#method.format
