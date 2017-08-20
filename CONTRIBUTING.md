@@ -26,7 +26,7 @@ Hopefully these modules are fairly separated, and it's clear when you'll need to
 
 #### Pull requests
 
-Pull requests are _the_ way to change code using git. If you aren't familiar with them in general, GitHub has some [excellent documentation](https://help.github.com/articles/about-pull-requests/) on using these.
+Pull requests are _the_ way to change code using git. If you aren't familiar with them in general, GitHub has some [excellent documentation](https://help.github.com/articles/about-pull-requests/).
 
 There aren't many hard guidelines in this repository on how specifically to format your request. Main points:
 

@@ -69,6 +69,6 @@ See [CONTRIBUTING](./CONTRIBUTING.md) for more information on technical details.
 [travis-builds]: https://travis-ci.org/daboross/fern
 [appveyor-image]: https://ci.appveyor.com/api/projects/status/github/daboross/fern?branch=master&svg=true
 [appveyor-builds]: https://ci.appveyor.com/project/daboross/fern
-[fern-docs](https://dabo.guru/rust/fern/)
-[fern-example](https://github.com/daboross/fern/tree/master/examples/cmd-program.rs)
+[fern-docs]: https://dabo.guru/rust/fern/
+[fern-example]: https://github.com/daboross/fern/tree/master/examples/cmd-program.rs
 [log]: https://github.com/rust-lang-nursery/log
