@@ -7,9 +7,9 @@
 //! cargo test -- --exclude test2
 //! cargo test test2
 //! ```
+extern crate fern;
 #[macro_use]
 extern crate log;
-extern crate fern;
 extern crate tempdir;
 
 use std::io::prelude::*;
@@ -50,23 +50,33 @@ fn test1_basic_usage() {
             log_read.read_to_string(&mut buf).unwrap();
             buf
         };
-        assert!(!result.contains("SHOULD NOT DISPLAY"),
-                "expected result not including \"SHOULD_NOT_DISPLAY\", found:\n```\n{}\n```\n",
-                result);
-        assert!(result.contains("[INFO] Test information message"),
-                "expected result including \"[INFO] Test information message\", found:\n```\n{}\n```\n",
-                result);
-        assert!(result.contains("[WARN] Test warning message"),
-                "expected result including \"[WARN] Test warning message\", found:\n```\n{}\n```\n",
-                result);
-        assert!(result.contains("[ERROR] Test error message"),
-                "expected result to not include \"[ERROR] Test error message\", found:\n```\n{}\n```\n",
-                result);
+        assert!(
+            !result.contains("SHOULD NOT DISPLAY"),
+            "expected result not including \"SHOULD_NOT_DISPLAY\", found:\n```\n{}\n```\n",
+            result
+        );
+        assert!(
+            result.contains("[INFO] Test information message"),
+            "expected result including \"[INFO] Test information message\", found:\n```\n{}\n```\n",
+            result
+        );
+        assert!(
+            result.contains("[WARN] Test warning message"),
+            "expected result including \"[WARN] Test warning message\", found:\n```\n{}\n```\n",
+            result
+        );
+        assert!(
+            result.contains("[ERROR] Test error message"),
+            "expected result to not include \"[ERROR] Test error message\", found:\n```\n{}\n```\n",
+            result
+        );
     }
 
     // Just to make sure this goes smoothly - it dose this automatically if we don't .close()
     // manually, but it will ignore any errors when doing it automatically.
-    temp_log_dir.close().expect("Failed to clean up temporary directory");
+    temp_log_dir
+        .close()
+        .expect("Failed to clean up temporary directory");
 }
 
 #[test]
@@ -102,5 +112,7 @@ fn test2_line_seps() {
 
     // Just to make sure this goes smoothly - it dose this automatically if we don't .close()
     // manually, but it will ignore any errors when doing it automatically.
-    temp_log_dir.close().expect("Failed to clean up temporary directory");
+    temp_log_dir
+        .close()
+        .expect("Failed to clean up temporary directory");
 }

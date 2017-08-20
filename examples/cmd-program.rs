@@ -1,8 +1,9 @@
+
+extern crate chrono;
 extern crate clap;
 extern crate fern;
 #[macro_use]
 extern crate log;
-extern crate chrono;
 
 use std::io;
 
@@ -13,13 +14,13 @@ fn setup_logging(verbosity: u64) -> Result<(), fern::InitError> {
         0 => {
             // Let's say we depend on something which whose "info" level messages are too verbose
             // to include in end-user output. If we don't need them, let's not include them.
-            base_config.level(log::LogLevelFilter::Info)
+            base_config
+                .level(log::LogLevelFilter::Info)
                 .level_for("overly-verbose-target", log::LogLevelFilter::Warn)
         }
-        1 => {
-            base_config.level(log::LogLevelFilter::Debug)
-                .level_for("overly-verbose-target", log::LogLevelFilter::Info)
-        }
+        1 => base_config
+            .level(log::LogLevelFilter::Debug)
+            .level_for("overly-verbose-target", log::LogLevelFilter::Info),
         2 => base_config.level(log::LogLevelFilter::Debug),
         _3_or_more => base_config.level(log::LogLevelFilter::Trace),
     };
@@ -27,11 +28,13 @@ fn setup_logging(verbosity: u64) -> Result<(), fern::InitError> {
     // Separate file config so we can include year, month and day in file logs
     let file_config = fern::Dispatch::new()
         .format(|out, message, record| {
-            out.finish(format_args!("{}[{}][{}] {}",
-                                    chrono::Local::now().format("[%Y-%m-%d][%H:%M:%S]"),
-                                    record.target(),
-                                    record.level(),
-                                    message))
+            out.finish(format_args!(
+                "{}[{}][{}] {}",
+                chrono::Local::now().format("[%Y-%m-%d][%H:%M:%S]"),
+                record.target(),
+                record.level(),
+                message
+            ))
         })
         .chain(fern::log_file("program.log")?);
 
@@ -59,11 +62,13 @@ fn setup_logging(verbosity: u64) -> Result<(), fern::InitError> {
 
 fn main() {
     let cmd_arguments = clap::App::new("cmd-program")
-        .arg(clap::Arg::with_name("verbose")
-            .short("v")
-            .long("verbose")
-            .multiple(true)
-            .help("Increases logging verbosity each use for up to 3 times"))
+        .arg(
+            clap::Arg::with_name("verbose")
+                .short("v")
+                .long("verbose")
+                .multiple(true)
+                .help("Increases logging verbosity each use for up to 3 times"),
+        )
         .get_matches();
 
     let verbosity: u64 = cmd_arguments.occurrences_of("verbose");

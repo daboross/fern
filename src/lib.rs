@@ -39,20 +39,21 @@
 //! an output.log file.
 //!
 //! ```no_run
+//! extern crate chrono;
 //! # extern crate fern;
 //! # #[macro_use]
 //! # extern crate log;
-//! extern crate chrono;
 //!
 //! # fn setup_logger() -> Result<(), fern::InitError> {
 //! fern::Dispatch::new()
 //!     .format(|out, message, record| {
-//!         out.finish(format_args!("{}[{}][{}] {}",
-//!             chrono::Local::now()
-//!                 .format("[%Y-%m-%d][%H:%M:%S]"),
+//!         out.finish(format_args!(
+//!             "{}[{}][{}] {}",
+//!             chrono::Local::now().format("[%Y-%m-%d][%H:%M:%S]"),
 //!             record.target(),
 //!             record.level(),
-//!             message))
+//!             message
+//!         ))
 //!     })
 //!     .level(log::LogLevelFilter::Debug)
 //!     .chain(std::io::stdout())
@@ -60,7 +61,9 @@
 //!     .apply()?;
 //! # Ok(())
 //! # }
-//! # fn main() { setup_logger().expect("failed to set up logger") }
+//! # fn main() {
+//! #     setup_logger().expect("failed to set up logger")
+//! # }
 //! ```
 //!
 //! Let's unwrap the above example:
@@ -203,7 +206,7 @@ extern crate log;
 use std::convert::AsRef;
 use std::path::Path;
 use std::fs::{File, OpenOptions};
-use std::{io, fmt};
+use std::{fmt, io};
 
 pub use builders::{Dispatch, Output};
 pub use log_impl::FormatCallback;
@@ -250,5 +253,9 @@ pub trait FernLog: Sync + Send {
 /// [`OpenOptions`]: https://doc.rust-lang.org/std/fs/struct.OpenOptions.html
 #[inline]
 pub fn log_file<P: AsRef<Path>>(path: P) -> io::Result<File> {
-    OpenOptions::new().write(true).create(true).append(true).open(path)
+    OpenOptions::new()
+        .write(true)
+        .create(true)
+        .append(true)
+        .open(path)
 }

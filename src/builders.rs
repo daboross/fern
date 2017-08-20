@@ -1,10 +1,10 @@
 use std::borrow::Cow;
 use std::sync::{Arc, Mutex};
-use std::{io, fs, cmp, fmt};
+use std::{cmp, fmt, fs, io};
 
 use log;
 
-use {log_impl, FernLog, FormatCallback, Formatter, Filter};
+use {log_impl, FernLog, Filter, FormatCallback, Formatter};
 
 /// The base dispatch logger.
 ///
@@ -36,7 +36,7 @@ use {log_impl, FernLog, FormatCallback, Formatter, Filter};
 ///             // accept info messages from the current crate too
 ///             .level_for("my_crate", log::LogLevelFilter::Info)
 ///             // `std::io::Stdout`, `std::io::Stderr` and `std::io::File` can be directly passed in.
-///             .chain(io::stdout())
+///             .chain(io::stdout()),
 ///     )
 ///     .chain(
 ///         fern::Dispatch::new()
@@ -53,7 +53,7 @@ use {log_impl, FernLog, FormatCallback, Formatter, Filter};
 ///                 .create(true)
 ///                 .truncate(true)
 ///                 .create(true)
-///                 .open("/tmp/temp.log")?)
+///                 .open("/tmp/temp.log")?),
 ///     )
 ///     .chain(
 ///         fern::Dispatch::new()
@@ -65,7 +65,7 @@ use {log_impl, FernLog, FormatCallback, Formatter, Filter};
 ///                 # */
 ///                 # true
 ///             })
-///             .chain(io::stderr())
+///             .chain(io::stderr()),
 ///     )
 ///     // and finally, set as the global logger! This fails if and only if the global logger has already been set.
 ///     .apply()?;
@@ -136,7 +136,8 @@ impl Dispatch {
     /// ```
     #[inline]
     pub fn format<F>(mut self, formatter: F) -> Self
-        where F: Fn(FormatCallback, &fmt::Arguments, &log::LogRecord) + Sync + Send + 'static
+    where
+        F: Fn(FormatCallback, &fmt::Arguments, &log::LogRecord) + Sync + Send + 'static,
     {
         self.format = Some(Box::new(formatter));
         self
@@ -248,7 +249,11 @@ impl Dispatch {
     pub fn level_for<T: Into<Cow<'static, str>>>(mut self, module: T, level: log::LogLevelFilter) -> Self {
         let module = module.into();
 
-        if let Some((index, _)) = self.levels.iter().enumerate().find(|&(_, &(ref name, _))| name == &module) {
+        if let Some((index, _)) = self.levels
+            .iter()
+            .enumerate()
+            .find(|&(_, &(ref name, _))| name == &module)
+        {
             self.levels.remove(index);
         }
 
@@ -284,7 +289,8 @@ impl Dispatch {
     /// # }
     #[inline]
     pub fn filter<F>(mut self, filter: F) -> Self
-        where F: Fn(&log::LogMetadata) -> bool + Send + Sync + 'static
+    where
+        F: Fn(&log::LogMetadata) -> bool + Send + Sync + 'static,
     {
         self.filters.push(Box::new(filter));
         self
@@ -349,11 +355,18 @@ impl Dispatch {
     ///
     /// This could probably be refactored, but having everything in one place is also nice.
     fn into_dispatch(self) -> (log::LogLevelFilter, log_impl::Dispatch) {
-        let Dispatch { format, children, default_level, levels, mut filters } = self;
+        let Dispatch {
+            format,
+            children,
+            default_level,
+            levels,
+            mut filters,
+        } = self;
 
         let mut max_child_level = log::LogLevelFilter::Off;
 
-        let output = children.into_iter()
+        let output = children
+            .into_iter()
             .flat_map(|child| match child {
                 OutputInner::Stdout { stream, line_sep } => {
                     max_child_level = log::LogLevelFilter::Trace;
@@ -386,7 +399,10 @@ impl Dispatch {
                     }
                 }
                 OutputInner::SharedDispatch(child_dispatch) => {
-                    let SharedDispatch { inner: child, min_level: child_level } = child_dispatch;
+                    let SharedDispatch {
+                        inner: child,
+                        min_level: child_level,
+                    } = child_dispatch;
 
                     if child_level > log::LogLevelFilter::Off {
                         max_child_level = cmp::max(max_child_level, child_level);
@@ -402,7 +418,11 @@ impl Dispatch {
             })
             .collect();
 
-        let min_level = levels.iter().map(|t| t.1).max().map_or(default_level, |lvl| cmp::max(lvl, default_level));
+        let min_level = levels
+            .iter()
+            .map(|t| t.1)
+            .max()
+            .map_or(default_level, |lvl| cmp::max(lvl, default_level));
         let real_min = cmp::min(min_level, max_child_level);
 
         filters.shrink_to_fit();
@@ -653,18 +673,21 @@ impl fmt::Debug for Dispatch {
         struct LevelsDebug<'a>(&'a [(Cow<'static, str>, log::LogLevelFilter)]);
         impl<'a> fmt::Debug for LevelsDebug<'a> {
             fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-                f.debug_map().entries(self.0.iter().map(|t| (t.0.as_ref(), t.1))).finish()
+                f.debug_map()
+                    .entries(self.0.iter().map(|t| (t.0.as_ref(), t.1)))
+                    .finish()
             }
         }
         struct FiltersDebug<'a>(&'a [Box<Filter>]);
         impl<'a> fmt::Debug for FiltersDebug<'a> {
             fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-                f.debug_list().entries(self.0.iter().map(|_| "<filter closure>")).finish()
+                f.debug_list()
+                    .entries(self.0.iter().map(|_| "<filter closure>"))
+                    .finish()
             }
         }
         f.debug_struct("Dispatch")
-            .field("format",
-                   &self.format.as_ref().map(|_| "<formatter closure>"))
+            .field("format", &self.format.as_ref().map(|_| "<formatter closure>"))
             .field("children", &self.children)
             .field("default_level", &self.default_level)
             .field("levels", &LevelsDebug(&self.levels))
@@ -676,20 +699,34 @@ impl fmt::Debug for Dispatch {
 impl fmt::Debug for OutputInner {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match *self {
-            OutputInner::Stdout { ref stream, ref line_sep } => {
-                f.debug_struct("Output::Stdout").field("stream", stream).field("line_sep", line_sep).finish()
-            }
-            OutputInner::Stderr { ref stream, ref line_sep } => {
-                f.debug_struct("Output::Stderr").field("stream", stream).field("line_sep", line_sep).finish()
-            }
-            OutputInner::File { ref stream, ref line_sep } => {
-                f.debug_struct("Output::File").field("stream", stream).field("line_sep", line_sep).finish()
-            }
+            OutputInner::Stdout {
+                ref stream,
+                ref line_sep,
+            } => f.debug_struct("Output::Stdout")
+                .field("stream", stream)
+                .field("line_sep", line_sep)
+                .finish(),
+            OutputInner::Stderr {
+                ref stream,
+                ref line_sep,
+            } => f.debug_struct("Output::Stderr")
+                .field("stream", stream)
+                .field("line_sep", line_sep)
+                .finish(),
+            OutputInner::File {
+                ref stream,
+                ref line_sep,
+            } => f.debug_struct("Output::File")
+                .field("stream", stream)
+                .field("line_sep", line_sep)
+                .finish(),
             OutputInner::Dispatch(ref dispatch) => f.debug_tuple("Output::Dispatch").field(dispatch).finish(),
-            OutputInner::SharedDispatch(_) => {
-                f.debug_tuple("Output::SharedDispatch").field(&"<built Dispatch logger>").finish()
-            }
-            OutputInner::Other { .. } => f.debug_tuple("Output::Other").field(&"<boxed logger>").finish(),
+            OutputInner::SharedDispatch(_) => f.debug_tuple("Output::SharedDispatch")
+                .field(&"<built Dispatch logger>")
+                .finish(),
+            OutputInner::Other { .. } => f.debug_tuple("Output::Other")
+                .field(&"<boxed logger>")
+                .finish(),
         }
     }
 }

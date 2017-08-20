@@ -1,13 +1,13 @@
-use std::io::{self, Write, BufWriter};
+use std::io::{self, BufWriter, Write};
 use std::borrow::Cow;
 use std::sync::{Arc, Mutex};
-use std::{fs, fmt};
+use std::{fmt, fs};
 
 use std::collections::HashMap;
 
 use log::{self, Log};
 
-use {FernLog, Formatter, Filter};
+use {FernLog, Filter, Formatter};
 
 pub enum LevelConfiguration {
     JustDefault,
@@ -124,9 +124,10 @@ impl LevelConfiguration {
     fn find_exact(&self, module: &str) -> Option<log::LogLevelFilter> {
         match *self {
             LevelConfiguration::JustDefault => None,
-            LevelConfiguration::Minimal(ref levels) => {
-                levels.iter().find(|&&(ref test_module, _)| test_module == module).map(|&(_, level)| level)
-            }
+            LevelConfiguration::Minimal(ref levels) => levels
+                .iter()
+                .find(|&&(ref test_module, _)| test_module == module)
+                .map(|&(_, level)| level),
             LevelConfiguration::Many(ref levels) => levels.get(module).cloned(),
         }
     }
@@ -147,8 +148,10 @@ impl FernLog for Output {
 
 impl log::Log for Dispatch {
     fn enabled(&self, metadata: &log::LogMetadata) -> bool {
-        metadata.level() <= self.levels.find_module(metadata.target()).unwrap_or(self.default_level) &&
-        self.filters.iter().all(|f| f(metadata))
+        metadata.level() <=
+            self.levels
+                .find_module(metadata.target())
+                .unwrap_or(self.default_level) && self.filters.iter().all(|f| f(metadata))
     }
 
     fn log(&self, record: &log::LogRecord) {
@@ -172,9 +175,11 @@ impl FernLog for Dispatch {
                     // flag to ensure the log message is completed even if the formatter doesn't complete the callback.
                     let mut callback_called_flag = false;
 
-                    (format)(FormatCallback(InnerFormatCallback(&mut callback_called_flag, self, record)),
-                             message,
-                             record);
+                    (format)(
+                        FormatCallback(InnerFormatCallback(&mut callback_called_flag, self, record)),
+                        message,
+                        record,
+                    );
 
                     if !callback_called_flag {
                         self.finish_logging(message, record);
@@ -257,7 +262,8 @@ impl FernLog for File {
 
 #[inline(always)]
 fn fallback_on_error<F>(payload: &fmt::Arguments, record: &log::LogRecord, log_func: F)
-    where F: FnOnce(&fmt::Arguments, &log::LogRecord) -> io::Result<()>
+where
+    F: FnOnce(&fmt::Arguments, &log::LogRecord) -> io::Result<()>,
 {
     if let Err(error) = log_func(payload, record) {
         backup_logging(payload, record, &error)
@@ -265,25 +271,29 @@ fn fallback_on_error<F>(payload: &fmt::Arguments, record: &log::LogRecord, log_f
 }
 
 fn backup_logging(payload: &fmt::Arguments, record: &log::LogRecord, error: &io::Error) {
-    let second = write!(io::stderr(),
-                        "Error performing logging.\
-                            \n\tattempted to log: {}\
-                            \n\torigin location: {:#?}\
-                            \n\tlogging error: {}",
-                        payload,
-                        record.location(),
-                        error);
+    let second = write!(
+        io::stderr(),
+        "Error performing logging.\
+         \n\tattempted to log: {}\
+         \n\torigin location: {:#?}\
+         \n\tlogging error: {}",
+        payload,
+        record.location(),
+        error
+    );
 
     if let Err(second_error) = second {
-        panic!("Error performing stderr logging after error occurred during regular logging.\
-                \n\tattempted to log: {}\
-                \n\torigin location: {:#?}\
-                \n\tfirst logging Error: {}\
-                \n\tstderr error: {}",
-               payload,
-               record.location(),
-               error,
-               second_error);
+        panic!(
+            "Error performing stderr logging after error occurred during regular logging.\
+             \n\tattempted to log: {}\
+             \n\torigin location: {:#?}\
+             \n\tfirst logging Error: {}\
+             \n\tstderr error: {}",
+            payload,
+            record.location(),
+            error,
+            second_error
+        );
     }
 }
 
@@ -294,10 +304,12 @@ mod test {
 
     #[test]
     fn test_level_config_find_exact_minimal() {
-        let config = LevelConfiguration::Minimal(vec![("mod1", Info), ("mod2", Debug), ("mod3", Off)]
-            .into_iter()
-            .map(|(k, v)| (k.into(), v))
-            .collect());
+        let config = LevelConfiguration::Minimal(
+            vec![("mod1", Info), ("mod2", Debug), ("mod3", Off)]
+                .into_iter()
+                .map(|(k, v)| (k.into(), v))
+                .collect(),
+        );
 
         assert_eq!(config.find_exact("mod1"), Some(Info));
         assert_eq!(config.find_exact("mod2"), Some(Debug));
@@ -306,10 +318,12 @@ mod test {
 
     #[test]
     fn test_level_config_find_exact_many() {
-        let config = LevelConfiguration::Many(vec![("mod1", Info), ("mod2", Debug), ("mod3", Off)]
-            .into_iter()
-            .map(|(k, v)| (k.into(), v))
-            .collect());
+        let config = LevelConfiguration::Many(
+            vec![("mod1", Info), ("mod2", Debug), ("mod3", Off)]
+                .into_iter()
+                .map(|(k, v)| (k.into(), v))
+                .collect(),
+        );
 
         assert_eq!(config.find_exact("mod1"), Some(Info));
         assert_eq!(config.find_exact("mod2"), Some(Debug));
@@ -318,10 +332,12 @@ mod test {
 
     #[test]
     fn test_level_config_simple_hierarchy() {
-        let config = LevelConfiguration::Minimal(vec![("mod1", Info), ("mod2::sub_mod", Debug), ("mod3", Off)]
-            .into_iter()
-            .map(|(k, v)| (k.into(), v))
-            .collect());
+        let config = LevelConfiguration::Minimal(
+            vec![("mod1", Info), ("mod2::sub_mod", Debug), ("mod3", Off)]
+                .into_iter()
+                .map(|(k, v)| (k.into(), v))
+                .collect(),
+        );
 
         assert_eq!(config.find_module("mod1::sub_mod"), Some(Info));
         assert_eq!(config.find_module("mod2::sub_mod::sub_mod_2"), Some(Debug));
@@ -330,16 +346,19 @@ mod test {
 
     #[test]
     fn test_level_config_hierarchy_correct() {
-        let config = LevelConfiguration::Minimal(vec![("root", Trace),
-                                                      ("root::sub1", Debug),
-                                                      ("root::sub2", Info),
-                                                      // should work with all insertion orders
-                                                      ("root::sub2::sub2.3::sub2.4", Error),
-                                                      ("root::sub2::sub2.3", Warn),
-                                                      ("root::sub3", Off)]
-            .into_iter()
-            .map(|(k, v)| (k.into(), v))
-            .collect());
+        let config = LevelConfiguration::Minimal(
+            vec![
+                ("root", Trace),
+                ("root::sub1", Debug),
+                ("root::sub2", Info),
+                // should work with all insertion orders
+                ("root::sub2::sub2.3::sub2.4", Error),
+                ("root::sub2::sub2.3", Warn),
+                ("root::sub3", Off),
+            ].into_iter()
+                .map(|(k, v)| (k.into(), v))
+                .collect(),
+        );
 
 
         assert_eq!(config.find_module("root"), Some(Trace));
@@ -353,20 +372,20 @@ mod test {
         assert_eq!(config.find_module("root::sub2::other"), Some(Info));
 
         assert_eq!(config.find_module("root::sub2::sub2.3"), Some(Warn));
-        assert_eq!(config.find_module("root::sub2::sub2.3::sub2.4"),
-                   Some(Error));
+        assert_eq!(config.find_module("root::sub2::sub2.3::sub2.4"), Some(Error));
 
         assert_eq!(config.find_module("root::sub3"), Some(Off));
-        assert_eq!(config.find_module("root::sub3::any::children::of::sub3"),
-                   Some(Off));
+        assert_eq!(config.find_module("root::sub3::any::children::of::sub3"), Some(Off));
     }
 
     #[test]
     fn test_level_config_similar_names_are_not_same() {
-        let config = LevelConfiguration::Minimal(vec![("root", Trace), ("rootay", Info)]
-            .into_iter()
-            .map(|(k, v)| (k.into(), v))
-            .collect());
+        let config = LevelConfiguration::Minimal(
+            vec![("root", Trace), ("rootay", Info)]
+                .into_iter()
+                .map(|(k, v)| (k.into(), v))
+                .collect(),
+        );
 
 
         assert_eq!(config.find_module("root"), Some(Trace));
@@ -379,13 +398,12 @@ mod test {
 
     #[test]
     fn test_level_config_single_colon_is_not_double_colon() {
-        let config = LevelConfiguration::Minimal(vec![("root", Trace),
-                                                      ("root::su", Debug),
-                                                      ("root::su:b2", Info),
-                                                      ("root::sub2", Warn)]
-            .into_iter()
-            .map(|(k, v)| (k.into(), v))
-            .collect());
+        let config = LevelConfiguration::Minimal(
+            vec![("root", Trace), ("root::su", Debug), ("root::su:b2", Info), ("root::sub2", Warn)]
+                .into_iter()
+                .map(|(k, v)| (k.into(), v))
+                .collect(),
+        );
 
 
         assert_eq!(config.find_module("root"), Some(Trace));
@@ -402,11 +420,12 @@ mod test {
 
     #[test]
     fn test_level_config_all_chars() {
-        let config =
-            LevelConfiguration::Minimal(vec![("♲", Trace), ("☸", Debug), ("♲::☸", Info), ("♲::\t", Debug)]
+        let config = LevelConfiguration::Minimal(
+            vec![("♲", Trace), ("☸", Debug), ("♲::☸", Info), ("♲::\t", Debug)]
                 .into_iter()
                 .map(|(k, v)| (k.into(), v))
-                .collect());
+                .collect(),
+        );
 
 
         assert_eq!(config.find_module("♲"), Some(Trace));

@@ -1,4 +1,4 @@
-use std::{io, error, fmt};
+use std::{error, fmt, io};
 
 use log;
 
