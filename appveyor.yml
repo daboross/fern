@@ -1,9 +1,14 @@
 # Based on the "trust" template v0.1.1
 # https://github.com/japaric/trust/tree/v0.1.1
 
-# Note: we're explicitly only supporting MSVC and not MinGW here due to ring's support for MSCV.
 environment:
     matrix:
+    # MinGW
+    - TARGET: i686-pc-windows-gnu
+      RUST_VERSION: stable
+    - TARGET: x86_64-pc-windows-gnu
+      RUST_VERSION: stable
+
     # Stable
     - TARGET: i686-pc-windows-msvc
       RUST_VERSION: stable
