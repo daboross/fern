@@ -116,3 +116,23 @@ fn test2_line_seps() {
         .close()
         .expect("Failed to clean up temporary directory");
 }
+
+#[test]
+fn test3_channel_logging() {
+    use std::sync::mpsc;
+    // Create the channel
+    let (send, recv) = mpsc::channel();
+
+    fern::Dispatch::new()
+        .chain(send)
+        .apply()
+        .expect("Failed to initialize logger: global logger already set!");
+
+    info!("message1");
+    info!("message2");
+
+    log::shutdown_logger().expect("Failed to shutdown logger");
+
+    assert_eq!(recv.recv().unwrap(), "message1\n");
+    assert_eq!(recv.recv().unwrap(), "message2\n");
+}

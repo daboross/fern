@@ -53,8 +53,9 @@ install:
 
 test_script:
 - cargo build --verbose
-- cargo test --verbose -- --skip test2
+- cargo test --verbose -- --skip test2 --skip test3
 - cargo test test2
+- cargo test test3
 - cargo run --example cmd-program
 - cargo run --example cmd-program -- --verbose
 

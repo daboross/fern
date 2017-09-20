@@ -43,11 +43,12 @@ There aren't many hard guidelines in this repository on how specifically to form
 
 Building fern is as easy as is expected, `cargo build`.
 
-Testing is somewhat more convoluted - mostly because using fern requires initializing a global logger. To test the two "integration" tests separately, you'll need to invoke two commands:
+Testing is somewhat more convoluted - mostly because using fern requires initializing a global logger. To test the three "integration" tests separately, you'll need to invoke three commands:
 
 ```sh
-cargo test -- --skip test2
+cargo test -- --skip test2 --skip test3
 cargo test test2
+cargo test test3
 ```
 
 To run the example program, use:
