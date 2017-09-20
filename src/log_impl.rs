@@ -156,8 +156,8 @@ impl FernLog for Output {
 
 impl log::Log for Dispatch {
     fn enabled(&self, metadata: &log::LogMetadata) -> bool {
-        metadata.level() <=
-            self.levels
+        metadata.level()
+            <= self.levels
                 .find_module(metadata.target())
                 .unwrap_or(self.default_level) && self.filters.iter().all(|f| f(metadata))
     }
@@ -271,9 +271,12 @@ impl FernLog for File {
 
 impl FernLog for Sender {
     fn log_args(&self, payload: &fmt::Arguments, record: &log::LogRecord) {
-        fallback_on_error(payload, record, |payload, _|{
+        fallback_on_error(payload, record, |payload, _| {
             let msg = format!("{}{}", payload, self.line_sep);
-            self.stream.lock().unwrap_or_else(|e| e.into_inner()).send(msg)?;
+            self.stream
+                .lock()
+                .unwrap_or_else(|e| e.into_inner())
+                .send(msg)?;
             Ok(())
         });
     }

@@ -583,8 +583,10 @@ impl From<io::Stderr> for Output {
     }
 }
 
-impl From<Sender<String>> for  Output {
-    /// Creates an output logger which writes all messages to mpsc::Sender with the given handle and '\n' as the separator.
+impl From<Sender<String>> for Output {
+    /// Creates an output logger which writes all messages to the given mpsc::Sender with  '\n' as the separator.
+    ///
+    /// All messages sent to the mpsc channel are suffixed with '\n'.
     fn from(stream: Sender<String>) -> Self {
         Output(OutputInner::Sender {
             stream: stream,
@@ -683,6 +685,8 @@ impl Output {
     ///
     /// If the default separator of `\n` is acceptable, an `mpsc::Sender<String>` instance can be passed into
     /// `Dispatch::chain()` directly.
+    ///
+    /// Each log message will be suffixed with the separator, then sent as a single String to the given sender.
     ///
     /// ```
     /// use std::sync::mpsc::channel;
