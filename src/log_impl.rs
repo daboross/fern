@@ -1,6 +1,7 @@
 use std::io::{self, BufWriter, Write};
 use std::borrow::Cow;
 use std::sync::{Arc, Mutex};
+use std::sync::mpsc;
 use std::{fmt, fs};
 
 use std::collections::HashMap;
@@ -48,6 +49,7 @@ pub enum Output {
     Stdout(Stdout),
     Stderr(Stderr),
     File(File),
+    Sender(Sender),
     Dispatch(Dispatch),
     SharedDispatch(Arc<Dispatch>),
     Other(Box<FernLog>),
@@ -65,6 +67,11 @@ pub struct Stderr {
 
 pub struct File {
     pub stream: Mutex<BufWriter<fs::File>>,
+    pub line_sep: Cow<'static, str>,
+}
+
+pub struct Sender {
+    pub stream: Mutex<mpsc::Sender<String>>,
     pub line_sep: Cow<'static, str>,
 }
 
@@ -139,6 +146,7 @@ impl FernLog for Output {
             Output::Stdout(ref s) => s.log_args(input, record),
             Output::Stderr(ref s) => s.log_args(input, record),
             Output::File(ref s) => s.log_args(input, record),
+            Output::Sender(ref s) => s.log_args(input, record),
             Output::Dispatch(ref s) => s.log_args(input, record),
             Output::SharedDispatch(ref s) => s.log_args(input, record),
             Output::Other(ref s) => s.log_args(input, record),
@@ -236,7 +244,8 @@ macro_rules! std_log_impl {
         impl FernLog for $ident {
             fn log_args(&self, payload: &fmt::Arguments, record: &log::LogRecord) {
                 fallback_on_error(payload, record, |payload, _| {
-                    write!(self.stream.lock(), "{}{}", payload, self.line_sep)
+                    write!(self.stream.lock(), "{}{}", payload, self.line_sep)?;
+                    Ok(())
                 });
             }
         }
@@ -260,17 +269,27 @@ impl FernLog for File {
     }
 }
 
+impl FernLog for Sender {
+    fn log_args(&self, payload: &fmt::Arguments, record: &log::LogRecord) {
+        fallback_on_error(payload, record, |payload, _|{
+            let msg = format!("{}{}", payload, self.line_sep);
+            self.stream.lock().unwrap_or_else(|e| e.into_inner()).send(msg)?;
+            Ok(())
+        });
+    }
+}
+
 #[inline(always)]
 fn fallback_on_error<F>(payload: &fmt::Arguments, record: &log::LogRecord, log_func: F)
 where
-    F: FnOnce(&fmt::Arguments, &log::LogRecord) -> io::Result<()>,
+    F: FnOnce(&fmt::Arguments, &log::LogRecord) -> Result<(), LogError>,
 {
     if let Err(error) = log_func(payload, record) {
         backup_logging(payload, record, &error)
     }
 }
 
-fn backup_logging(payload: &fmt::Arguments, record: &log::LogRecord, error: &io::Error) {
+fn backup_logging(payload: &fmt::Arguments, record: &log::LogRecord, error: &LogError) {
     let second = write!(
         io::stderr(),
         "Error performing logging.\
@@ -294,6 +313,33 @@ fn backup_logging(payload: &fmt::Arguments, record: &log::LogRecord, error: &io:
             error,
             second_error
         );
+    }
+}
+
+#[derive(Debug)]
+enum LogError {
+    Io(io::Error),
+    Send(mpsc::SendError<String>),
+}
+
+impl fmt::Display for LogError {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        match *self {
+            LogError::Io(ref e) => write!(f, "{}", e),
+            LogError::Send(ref e) => write!(f, "{}", e),
+        }
+    }
+}
+
+impl From<io::Error> for LogError {
+    fn from(error: io::Error) -> Self {
+        LogError::Io(error)
+    }
+}
+
+impl From<mpsc::SendError<String>> for LogError {
+    fn from(error: mpsc::SendError<String>) -> Self {
+        LogError::Send(error)
     }
 }
 

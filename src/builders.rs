@@ -1,5 +1,6 @@
 use std::borrow::Cow;
 use std::sync::{Arc, Mutex};
+use std::sync::mpsc::Sender;
 use std::{cmp, fmt, fs, io};
 
 use log;
@@ -389,6 +390,13 @@ impl Dispatch {
                         line_sep: line_sep,
                     }))
                 }
+                OutputInner::Sender { stream, line_sep } => {
+                    max_child_level = log::LogLevelFilter::Trace;
+                    Some(log_impl::Output::Sender(log_impl::Sender {
+                        stream: Mutex::new(stream),
+                        line_sep: line_sep,
+                    }))
+                }
                 OutputInner::Dispatch(child_dispatch) => {
                     let (child_level, child) = child_dispatch.into_dispatch();
                     if child_level > log::LogLevelFilter::Off {
@@ -506,6 +514,11 @@ enum OutputInner {
         stream: fs::File,
         line_sep: Cow<'static, str>,
     },
+    /// Writes all messages to mpst::Sender with `line_sep` separator.
+    Sender {
+        stream: Sender<String>,
+        line_sep: Cow<'static, str>,
+    },
     /// Passes all messages to other dispatch.
     Dispatch(Dispatch),
     /// Passes all messages to other dispatch that's shared.
@@ -564,6 +577,16 @@ impl From<io::Stderr> for Output {
     /// Creates an output logger which writes all messages to stderr with the given handle and `\n` as the separator.
     fn from(stream: io::Stderr) -> Self {
         Output(OutputInner::Stderr {
+            stream: stream,
+            line_sep: "\n".into(),
+        })
+    }
+}
+
+impl From<Sender<String>> for  Output {
+    /// Creates an output logger which writes all messages to mpsc::Sender with the given handle and '\n' as the separator.
+    fn from(stream: Sender<String>) -> Self {
+        Output(OutputInner::Sender {
             stream: stream,
             line_sep: "\n".into(),
         })
@@ -655,6 +678,26 @@ impl Output {
             line_sep: line_sep.into(),
         })
     }
+
+    /// Returns a mpsc::Sender logger using a custom separator.
+    ///
+    /// If the default separator of `\n` is acceptable, an `mpsc::Sender<String>` instance can be passed into
+    /// `Dispatch::chain()` directly.
+    ///
+    /// ```
+    /// use std::sync::mpsc::channel;
+    ///
+    /// let (tx, rx) = channel();
+    /// fern::Dispatch::new()
+    ///     .chain(tx)
+    ///     # .into_log();
+    /// ```
+    pub fn sender<T: Into<Cow<'static, str>>>(sender: Sender<String>, line_sep: T) -> Self {
+        Output(OutputInner::Sender {
+            stream: sender,
+            line_sep: line_sep.into(),
+        })
+    }
 }
 
 impl Default for Dispatch {
@@ -717,6 +760,13 @@ impl fmt::Debug for OutputInner {
                 ref stream,
                 ref line_sep,
             } => f.debug_struct("Output::File")
+                .field("stream", stream)
+                .field("line_sep", line_sep)
+                .finish(),
+            OutputInner::Sender {
+                ref stream,
+                ref line_sep,
+            } => f.debug_struct("Output::Sender")
                 .field("stream", stream)
                 .field("line_sep", line_sep)
                 .finish(),
