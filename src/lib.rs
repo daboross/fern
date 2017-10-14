@@ -1,4 +1,4 @@
-#![deny(missing_docs)]
+//#![deny(missing_docs)]
 #![doc(html_root_url = "https://dabo.guru/rust/fern/")]
 //! Efficient, configurable logging in Rust.
 //!
@@ -202,6 +202,11 @@
 //! [`apply`]: struct.Dispatch.html#method.apply
 //! [`log`]: doc.rust-lang.org/log/
 extern crate log;
+#[cfg(feature = "with-colors")]
+#[macro_use]
+extern crate lazy_static;
+#[cfg(feature = "with-colors")]
+extern crate colored;
 
 use std::convert::AsRef;
 use std::path::Path;
@@ -215,6 +220,8 @@ pub use errors::InitError;
 mod builders;
 mod log_impl;
 mod errors;
+#[cfg(feature = "with-colors")]
+pub mod colors;
 
 /// A type alias for a log formatter.
 pub type Formatter = Fn(FormatCallback, &fmt::Arguments, &log::LogRecord) + Sync + Send + 'static;
