@@ -1,4 +1,4 @@
-//#![deny(missing_docs)]
+#![deny(missing_docs)]
 #![doc(html_root_url = "https://dabo.guru/rust/fern/")]
 //! Efficient, configurable logging in Rust.
 //!
