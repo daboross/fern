@@ -1,4 +1,4 @@
-#![deny(missing_docs)]
+//#![deny(missing_docs)]
 #![doc(html_root_url = "https://dabo.guru/rust/fern/")]
 //! Efficient, configurable logging in Rust.
 //!
@@ -202,9 +202,6 @@
 //! [`apply`]: struct.Dispatch.html#method.apply
 //! [`log`]: doc.rust-lang.org/log/
 extern crate log;
-#[cfg(feature = "with-colors")]
-#[macro_use]
-extern crate lazy_static;
 #[cfg(feature = "with-colors")]
 extern crate colored;
 
