@@ -5,8 +5,7 @@ extern crate log;
 extern crate chrono;
 
 use colored::Color;
-use fern::colors::ColoredLogLevel;
-use log::LogLevel;
+use fern::colors::ColoredLogLevelConfig;
 
 fn main() {
     let mut config = ColoredLogLevelConfig::default();
