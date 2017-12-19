@@ -19,8 +19,16 @@ appveyor = { repository = "daboross/fern" }
 
 [dependencies]
 log = "0.3"
+colored = { version = "1.5", optional = true }
 
 [dev-dependencies]
 tempdir = "0.3"
 chrono = "0.4"
 clap = "2.22"
+
+[[example]]
+name = "cmd-program"
+
+[[example]]
+name = "colored"
+required-features = ["colored"]

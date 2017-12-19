@@ -58,6 +58,7 @@ test_script:
 - cargo test test3
 - cargo run --example cmd-program
 - cargo run --example cmd-program -- --verbose
+- cargo run --example colored --features colored
 
 cache:
 - C:\Users\appveyor\.cargo\registry

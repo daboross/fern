@@ -202,6 +202,8 @@
 //! [`apply`]: struct.Dispatch.html#method.apply
 //! [`log`]: doc.rust-lang.org/log/
 extern crate log;
+#[cfg(feature = "colored")]
+extern crate colored;
 
 use std::convert::AsRef;
 use std::path::Path;
@@ -215,6 +217,8 @@ pub use errors::InitError;
 mod builders;
 mod log_impl;
 mod errors;
+#[cfg(feature = "colored")]
+pub mod colors;
 
 /// A type alias for a log formatter.
 pub type Formatter = Fn(FormatCallback, &fmt::Arguments, &log::LogRecord) + Sync + Send + 'static;
