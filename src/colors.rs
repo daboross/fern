@@ -39,20 +39,69 @@ pub struct ColoredLogLevelConfig {
 }
 
 impl ColoredLogLevelConfig {
-    /// Creates a new ColoredLogLevelConfig with the given colors for each log level.
+    /// Creates a new ColoredLogLevelConfig with the default colors.
     ///
-    /// Use [`ColoredLogLevelConfig::default`] for default colors.
+    /// This matches the behavior of [`ColoredLogLevelConfig::default`].
     ///
     /// [`ColoredLogLevelConfig::default`]: #method.default
     #[inline]
-    pub fn new(error: Color, warn: Color, info: Color, debug: Color, trace: Color) -> Self {
-        ColoredLogLevelConfig {
-            trace: trace,
-            error: error,
-            warn: warn,
-            debug: debug,
-            info: info,
-        }
+    pub fn new() -> Self {
+        Self::default()
+    }
+
+    /// Overrides the [`Error`] level color with the given color.
+    ///
+    /// The default color is [`Color::Red`].
+    ///
+    /// [`Error`]: https://docs.rs/log/0.3/log/enum.LogLevel.html#variant.Error
+    /// [`Color::Red`]: https://docs.rs/colored/1/colored/enum.Color.html#variant.Red
+    pub fn error(&mut self, error: Color) -> &mut Self {
+        self.error = error;
+        self
+    }
+
+    /// Overrides the [`Warn`] level color with the given color.
+    ///
+    /// The default color is [`Color::Yellow`].
+    ///
+    /// [`Warn`]: https://docs.rs/log/0.3/log/enum.LogLevel.html#variant.Warn
+    /// [`Color::Yellow`]: https://docs.rs/colored/1/colored/enum.Color.html#variant.Yellow
+    pub fn warn(&mut self, warn: Color) -> &mut Self {
+        self.warn = warn;
+        self
+    }
+
+    /// Overrides the [`Info`] level color with the given color.
+    ///
+    /// The default color is [`Color::White`].
+    ///
+    /// [`Info`]: https://docs.rs/log/0.3/log/enum.LogLevel.html#variant.Info
+    /// [`Color::White`]: https://docs.rs/colored/1/colored/enum.Color.html#variant.White
+    pub fn info(&mut self, info: Color) -> &mut Self {
+        self.info = info;
+        self
+    }
+
+    /// Overrides the [`Debug`] level color with the given color.
+    ///
+    /// The default color is [`Color::White`].
+    ///
+    /// [`Debug`]: https://docs.rs/log/0.3/log/enum.LogLevel.html#variant.Debug
+    /// [`Color::White`]: https://docs.rs/colored/1/colored/enum.Color.html#variant.White
+    pub fn debug(&mut self, debug: Color) -> &mut Self {
+        self.debug = debug;
+        self
+    }
+
+    /// Overrides the [`Trace`] level color with the given color.
+    ///
+    /// The default color is [`Color::White`].
+    ///
+    /// [`Trace`]: https://docs.rs/log/0.3/log/enum.LogLevel.html#variant.Trace
+    /// [`Color::White`]: https://docs.rs/colored/1/colored/enum.Color.html#variant.White
+    pub fn trace(&mut self, trace: Color) -> &mut Self {
+        self.trace = trace;
+        self
     }
 
     /// Retrieves the default configuration. This has:
