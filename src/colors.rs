@@ -1,16 +1,28 @@
 //! Module containing color-related functions using the `colored` crate.
-use colored::{Color, ColoredString, Colorize};
+use std::fmt;
+use colored::Color;
 use log::LogLevel;
 
 /// Extension crate allowing the use of `.colored` on LogLevels.
 pub trait ColoredLogLevel {
     /// Colors this log level with the given color.
-    fn colored(&self, color: Color) -> ColoredString;
+    fn colored(&self, color: Color) -> LogLevelWithColor;
 }
 
-fn new_colored_string(input: String, color: Color) -> ColoredString {
-    let cs = ColoredString::from(input.as_str());
-    cs.color(color)
+/// Opaque structure representing a log level with an associated color. This implements [`fmt::Display`] so that it is
+/// displayed as the underlying log level surrounded with ASCII markers for the given color.
+// this is necessary in order to avoid using colored::ColorString, which has a Display
+// implementation involving many allocations, and would involve two more string allocations
+// even to create it.
+pub struct LogLevelWithColor {
+    level: LogLevel,
+    color: Color,
+}
+
+impl fmt::Display for LogLevelWithColor {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, "\x1B[{}m{}\x1B[0m", self.color.to_fg_str(), self.level)
+    }
 }
 
 /// Configuration specifying colors a log level can be colored as.
@@ -137,7 +149,7 @@ impl ColoredLogLevelConfig {
     /// function on Windows terminals.
     ///
     /// [`colored`]: https://github.com/mackwic/colored
-    pub fn color(&self, level: LogLevel) -> ColoredString {
+    pub fn color(&self, level: LogLevel) -> LogLevelWithColor {
         level.colored(self.get_color(&level))
     }
 
@@ -154,9 +166,10 @@ impl ColoredLogLevelConfig {
 }
 
 impl ColoredLogLevel for LogLevel {
-    fn colored(&self, color: Color) -> ColoredString {
-        let s = format!("{:?}", self);
-
-        new_colored_string(s, color)
+    fn colored(&self, color: Color) -> LogLevelWithColor {
+        LogLevelWithColor {
+            level: *self,
+            color: color,
+        }
     }
 }
