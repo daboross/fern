@@ -734,7 +734,10 @@ impl fmt::Debug for Dispatch {
             }
         }
         f.debug_struct("Dispatch")
-            .field("format", &self.format.as_ref().map(|_| "<formatter closure>"))
+            .field(
+                "format",
+                &self.format.as_ref().map(|_| "<formatter closure>"),
+            )
             .field("children", &self.children)
             .field("default_level", &self.default_level)
             .field("levels", &LevelsDebug(&self.levels))

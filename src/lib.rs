@@ -201,9 +201,9 @@
 //! [full example program]: https://github.com/daboross/fern/tree/master/examples/cmd-program.rs
 //! [`apply`]: struct.Dispatch.html#method.apply
 //! [`log`]: doc.rust-lang.org/log/
-extern crate log;
 #[cfg(feature = "colored")]
 extern crate colored;
+extern crate log;
 
 use std::convert::AsRef;
 use std::path::Path;

@@ -1,13 +1,12 @@
+extern crate chrono;
 extern crate fern;
 #[macro_use]
 extern crate log;
-extern crate chrono;
 
 use fern::colors::{Color, ColoredLogLevelConfig};
 
 fn main() {
-    let colors = ColoredLogLevelConfig::new()
-        .debug(Color::Magenta);
+    let colors = ColoredLogLevelConfig::new().debug(Color::Magenta);
 
     fern::Dispatch::new()
         .chain(std::io::stdout())

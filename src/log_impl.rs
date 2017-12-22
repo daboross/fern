@@ -409,7 +409,6 @@ mod test {
                 .collect(),
         );
 
-
         assert_eq!(config.find_module("root"), Some(Trace));
         assert_eq!(config.find_module("root::other_module"), Some(Trace));
 
@@ -421,10 +420,16 @@ mod test {
         assert_eq!(config.find_module("root::sub2::other"), Some(Info));
 
         assert_eq!(config.find_module("root::sub2::sub2.3"), Some(Warn));
-        assert_eq!(config.find_module("root::sub2::sub2.3::sub2.4"), Some(Error));
+        assert_eq!(
+            config.find_module("root::sub2::sub2.3::sub2.4"),
+            Some(Error)
+        );
 
         assert_eq!(config.find_module("root::sub3"), Some(Off));
-        assert_eq!(config.find_module("root::sub3::any::children::of::sub3"), Some(Off));
+        assert_eq!(
+            config.find_module("root::sub3::any::children::of::sub3"),
+            Some(Off)
+        );
     }
 
     #[test]
@@ -435,7 +440,6 @@ mod test {
                 .map(|(k, v)| (k.into(), v))
                 .collect(),
         );
-
 
         assert_eq!(config.find_module("root"), Some(Trace));
         assert_eq!(config.find_module("root::sub"), Some(Trace));
@@ -448,12 +452,15 @@ mod test {
     #[test]
     fn test_level_config_single_colon_is_not_double_colon() {
         let config = LevelConfiguration::Minimal(
-            vec![("root", Trace), ("root::su", Debug), ("root::su:b2", Info), ("root::sub2", Warn)]
-                .into_iter()
+            vec![
+                ("root", Trace),
+                ("root::su", Debug),
+                ("root::su:b2", Info),
+                ("root::sub2", Warn),
+            ].into_iter()
                 .map(|(k, v)| (k.into(), v))
                 .collect(),
         );
-
 
         assert_eq!(config.find_module("root"), Some(Trace));
 
@@ -470,12 +477,15 @@ mod test {
     #[test]
     fn test_level_config_all_chars() {
         let config = LevelConfiguration::Minimal(
-            vec![("♲", Trace), ("☸", Debug), ("♲::☸", Info), ("♲::\t", Debug)]
-                .into_iter()
+            vec![
+                ("♲", Trace),
+                ("☸", Debug),
+                ("♲::☸", Info),
+                ("♲::\t", Debug),
+            ].into_iter()
                 .map(|(k, v)| (k.into(), v))
                 .collect(),
         );
-
 
         assert_eq!(config.find_module("♲"), Some(Trace));
         assert_eq!(config.find_module("♲::other"), Some(Trace));

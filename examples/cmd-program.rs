@@ -1,4 +1,3 @@
-
 extern crate chrono;
 extern crate clap;
 extern crate fern;
@@ -42,15 +41,19 @@ fn setup_logging(verbosity: u64) -> Result<(), fern::InitError> {
         .format(|out, message, record| {
             // special format for debug messages coming from our own crate.
             if record.level() > log::LogLevelFilter::Info && record.target() == "cmd_program" {
-                out.finish(format_args!("---\nDEBUG: {}: {}\n---",
-                                        chrono::Local::now().format("%H:%M:%S"),
-                                        message))
+                out.finish(format_args!(
+                    "---\nDEBUG: {}: {}\n---",
+                    chrono::Local::now().format("%H:%M:%S"),
+                    message
+                ))
             } else {
-                out.finish(format_args!("[{}][{}][{}] {}",
-                                        chrono::Local::now().format("%H:%M"),
-                                        record.target(),
-                                        record.level(),
-                                        message))
+                out.finish(format_args!(
+                    "[{}][{}][{}] {}",
+                    chrono::Local::now().format("%H:%M"),
+                    record.target(),
+                    record.level(),
+                    message
+                ))
             }
         })
         .chain(io::stdout());

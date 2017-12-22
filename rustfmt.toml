@@ -1,11 +1,7 @@
 max_width = 120
-fn_call_width = 100
-array_width = 100
 comment_width = 120
-fn_args_paren_newline = false
 report_fixme = "unnumbered"
 use_try_shorthand = true
 write_mode = "overwrite"
-condense_wildcard_suffices = true
-closure_block_indent_threshold = 0
+condense_wildcard_suffixes = true
 format_strings = false
