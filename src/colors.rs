@@ -36,6 +36,7 @@ impl fmt::Display for LogLevelWithColor {
 
 /// Configuration specifying colors a log level can be colored as.
 #[derive(Copy, Clone)]
+#[must_use = "builder methods take config by value and thus must be reassigned to variable"]
 pub struct ColoredLogLevelConfig {
     /// The color to color logs with the [`Error`] level.
     ///
@@ -76,7 +77,7 @@ impl ColoredLogLevelConfig {
     ///
     /// [`Error`]: https://docs.rs/log/0.3/log/enum.LogLevel.html#variant.Error
     /// [`Color::Red`]: https://docs.rs/colored/1/colored/enum.Color.html#variant.Red
-    pub fn error(&mut self, error: Color) -> &mut Self {
+    pub fn error(mut self, error: Color) -> Self {
         self.error = error;
         self
     }
@@ -87,7 +88,7 @@ impl ColoredLogLevelConfig {
     ///
     /// [`Warn`]: https://docs.rs/log/0.3/log/enum.LogLevel.html#variant.Warn
     /// [`Color::Yellow`]: https://docs.rs/colored/1/colored/enum.Color.html#variant.Yellow
-    pub fn warn(&mut self, warn: Color) -> &mut Self {
+    pub fn warn(mut self, warn: Color) -> Self {
         self.warn = warn;
         self
     }
@@ -98,7 +99,7 @@ impl ColoredLogLevelConfig {
     ///
     /// [`Info`]: https://docs.rs/log/0.3/log/enum.LogLevel.html#variant.Info
     /// [`Color::White`]: https://docs.rs/colored/1/colored/enum.Color.html#variant.White
-    pub fn info(&mut self, info: Color) -> &mut Self {
+    pub fn info(mut self, info: Color) -> Self {
         self.info = info;
         self
     }
@@ -109,7 +110,7 @@ impl ColoredLogLevelConfig {
     ///
     /// [`Debug`]: https://docs.rs/log/0.3/log/enum.LogLevel.html#variant.Debug
     /// [`Color::White`]: https://docs.rs/colored/1/colored/enum.Color.html#variant.White
-    pub fn debug(&mut self, debug: Color) -> &mut Self {
+    pub fn debug(mut self, debug: Color) -> Self {
         self.debug = debug;
         self
     }
@@ -120,7 +121,7 @@ impl ColoredLogLevelConfig {
     ///
     /// [`Trace`]: https://docs.rs/log/0.3/log/enum.LogLevel.html#variant.Trace
     /// [`Color::White`]: https://docs.rs/colored/1/colored/enum.Color.html#variant.White
-    pub fn trace(&mut self, trace: Color) -> &mut Self {
+    pub fn trace(mut self, trace: Color) -> Self {
         self.trace = trace;
         self
     }
