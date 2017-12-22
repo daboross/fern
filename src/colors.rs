@@ -35,6 +35,30 @@ impl fmt::Display for LogLevelWithColor {
 }
 
 /// Configuration specifying colors a log level can be colored as.
+///
+/// Example usage setting custom 'info' and 'debug' colors:
+///
+/// ```
+/// use fern::colors::{Color, ColoredLogLevelConfig};
+///
+/// let colors = ColoredLogLevelConfig::new()
+///     .info(Color::Green)
+///     .debug(Color::Magenta);
+///
+/// fern::Dispatch::new()
+///     .format(move |out, message, record| {
+///         out.finish(format_args!(
+///             "[{}] {}",
+///             colors.color(record.level()),
+///             message
+///         ))
+///     })
+///     .chain(std::io::stdout())
+/// # /*
+///     .apply()?;
+/// # */
+/// #   .into_log();
+/// ```
 #[derive(Copy, Clone)]
 #[must_use = "builder methods take config by value and thus must be reassigned to variable"]
 pub struct ColoredLogLevelConfig {
@@ -152,11 +176,12 @@ impl ColoredLogLevelConfig {
         }
     }
 
-    /// Colors the given log level with the correct color.
+    /// Colors the given log level with the color in this configuration corresponding to it's
+    /// level.
     ///
-    /// This will output ANSI escapes correctly coloring the log level when printed
-    /// to a Unix terminal. Due to behavior of the [`colored`] crate, this does not
-    /// function on Windows terminals.
+    /// The structure returned is opaque, but will print the LogLevel surrounded by ANSI color
+    /// codes when displayed. This will work correctly for UNIX terminals, but due to a lack
+    /// of support from the [`colored`] crate, this will not function in Windows.
     ///
     /// [`colored`]: https://github.com/mackwic/colored
     pub fn color(&self, level: LogLevel) -> LogLevelWithColor {

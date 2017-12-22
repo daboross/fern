@@ -6,15 +6,15 @@ extern crate chrono;
 use fern::colors::{Color, ColoredLogLevelConfig};
 
 fn main() {
-    let mut config = ColoredLogLevelConfig::default();
-    config.debug = Color::Magenta;
+    let colors = ColoredLogLevelConfig::new()
+        .debug(Color::Magenta);
 
     fern::Dispatch::new()
         .chain(std::io::stdout())
         .format(move |out, message, record| {
             out.finish(format_args!(
                 "[{}]{} {}",
-                config.color(record.level()),
+                colors.color(record.level()),
                 chrono::Utc::now().format("[%Y-%m-%d %H:%M:%S]"),
                 message
             ))
