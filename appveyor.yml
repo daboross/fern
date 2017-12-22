@@ -3,12 +3,6 @@
 
 environment:
     matrix:
-    # MinGW
-    - TARGET: i686-pc-windows-gnu
-      RUST_VERSION: stable
-    - TARGET: x86_64-pc-windows-gnu
-      RUST_VERSION: stable
-
     # Stable
     - TARGET: i686-pc-windows-msvc
       RUST_VERSION: stable
@@ -61,7 +55,6 @@ test_script:
 - cargo run --example colored --features colored
 
 cache:
-- C:\Users\appveyor\.cargo\registry
 - target
 
 # Disable the appveyor build step so we can just build the rust project instead.
