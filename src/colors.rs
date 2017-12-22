@@ -13,7 +13,7 @@ use colored::Color;
 use log::LogLevel;
 
 /// Extension crate allowing the use of `.colored` on LogLevels.
-pub trait ColoredLogLevel {
+trait ColoredLogLevel {
     /// Colors this log level with the given color.
     fn colored(&self, color: Color) -> LogLevelWithColor;
 }
