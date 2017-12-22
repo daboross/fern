@@ -15,22 +15,31 @@ use log::LogLevel;
 /// Extension crate allowing the use of `.colored` on LogLevels.
 trait ColoredLogLevel {
     /// Colors this log level with the given color.
-    fn colored(&self, color: Color) -> LogLevelWithColor;
+    fn colored(&self, color: Color) -> WithFgColor<LogLevel>;
 }
 
-/// Opaque structure representing a log level with an associated color. This implements [`fmt::Display`] so that it is
-/// displayed as the underlying log level surrounded with ASCII markers for the given color.
+/// Opaque structure which represents some text data and a color to display it with. This implements [`fmt::Display`]
+/// via displaying the inner text (usually a log level) with ANSI color markers before to set the color and after to
+/// reset the color.
+///
+/// WithFgColor instances can be created and displayed without any allocation.
 // this is necessary in order to avoid using colored::ColorString, which has a Display
 // implementation involving many allocations, and would involve two more string allocations
 // even to create it.
-pub struct LogLevelWithColor {
-    level: LogLevel,
+pub struct WithFgColor<T>
+where
+    T: fmt::Display,
+{
+    text: T,
     color: Color,
 }
 
-impl fmt::Display for LogLevelWithColor {
+impl<T> fmt::Display for WithFgColor<T>
+where
+    T: fmt::Display,
+{
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "\x1B[{}m{}\x1B[0m", self.color.to_fg_str(), self.level)
+        write!(f, "\x1B[{}m{}\x1B[0m", self.color.to_fg_str(), self.text)
     }
 }
 
@@ -184,7 +193,7 @@ impl ColoredLogLevelConfig {
     /// of support from the [`colored`] crate, this will not function in Windows.
     ///
     /// [`colored`]: https://github.com/mackwic/colored
-    pub fn color(&self, level: LogLevel) -> LogLevelWithColor {
+    pub fn color(&self, level: LogLevel) -> WithFgColor<LogLevel> {
         level.colored(self.get_color(&level))
     }
 
@@ -201,10 +210,50 @@ impl ColoredLogLevelConfig {
 }
 
 impl ColoredLogLevel for LogLevel {
-    fn colored(&self, color: Color) -> LogLevelWithColor {
-        LogLevelWithColor {
-            level: *self,
+    fn colored(&self, color: Color) -> WithFgColor<LogLevel> {
+        WithFgColor {
+            text: *self,
             color: color,
+        }
+    }
+}
+
+#[cfg(test)]
+mod test {
+    use super::WithFgColor;
+    use colored::Colorize;
+    use colored::Color::*;
+
+    #[test]
+    fn fg_color_matches_colored_behavior() {
+        for &color in &[
+            Black,
+            Red,
+            Green,
+            Yellow,
+            Blue,
+            Magenta,
+            Cyan,
+            White,
+            BrightBlack,
+            BrightRed,
+            BrightGreen,
+            BrightYellow,
+            BrightBlue,
+            BrightMagenta,
+            BrightCyan,
+            BrightWhite,
+        ] {
+            assert_eq!(
+                format!("{}", "test".color(color)),
+                format!(
+                    "{}",
+                    WithFgColor {
+                        text: "test",
+                        color: color,
+                    }
+                )
+            );
         }
     }
 }
