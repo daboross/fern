@@ -1,11 +1,9 @@
 extern crate fern;
-extern crate colored;
 #[macro_use]
 extern crate log;
 extern crate chrono;
 
-use colored::Color;
-use fern::colors::ColoredLogLevelConfig;
+use fern::colors::{Color, ColoredLogLevelConfig};
 
 fn main() {
     let mut config = ColoredLogLevelConfig::default();

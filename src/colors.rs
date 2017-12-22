@@ -9,7 +9,7 @@
 //! fern = { version = "0.4", features = ["colored"] }
 //! ```
 use std::fmt;
-use colored::Color;
+pub use colored::Color;
 use log::LogLevel;
 
 /// Extension crate allowing the use of `.colored` on LogLevels.
