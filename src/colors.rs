@@ -1,4 +1,13 @@
 //! Module containing color-related functions using the `colored` crate.
+//!
+//! This module is only available when the `colored` feature is enabled for `fern`.
+//! This can be done with the following in `Cargo.toml`:
+//!
+//! ```toml
+//! [dependencies]
+//! # ...
+//! fern = { version = "0.4", features = ["colored"] }
+//! ```
 use std::fmt;
 use colored::Color;
 use log::LogLevel;

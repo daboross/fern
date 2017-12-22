@@ -32,3 +32,6 @@ name = "cmd-program"
 [[example]]
 name = "colored"
 required-features = ["colored"]
+
+[package.metadata.docs.rs]
+all-features = true
