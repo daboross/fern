@@ -28,7 +28,12 @@ use {log_impl, Filter, FormatCallback, Formatter};
 /// # fn setup_logger() -> Result<(), fern::InitError> {
 /// fern::Dispatch::new()
 ///     .format(|out, message, record| {
-///         out.finish(format_args!("[{}][{}] {}", record.level(), record.target(), message))
+///         out.finish(format_args!(
+///             "[{}][{}] {}",
+///             record.level(),
+///             record.target(),
+///             message,
+///         ))
 ///     })
 ///     .chain(
 ///         fern::Dispatch::new()
@@ -45,7 +50,6 @@ use {log_impl, Filter, FormatCallback, Formatter};
 ///             .level(log::LevelFilter::Trace)
 ///             // except for hyper, in that case only show info messages
 ///             .level_for("hyper", log::LevelFilter::Info)
-///             // in a real application, you'd probably want to handle this error.
 ///             // `log_file(x)` equates to `OpenOptions::new().write(true).append(true).create(true).open(x)`
 ///             .chain(fern::log_file("persistent-log.log")?)
 ///             // chain accepts io::File objects, so you can provide your own options too.
