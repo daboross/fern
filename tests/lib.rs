@@ -4,14 +4,60 @@ extern crate fern;
 extern crate log;
 extern crate tempdir;
 
+use std::sync::{Arc, Mutex};
 use std::io::prelude::*;
 use std::{fmt, fs, io};
 
+use log::Level::*;
+
 #[test]
-fn test1_basic_usage_global_logger() {
-    // Create a temporary directory to put a log file into for testing
-    let temp_log_dir = tempdir::TempDir::new("fern").expect("Failed to set up temporary directory");
-    let log_file = temp_log_dir.path().join("test.log");
+fn test_global_logger() {
+    // custom logger to verify behavior
+    struct LogVerify {
+        info: bool,
+        warn: bool,
+        error: bool,
+    }
+    impl LogVerify {
+        fn new() -> Self {
+            LogVerify {
+                info: false,
+                warn: false,
+                error: false,
+            }
+        }
+        fn log(&mut self, record: &log::Record) {
+            let formatted_message = format!("{}", record.args());
+            match &*formatted_message {
+                "[INFO] Test information message" => {
+                    assert_eq!(self.info, false, "expected only one info message");
+                    self.info = true;
+                }
+                "[WARN] Test warning message" => {
+                    assert_eq!(self.warn, false, "expected only one warn message");
+                    self.warn = true;
+                }
+                "[ERROR] Test error message" => {
+                    assert_eq!(self.error, false, "expected only one error message");
+                    self.error = true;
+                }
+                other => panic!("unexpected message: '{}'", other),
+            }
+        }
+    }
+    #[derive(Clone)]
+    struct LogVerifyWrapper(Arc<Mutex<LogVerify>>);
+    impl log::Log for LogVerifyWrapper {
+        fn enabled(&self, _: &log::Metadata) -> bool {
+            true
+        }
+        fn flush(&self) {}
+        fn log(&self, record: &log::Record) {
+            self.0.lock().unwrap().log(record);
+        }
+    }
+
+    let verify = LogVerifyWrapper(Arc::new(Mutex::new(LogVerify::new())));
 
     // Create a basic logger configuration
     fern::Dispatch::new()
@@ -20,9 +66,8 @@ fn test1_basic_usage_global_logger() {
         })
         // Only log messages Info and above
         .level(log::LevelFilter::Info)
-        // Output to stdout and the log file in the temporary directory we made above to test
-        .chain(io::stdout())
-        .chain(fern::log_file(log_file).expect("Failed to open log file"))
+        // Output to our verification logger for verification
+        .chain(Box::new(verify.clone()) as Box<log::Log>)
         .apply()
         .expect("Failed to initialize logger: global logger already set!");
 
@@ -31,6 +76,51 @@ fn test1_basic_usage_global_logger() {
     info!("Test information message");
     warn!("Test warning message");
     error!("Test error message");
+
+    // ensure all buffers are flushed.
+    log::logger().flush();
+
+    let verify_acquired = verify.0.lock().unwrap();
+    assert_eq!(
+        verify_acquired.info,
+        true,
+        "expected info message to be received"
+    );
+    assert_eq!(
+        verify_acquired.warn,
+        true,
+        "expected warn message to be received"
+    );
+    assert_eq!(
+        verify_acquired.error,
+        true,
+        "expected error message to be received"
+    );
+}
+
+#[test]
+fn basic_logging_file_logging() {
+    // Create a temporary directory to put a log file into for testing
+    let temp_log_dir = tempdir::TempDir::new("fern").expect("Failed to set up temporary directory");
+    let log_file = temp_log_dir.path().join("test.log");
+
+    // Create a basic logger configuration
+    let l = fern::Dispatch::new()
+        .format(|out, msg, record| {
+            out.finish(format_args!("[{}] {}", record.level(), msg))
+        })
+        // Only log messages Info and above
+        .level(log::LevelFilter::Info)
+        // Output to stdout and the log file in the temporary directory we made above to test
+        .chain(io::stdout())
+        .chain(fern::log_file(log_file).expect("Failed to open log file"))
+        .into_log().1;
+
+    manual_log(&*l, Trace, "SHOULD NOT DISPLAY");
+    manual_log(&*l, Debug, "SHOULD NOT DISPLAY");
+    manual_log(&*l, Info, "Test information message");
+    manual_log(&*l, Warn, "Test warning message");
+    manual_log(&*l, Error, "Test error message");
 
     // ensure all File objects are dropped and OS buffers are flushed.
     log::logger().flush();
@@ -64,8 +154,8 @@ fn test1_basic_usage_global_logger() {
         );
     }
 
-    // Just to make sure this goes smoothly - it dose this automatically if we don't .close()
-    // manually, but it will ignore any errors when doing it automatically.
+    drop(l); // close before tempdir closes for Windows support.
+
     temp_log_dir
         .close()
         .expect("Failed to clean up temporary directory");
@@ -97,8 +187,8 @@ fn test2_line_seps() {
         .chain(fern::Output::file(fern::log_file(&log_file).expect("Failed to open log file"), "\r\n"))
         .into_log();
 
-    manual_log(&*l, log::Level::Info, "message1");
-    manual_log(&*l, log::Level::Info, "message2");
+    manual_log(&*l, Info, "message1");
+    manual_log(&*l, Info, "message2");
 
     // ensure all File objects are dropped and OS buffers are flushed.
     l.flush();
@@ -113,8 +203,6 @@ fn test2_line_seps() {
         assert_eq!(&result, "message1\r\nmessage2\r\n");
     }
 
-    // Just to make sure this goes smoothly - it dose this automatically if we don't .close()
-    // manually, but it will ignore any errors when doing it automatically.
     temp_log_dir
         .close()
         .expect("Failed to clean up temporary directory");
@@ -128,8 +216,8 @@ fn test3_channel_logging() {
 
     let (_, l) = fern::Dispatch::new().chain(send).into_log();
 
-    manual_log(&*l, log::Level::Info, "message1");
-    manual_log(&*l, log::Level::Info, "message2");
+    manual_log(&*l, Info, "message1");
+    manual_log(&*l, Info, "message2");
 
     l.flush();
 
