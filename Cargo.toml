@@ -18,7 +18,7 @@ travis-ci = { repository = "daboross/fern" }
 appveyor = { repository = "daboross/fern" }
 
 [dependencies]
-log = { version = "0.4.0-rc.1", features = ["std"] }
+log = { version = "0.4", features = ["std"] }
 
 [dev-dependencies]
 tempdir = "0.3"
