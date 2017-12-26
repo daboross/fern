@@ -69,7 +69,7 @@ fn test_basic_logging_file_logging() {
         );
     }
 
-    drop(l); // close before tempdir closes for Windows support.
+    drop(logger); // manual drop so file is freed before temp dir close
 
     temp_log_dir
         .close()
@@ -106,6 +106,8 @@ fn test_custom_line_separators() {
         };
         assert_eq!(&result, "message1\r\nmessage2\r\n");
     }
+
+    drop(logger); // manual drop so file is freed before temp dir close
 
     temp_log_dir
         .close()
