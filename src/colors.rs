@@ -6,7 +6,7 @@
 //! ```toml
 //! [dependencies]
 //! # ...
-//! fern = { version = "0.4", features = ["colored"] }
+//! fern = { version = "0.5", features = ["colored"] }
 //! ```
 use std::fmt;
 pub use colored::Color;
