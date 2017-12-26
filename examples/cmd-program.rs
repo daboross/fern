@@ -14,14 +14,14 @@ fn setup_logging(verbosity: u64) -> Result<(), fern::InitError> {
             // Let's say we depend on something which whose "info" level messages are too verbose
             // to include in end-user output. If we don't need them, let's not include them.
             base_config
-                .level(log::LogLevelFilter::Info)
-                .level_for("overly-verbose-target", log::LogLevelFilter::Warn)
+                .level(log::LevelFilter::Info)
+                .level_for("overly-verbose-target", log::LevelFilter::Warn)
         }
         1 => base_config
-            .level(log::LogLevelFilter::Debug)
-            .level_for("overly-verbose-target", log::LogLevelFilter::Info),
-        2 => base_config.level(log::LogLevelFilter::Debug),
-        _3_or_more => base_config.level(log::LogLevelFilter::Trace),
+            .level(log::LevelFilter::Debug)
+            .level_for("overly-verbose-target", log::LevelFilter::Info),
+        2 => base_config.level(log::LevelFilter::Debug),
+        _3_or_more => base_config.level(log::LevelFilter::Trace),
     };
 
     // Separate file config so we can include year, month and day in file logs
@@ -40,7 +40,7 @@ fn setup_logging(verbosity: u64) -> Result<(), fern::InitError> {
     let stdout_config = fern::Dispatch::new()
         .format(|out, message, record| {
             // special format for debug messages coming from our own crate.
-            if record.level() > log::LogLevelFilter::Info && record.target() == "cmd_program" {
+            if record.level() > log::LevelFilter::Info && record.target() == "cmd_program" {
                 out.finish(format_args!(
                     "---\nDEBUG: {}: {}\n---",
                     chrono::Local::now().format("%H:%M:%S"),

@@ -17,8 +17,8 @@
 //!
 //! ```toml
 //! [dependencies]
-//! log = "0.3"
-//! fern = "0.4"
+//! log = "0.4"
+//! fern = "0.5"
 //! ```
 //!
 //! Then declare both in your program's `main.rs` or `lib.rs`:
@@ -32,7 +32,7 @@
 //!
 //! # Example setup:
 //!
-//! In fern 0.4, creating, configuring, and establishing a logger as the global logger are all merged
+//! In fern 0.4+, creating, configuring, and establishing a logger as the global logger are all merged
 //! into builder methods on the `Dispatch` struct.
 //!
 //! Here's an example logger which formats messages, limits to Debug level, and puts everything into both stdout and
@@ -55,7 +55,7 @@
 //!             message
 //!         ))
 //!     })
-//!     .level(log::LogLevelFilter::Debug)
+//!     .level(log::LevelFilter::Debug)
 //!     .chain(std::io::stdout())
 //!     .chain(fern::log_file("output.log")?)
 //!     .apply()?;
@@ -111,7 +111,7 @@
 //!
 //! ---
 //!
-//! [`.level(log::LogLevelFilter::Debug)`]
+//! [`.level(log::LevelFilter::Debug)`]
 //!
 //! Set the minimum level needed to output to `Debug`.
 //!
@@ -181,7 +181,7 @@
 //! [`.format(`]: https://docs.rs/chrono/0.4/chrono/datetime/struct.DateTime.html#method.format
 //! [`")`]: https://docs.rs/chrono/0.4/chrono/datetime/struct.DateTime.html#method.format
 //! [`out.finish(format_args!(...))`]: struct.FormatCallback.html#method.finish
-//! [`.level(log::LogLevelFilter::Debug)`]: struct.Dispatch.html#method.level
+//! [`.level(log::LevelFilter::Debug)`]: struct.Dispatch.html#method.level
 //! [`Dispatch::chain`]: struct.Dispatch.html#method.chain
 //! [`.chain(std::io::stdout())`]: struct.Dispatch.html#method.chain
 //! [`Stdout`]: https://doc.rust-lang.org/std/io/struct.Stdout.html
@@ -200,7 +200,7 @@
 //! [`Dispatch` documentation]: struct.Dispatch.html
 //! [full example program]: https://github.com/daboross/fern/tree/master/examples/cmd-program.rs
 //! [`apply`]: struct.Dispatch.html#method.apply
-//! [`log`]: doc.rust-lang.org/log/
+//! [`log`]: https://docs.rs/log/0.4/log/
 #[cfg(feature = "colored")]
 extern crate colored;
 extern crate log;
@@ -221,23 +221,13 @@ mod errors;
 pub mod colors;
 
 /// A type alias for a log formatter.
-pub type Formatter = Fn(FormatCallback, &fmt::Arguments, &log::LogRecord) + Sync + Send + 'static;
+///
+/// As of fern `0.5`, the passed `fmt::Arguments` will always be the same as the given `log::Record`'s
+/// `.args()`.
+pub type Formatter = Fn(FormatCallback, &fmt::Arguments, &log::Record) + Sync + Send + 'static;
 
 /// A type alias for a log filter. Returning true means the record should succeed - false means it should fail.
-pub type Filter = Fn(&log::LogMetadata) -> bool + Send + Sync + 'static;
-
-/// Fern logging trait. This is necessary in order to allow for custom loggers taking in arguments that have already had
-/// a custom format applied to them.
-///
-/// The original `log::Log` trait's `log` method only accepts messages that were created using the log macros - this
-/// trait also accepts records which have had additional formatting applied to them.
-pub trait FernLog: Sync + Send {
-    /// Logs a log record, but with the given fmt::Arguments instead of the one contained in the LogRecord.
-    ///
-    /// This has access to the original record, but _should ignore_ the original `record.args()` and instead
-    /// use the passed in payload.
-    fn log_args(&self, payload: &fmt::Arguments, record: &log::LogRecord);
-}
+pub type Filter = Fn(&log::Metadata) -> bool + Send + Sync + 'static;
 
 /// Convenience method for opening a log file with common options.
 ///
