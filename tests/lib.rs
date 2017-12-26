@@ -1,12 +1,4 @@
 //! Tests!
-//!
-//! Note that since all tests set the global logger, only one can be run at a time in each runtime. In order to
-//! successfully run tests, you can use the following:
-//!
-//! ```sh
-//! cargo test -- --exclude test2
-//! cargo test test2
-//! ```
 extern crate fern;
 #[macro_use]
 extern crate log;
@@ -79,6 +71,8 @@ fn test1_basic_usage_global_logger() {
         .expect("Failed to clean up temporary directory");
 }
 
+/// Utility to manually enter a log message into a logger. All extra metadata (target,
+/// line number, etc) will be blank.
 fn manual_log<T>(logger: &log::Log, level: log::Level, message: T)
 where
     T: fmt::Display,

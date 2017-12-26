@@ -13,6 +13,7 @@ fn main() {
         .format(move |out, message, record| {
             out.finish(format_args!(
                 "[{}]{} {}",
+                // This will color the log level only, not the whole line. Just a touch.
                 colors.color(record.level()),
                 chrono::Utc::now().format("[%Y-%m-%d %H:%M:%S]"),
                 message

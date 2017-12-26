@@ -41,21 +41,17 @@ There aren't many hard guidelines in this repository on how specifically to form
 
 ### Testing
 
+
 Building fern is as easy as is expected, `cargo build`.
 
-Testing is somewhat more convoluted - mostly because using fern requires initializing a global logger. To test the three "integration" tests separately, you'll need to invoke three commands:
+As of fern 0.5, testing can also easily be done with `cargo test`.
 
-```sh
-cargo test -- --skip test2 --skip test3
-cargo test test2
-cargo test test3
-```
-
-To run the example program, use:
+To run and test the example programs, use:
 
 ```sh
 cargo run --example cmd-program # test less logging
 cargo run --example cmd-program -- --verbose # test more logging
+cargo run --example colored --features=colored # test colored log levels
 ```
 
 Feel free to add tests and examples demonstrating new features as you see fit. Pull requests which solely add new/interesting example programs are also welcome.

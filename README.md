@@ -51,19 +51,19 @@ More contrived, and useful, examples at the [`api docs`][fern-docs] and the [exa
 
 ### Project Status
 
-The `fern` project, so far, has been maintained by myself alone. It's a hobby project, but one I aim to keep at a high quality now and in the future.
+The `fern` project is primarily maintained by @daboross on github. It's a hobby project, but one I aim to keep at a high quality.
 
 ### Contributing
 
-With that said, contributions are also welcome!
+As this is a hobby project, contributions are very welcome!
 
-The easiest way for you to contribute right now is to use `fern` in your application, and see where it's lacking. The current library should have a solid base, but not many log adapters or niche features.
+The easiest way for you to contribute right now is to use `fern` in your application, and see where it's lacking. The current library has a solid base, but it lacks features, and I may not anticipate your use cases.
 
-If you have a use case `fern` does not cover, filing an issue will be immensely useful to me, to anyone wanting to contribute to the project, and (hopefully) to you once the feature is implemented!
+If you have a use case `fern` does not cover, please file an issue. This is immensely useful to me, to anyone wanting to contribute to the project, and to you as well if the feature is implemented.
 
-If you've just filed an issue, or you want to approach one of our [existing ones](https://github.com/daboross/fern/issues), mentoring is available! Tag me with @daboross on an issue, or send me an email at daboross @ daboross.net, and I'll be available to help.
+If you're interested in helping fix an [existing issue](https://github.com/daboross/fern/issues), or an issue you just filed, help is always welcome.
 
-See [CONTRIBUTING](./CONTRIBUTING.md) for more information on technical details.
+See [CONTRIBUTING](./CONTRIBUTING.md) for technical information on contrbuting.
 
 [Rust]: https://www.rust-lang.org/
 [travis-image]: https://travis-ci.org/daboross/fern.svg?branch=master

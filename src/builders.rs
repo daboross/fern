@@ -13,7 +13,8 @@ use {log_impl, Filter, FormatCallback, Formatter};
 /// to other dispatch loggers or output loggers.
 ///
 /// Note that all methods are position-insensitive. `Dispatch::new().format(a).chain(b)` produces the exact same result
-/// as `Dispatch::new().chain(b).format(a)`. Even with this, the first syntax is preferred for clarity's sake.
+/// as `Dispatch::new().chain(b).format(a)`. Given this, it is preferred to put 'format' and other modifiers before 'chain'
+/// for the sake of clarity.
 ///
 /// Example usage demonstrating all features:
 ///
