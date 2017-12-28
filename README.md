@@ -2,6 +2,7 @@ fern
 ====
 [![Linux Build Status][travis-image]][travis-builds]
 [![Windows Build Status][appveyor-image]][appveyor-builds]
+[![crates.io version badge][cratesio-badge]][fern-crate]
 
 Simple, efficient logging for [Rust].
 
@@ -46,7 +47,7 @@ More contrived, and useful, examples at the [`api docs`][fern-docs] and the [exa
 ---
 
 - [`fern` documentation][fern-docs]
-- [`fern` on crates.io](crates.io/crates/fern/)
+- [`fern` on crates.io][fern-crate]
 - [`fern` in use (example program)][fern-example]
 
 ### Project Status
@@ -70,6 +71,8 @@ See [CONTRIBUTING](./CONTRIBUTING.md) for technical information on contrbuting.
 [travis-builds]: https://travis-ci.org/daboross/fern
 [appveyor-image]: https://ci.appveyor.com/api/projects/status/github/daboross/fern?branch=master&svg=true
 [appveyor-builds]: https://ci.appveyor.com/project/daboross/fern
+[cratesio-badge]: http://meritbadge.herokuapp.com/fern
 [fern-docs]: https://dabo.guru/rust/fern/
+[fern-crate]: https://crates.io/crates/fern
 [fern-example]: https://github.com/daboross/fern/tree/master/examples/cmd-program.rs
 [`log`]: https://github.com/rust-lang-nursery/log
