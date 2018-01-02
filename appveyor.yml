@@ -46,8 +46,9 @@ install:
 - cargo -V
 
 test_script:
-- cargo build --verbose
 - cargo test --verbose
+- cargo test --verbose --features=colored
+- cargo test --verbose --features=syslog-3
 - cargo test --verbose --all-features
 - cargo run --example cmd-program
 - cargo run --example cmd-program -- --verbose
