@@ -195,32 +195,6 @@ impl ColoredLevelConfig {
         self
     }
 
-    /// Retrieves the default configuration. This has:
-    ///
-    /// - [`Error`] as [`Color::Red`]
-    /// - [`Warn`] as [`Color::Yellow`]
-    /// - [`Info`] as [`Color::White`]
-    /// - [`Debug`] as [`Color::White`]
-    /// - [`Trace`] as [`Color::White`]
-    ///
-    /// [`Error`]: https://docs.rs/log/0.4/log/enum.Level.html#variant.Error
-    /// [`Warn`]: https://docs.rs/log/0.4/log/enum.Level.html#variant.Warn
-    /// [`Info`]: https://docs.rs/log/0.4/log/enum.Level.html#variant.Info
-    /// [`Debug`]: https://docs.rs/log/0.4/log/enum.Level.html#variant.Debug
-    /// [`Trace`]: https://docs.rs/log/0.4/log/enum.Level.html#variant.Trace
-    /// [`Color::White`]: https://docs.rs/colored/1/colored/enum.Color.html#variant.White
-    /// [`Color::Yellow`]: https://docs.rs/colored/1/colored/enum.Color.html#variant.Yellow
-    /// [`Color::Red`]: https://docs.rs/colored/1/colored/enum.Color.html#variant.Red
-    pub fn default() -> Self {
-        ColoredLevelConfig {
-            error: Color::Red,
-            warn: Color::Yellow,
-            debug: Color::White,
-            info: Color::White,
-            trace: Color::White,
-        }
-    }
-
     /// Colors the given log level with the color in this configuration corresponding to it's
     /// level.
     ///
@@ -241,6 +215,34 @@ impl ColoredLevelConfig {
             Level::Info => self.info,
             Level::Debug => self.debug,
             Level::Trace => self.trace,
+        }
+    }
+}
+
+impl Default for ColoredLevelConfig {
+    /// Retrieves the default configuration. This has:
+    ///
+    /// - [`Error`] as [`Color::Red`]
+    /// - [`Warn`] as [`Color::Yellow`]
+    /// - [`Info`] as [`Color::White`]
+    /// - [`Debug`] as [`Color::White`]
+    /// - [`Trace`] as [`Color::White`]
+    ///
+    /// [`Error`]: https://docs.rs/log/0.4/log/enum.Level.html#variant.Error
+    /// [`Warn`]: https://docs.rs/log/0.4/log/enum.Level.html#variant.Warn
+    /// [`Info`]: https://docs.rs/log/0.4/log/enum.Level.html#variant.Info
+    /// [`Debug`]: https://docs.rs/log/0.4/log/enum.Level.html#variant.Debug
+    /// [`Trace`]: https://docs.rs/log/0.4/log/enum.Level.html#variant.Trace
+    /// [`Color::White`]: https://docs.rs/colored/1/colored/enum.Color.html#variant.White
+    /// [`Color::Yellow`]: https://docs.rs/colored/1/colored/enum.Color.html#variant.Yellow
+    /// [`Color::Red`]: https://docs.rs/colored/1/colored/enum.Color.html#variant.Red
+    fn default() -> Self {
+        ColoredLevelConfig {
+            error: Color::Red,
+            warn: Color::Yellow,
+            debug: Color::White,
+            info: Color::White,
+            trace: Color::White,
         }
     }
 }
