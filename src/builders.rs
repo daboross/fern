@@ -7,6 +7,9 @@ use log::{self, Log};
 
 use {log_impl, Filter, FormatCallback, Formatter};
 
+#[cfg(feature = "syslog-3")]
+use syslog_3;
+
 /// The base dispatch logger.
 ///
 /// This allows for formatting log records, limiting what records can be passed through, and then dispatching records
@@ -402,6 +405,10 @@ impl Dispatch {
                         line_sep: line_sep,
                     }))
                 }
+                OutputInner::Syslog(log) => {
+                    max_child_level = log::LevelFilter::Trace;
+                    Some(log_impl::Output::Syslog(log_impl::Syslog { inner: log }))
+                }
                 OutputInner::Dispatch(child_dispatch) => {
                     let (child_level, child) = child_dispatch.into_dispatch();
                     if child_level > log::LevelFilter::Off {
@@ -535,6 +542,7 @@ enum OutputInner {
     OtherBoxed(Box<Log>),
     /// Passes all messages to other logger.
     OtherStatic(&'static Log),
+    #[cfg(feature = "syslog-3")] Syslog(syslog_3::Logger),
 }
 
 /// Configuration for a logger output.
@@ -609,6 +617,32 @@ impl From<Sender<String>> for Output {
             stream: stream,
             line_sep: "\n".into(),
         })
+    }
+}
+
+#[cfg(feature = "syslog-3")]
+impl From<syslog_3::Logger> for Output {
+    /// Creates an output logger which writes all messages to the given syslog output.
+    ///
+    /// Log levels are translated trace => debug, debug => debug, info => informational, warn => warning, and
+    /// error => error.
+    fn from(log: syslog_3::Logger) -> Self {
+        Output(OutputInner::Syslog(log))
+    }
+}
+
+#[cfg(feature = "syslog-3")]
+impl From<Box<syslog_3::Logger>> for Output {
+    /// Creates an output logger which writes all messages to the given syslog output.
+    ///
+    /// Log levels are translated trace => debug, debug => debug, info => informational, warn => warning, and
+    /// error => error.
+    ///
+    /// Note that while this takes a Box<Logger> for convenience (syslog methods return Boxes), it will be
+    /// immediately unboxed upon storage in the configuration structure. This will create a configuration
+    /// identical to that created by passing a raw `syslog::Logger`.
+    fn from(log: Box<syslog_3::Logger>) -> Self {
+        Output(OutputInner::Syslog(*log))
     }
 }
 
@@ -793,6 +827,10 @@ impl fmt::Debug for OutputInner {
             } => f.debug_struct("Output::Sender")
                 .field("stream", stream)
                 .field("line_sep", line_sep)
+                .finish(),
+            #[cfg(feature = "syslog-3")]
+            OutputInner::Syslog(_) => f.debug_tuple("Output::Syslog")
+                .field(&"<unprintable syslog::Logger>")
                 .finish(),
             OutputInner::Dispatch(ref dispatch) => f.debug_tuple("Output::Dispatch").field(dispatch).finish(),
             OutputInner::SharedDispatch(_) => f.debug_tuple("Output::SharedDispatch")

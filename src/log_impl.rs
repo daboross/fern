@@ -10,6 +10,9 @@ use log::{self, Log};
 
 use {Filter, Formatter};
 
+#[cfg(feature = "syslog-3")]
+use syslog_3;
+
 pub enum LevelConfiguration {
     JustDefault,
     Minimal(Vec<(Cow<'static, str>, log::LevelFilter)>),
@@ -50,6 +53,7 @@ pub(crate) enum Output {
     Stderr(Stderr),
     File(File),
     Sender(Sender),
+    #[cfg(feature = "syslog-3")] Syslog(Syslog),
     Dispatch(Dispatch),
     SharedDispatch(Arc<Dispatch>),
     OtherBoxed(Box<Log>),
@@ -74,6 +78,11 @@ pub(crate) struct File {
 pub(crate) struct Sender {
     pub stream: Mutex<mpsc::Sender<String>>,
     pub line_sep: Cow<'static, str>,
+}
+
+#[cfg(feature = "syslog-3")]
+pub(crate) struct Syslog {
+    pub inner: syslog_3::Logger,
 }
 
 pub(crate) struct Null;
@@ -152,6 +161,8 @@ impl Log for Output {
             Output::SharedDispatch(ref s) => s.enabled(metadata),
             Output::OtherBoxed(ref s) => s.enabled(metadata),
             Output::OtherStatic(ref s) => s.enabled(metadata),
+            #[cfg(feature = "syslog-3")]
+            Output::Syslog(ref s) => s.enabled(metadata),
         }
     }
 
@@ -165,6 +176,8 @@ impl Log for Output {
             Output::SharedDispatch(ref s) => s.log(record),
             Output::OtherBoxed(ref s) => s.log(record),
             Output::OtherStatic(ref s) => s.log(record),
+            #[cfg(feature = "syslog-3")]
+            Output::Syslog(ref s) => s.log(record),
         }
     }
 
@@ -178,6 +191,8 @@ impl Log for Output {
             Output::SharedDispatch(ref s) => s.flush(),
             Output::OtherBoxed(ref s) => s.flush(),
             Output::OtherStatic(ref s) => s.flush(),
+            #[cfg(feature = "syslog-3")]
+            Output::Syslog(ref s) => s.flush(),
         }
     }
 }
@@ -345,6 +360,29 @@ impl Log for Sender {
         });
     }
 
+    fn flush(&self) {}
+}
+
+#[cfg(feature = "syslog-3")]
+impl Log for Syslog {
+    fn enabled(&self, _: &log::Metadata) -> bool {
+        true
+    }
+
+    fn log(&self, record: &log::Record) {
+        fallback_on_error(record, |record| {
+            use log::Level;
+            let message = record.args();
+            match record.level() {
+                Level::Error => self.inner.err(message)?,
+                Level::Warn => self.inner.warning(message)?,
+                Level::Info => self.inner.info(message)?,
+                Level::Debug | Level::Trace => self.inner.debug(message)?,
+            };
+
+            Ok(())
+        });
+    }
     fn flush(&self) {}
 }
 

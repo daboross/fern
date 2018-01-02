@@ -23,6 +23,10 @@ appveyor = { repository = "daboross/fern" }
 [dependencies]
 log = { version = "0.4", features = ["std"] }
 colored = { version = "1.5", optional = true }
+syslog = { version = "3.3", optional = true }
+
+[features]
+syslog-3 = ["syslog"]
 
 [dev-dependencies]
 tempdir = "0.3"
@@ -35,6 +39,12 @@ name = "cmd-program"
 [[example]]
 name = "colored"
 required-features = ["colored"]
+
+[[example]]
+# different name so we know it's working correctly when looking at the syslog.
+name = "fern-syslog"
+path = "examples/syslog.rs"
+required-features = ["syslog-3"]
 
 [package.metadata.docs.rs]
 all-features = true

@@ -169,7 +169,10 @@
 //! The [`Dispatch` documentation] has example usages of each method, and the [full example program] might be useful
 //! for using fern in a larger application context.
 //!
-//! ANSI colors are also supported, see the [colors] module for examples.
+//! See the [colors] module for examples using ANSI terminal coloring.
+//!
+//! See the [syslog] module for examples outputting to the unix syslog, or the [syslog full example program] for a more
+//! realistic sample.
 //!
 //! [`fern::Dispatch::new()`]: struct.Dispatch.html#method.new
 //! [`.format(|...| ...)`]: struct.Dispatch.html#method.format
@@ -194,11 +197,15 @@
 //! [the format specifier docs]: https://docs.rs/chrono/0.4/chrono/format/strftime/index.html#specifiers
 //! [`Dispatch` documentation]: struct.Dispatch.html
 //! [full example program]: https://github.com/daboross/fern/tree/master/examples/cmd-program.rs
+//! [syslog full example program]: https://github.com/daboross/fern/tree/master/examples/syslog.rs
 //! [`apply`]: struct.Dispatch.html#method.apply
 //! [colors]: colors/index.html
+//! [syslog]: syslog/index.html
 #[cfg(feature = "colored")]
 extern crate colored;
 extern crate log;
+#[cfg(feature = "syslog-3")]
+extern crate syslog as syslog_3;
 
 use std::convert::AsRef;
 use std::path::Path;
@@ -214,6 +221,8 @@ mod log_impl;
 mod errors;
 #[cfg(feature = "colored")]
 pub mod colors;
+#[cfg(feature = "syslog-3")]
+pub mod syslog;
 
 /// A type alias for a log formatter.
 ///
