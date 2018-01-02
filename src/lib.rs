@@ -2,9 +2,9 @@
 #![doc(html_root_url = "https://docs.rs/fern/0.5.1")]
 //! Efficient, configurable logging in Rust.
 //!
-//! # Depending on `fern`
+//! # Depending on fern
 //!
-//! Ensure you require both `fern` and `log` in your project's `Cargo.toml`:
+//! Ensure you require both fern and log in your project's `Cargo.toml`:
 //!
 //! ```toml
 //! [dependencies]
@@ -12,7 +12,7 @@
 //! fern = "0.5"
 //! ```
 //!
-//! Then declare both in your program's `main.rs` or `lib.rs`:
+//! Then declare both in `main.rs` or `lib.rs`:
 //!
 //! ```
 //! #[macro_use]
@@ -195,7 +195,6 @@
 //! [`Dispatch` documentation]: struct.Dispatch.html
 //! [full example program]: https://github.com/daboross/fern/tree/master/examples/cmd-program.rs
 //! [`apply`]: struct.Dispatch.html#method.apply
-//! [`log`]: https://docs.rs/log/0.4/log/
 //! [colors]: colors/index.html
 #[cfg(feature = "colored")]
 extern crate colored;

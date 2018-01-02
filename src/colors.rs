@@ -56,7 +56,7 @@ trait ColoredLogLevel {
 /// This implements [`fmt::Display`] to displaying the inner text (usually a log level) with ANSI color markers before
 /// to set the color and after to reset the color.
 ///
-/// WithFgColor instances can be created and displayed without any allocation.
+/// `WithFgColor` instances can be created and displayed without any allocation.
 // this is necessary in order to avoid using colored::ColorString, which has a Display
 // implementation involving many allocations, and would involve two more string allocations
 // even to create it.
