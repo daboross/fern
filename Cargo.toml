@@ -41,9 +41,7 @@ name = "colored"
 required-features = ["colored"]
 
 [[example]]
-# different name so we know it's working correctly when looking at the syslog.
-name = "fern-syslog"
-path = "examples/syslog.rs"
+name = "syslog"
 required-features = ["syslog-3"]
 
 [package.metadata.docs.rs]
