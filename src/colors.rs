@@ -36,6 +36,7 @@
 //!             // just use 'colors.color(..)' instead of the level
 //!             // itself to insert ANSI colors.
 //!             colors.color(record.level()),
+//!             message,
 //!         ))
 //!     })
 //! ```
