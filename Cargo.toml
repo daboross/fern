@@ -1,11 +1,12 @@
 [package]
 
 name = "fern"
+# Remember to update html_root_url in src/lib.rs with each version.
 version = "0.5.1"
 authors = ["David Ross <daboross@daboross.net>"]
 description = "Simple, efficient logging"
 
-documentation = "https://dabo.guru/rust/fern/"
+documentation = "https://docs.rs/fern/"
 repository = "https://github.com/daboross/fern"
 readme = "README.md"
 

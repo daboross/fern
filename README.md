@@ -72,7 +72,7 @@ See [CONTRIBUTING](./CONTRIBUTING.md) for technical information on contrbuting.
 [appveyor-image]: https://ci.appveyor.com/api/projects/status/github/daboross/fern?branch=master&svg=true
 [appveyor-builds]: https://ci.appveyor.com/project/daboross/fern
 [cratesio-badge]: http://meritbadge.herokuapp.com/fern
-[fern-docs]: https://dabo.guru/rust/fern/
+[fern-docs]: https://docs.rs/fern/
 [fern-crate]: https://crates.io/crates/fern
 [fern-example]: https://github.com/daboross/fern/tree/master/examples/cmd-program.rs
 [`log`]: https://github.com/rust-lang-nursery/log

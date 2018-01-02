@@ -1,5 +1,5 @@
 #![deny(missing_docs)]
-#![doc(html_root_url = "https://dabo.guru/rust/fern/")]
+#![doc(html_root_url = "https://docs.rs/fern/0.5.1")]
 //! Efficient, configurable logging in Rust.
 //!
 //! With Fern, you can:
