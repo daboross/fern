@@ -405,6 +405,7 @@ impl Dispatch {
                         line_sep: line_sep,
                     }))
                 }
+                #[cfg(feature = "syslog-3")]
                 OutputInner::Syslog(log) => {
                     max_child_level = log::LevelFilter::Trace;
                     Some(log_impl::Output::Syslog(log_impl::Syslog { inner: log }))
