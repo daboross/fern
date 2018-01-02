@@ -5,8 +5,9 @@ rust:
 - stable
 - beta
 - nightly
-before_script:
-- export PATH="$PATH:$HOME/.cargo/bin"
+os:
+- linux
+- osx
 script:
 - cargo test --verbose
 - cargo test --verbose --features=colored
