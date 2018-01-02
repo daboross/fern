@@ -1,13 +1,46 @@
-//! Module containing color-related functions using the `colored` crate.
+//! Support for ANSI terminal colors via the colored crate.
 //!
-//! This module is only available when the `colored` feature is enabled for `fern`.
-//! This can be done with the following in `Cargo.toml`:
+//! To enable support for colors, add the `"colored"` feature in your `Cargo.toml`:
 //!
 //! ```toml
 //! [dependencies]
-//! # ...
 //! fern = { version = "0.5", features = ["colored"] }
 //! ```
+//!
+//! ---
+//!
+//! Colors are currently supported mainly for the log-level. Meaning you can configure the "INFO" / "WARN"
+//! / "ERROR" text itself to be a different color depending on which of those it is.
+//!
+//! To do this, the [`ColoredLevelConfig`] structure allows configuration of per-level colors.
+//!
+//! ```
+//! use fern::colors::{Color, ColoredLevelConfig};
+//!
+//!
+//! let mut colors = ColoredLevelConfig::new()
+//!     // use builder methods
+//!     .info(Color::Green);
+//! // or access raw fields
+//! colors.warn = Color::Magenta;
+//! ```
+//!
+//! It can then be used within any regular fern formatting closure:
+//!
+//! ```
+//! fern::Dispatch::new()
+//!     // ...
+//!     .format(move |out, message, record| {
+//!         out.finish(format_args!(
+//!             "[{}] {}",
+//!             // just use 'colors.color(..)' instead of the level
+//!             // itself to insert ANSI colors.
+//!             colors.color(record.level()),
+//!         ))
+//!     })
+//! ```
+//!
+//! [`ColoredLevelConfig`]: struct.ColoredLevelConfig.html
 use std::fmt;
 pub use colored::Color;
 use log::Level;
@@ -18,14 +51,17 @@ trait ColoredLogLevel {
     fn colored(&self, color: Color) -> WithFgColor<Level>;
 }
 
-/// Opaque structure which represents some text data and a color to display it with. This implements [`fmt::Display`]
-/// via displaying the inner text (usually a log level) with ANSI color markers before to set the color and after to
-/// reset the color.
+/// Opaque structure which represents some text data and a color to display it with.
+///
+/// This implements [`fmt::Display`] to displaying the inner text (usually a log level) with ANSI color markers before
+/// to set the color and after to reset the color.
 ///
 /// WithFgColor instances can be created and displayed without any allocation.
 // this is necessary in order to avoid using colored::ColorString, which has a Display
 // implementation involving many allocations, and would involve two more string allocations
 // even to create it.
+//
+// [`fmt::Display`]: https://doc.rust-lang.org/std/fmt/trait.Display.html
 pub struct WithFgColor<T>
 where
     T: fmt::Display,

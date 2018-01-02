@@ -8,10 +8,7 @@ Simple, efficient logging for [Rust].
 
 ---
 
-Fern
-====
-
-Logging configuration is infinitely branched, like a fern: formatting, filters, and output are all controlled for any increasingly specific set of parameters. Fern provides a builder-based configuration and implementation for rust's standard [`log`] crate.
+Logging configuration is recursively branched, like a fern: formatting, filters, and output can be applied recursively to match increasingly specific kinds of logging. Fern provides a builder-based configuration backing for rust's standard [`log`] crate.
 
 ```rust
 //! With fern, we can:
@@ -30,7 +27,7 @@ fern::Dispatch::new()
     })
     // Add blanket level filter -
     .level(log::LevelFilter::Debug)
-    // - and per-namespace overrides
+    // - and per-module overrides
     .level_for("hyper", log::LevelFilter::Info)
     // Output to stdout, files, and other Dispatch configurations
     .chain(std::io::stdout())
@@ -42,7 +39,7 @@ fern::Dispatch::new()
 info!("helllo, world!");
 ```
 
-More contrived, and useful, examples at the [`api docs`][fern-docs] and the [example command line program][fern-example].
+Examples of all features at the [`api docs`][fern-docs]. See fern in use with this [example command line program][fern-example].
 
 ---
 
