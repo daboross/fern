@@ -14,7 +14,7 @@ license = "MIT"
 keywords = ["log", "logging", "logger"]
 categories = ["development-tools::debugging"]
 
-include = ["Cargo.toml", "src/**/*", "tests/**/*", "examples/**/*", "LICENSE", "README.md", "CONTRIBUTING.md"]
+include = ["Cargo.toml", "src/**/*", "tests/**/*", "examples/**/*", "LICENSE", "README.md", "CONTRIBUTING.md", "CHANGELOG.md"]
 
 [badges]
 travis-ci = { repository = "daboross/fern" }
