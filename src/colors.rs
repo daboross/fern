@@ -28,6 +28,7 @@
 //! It can then be used within any regular fern formatting closure:
 //!
 //! ```
+//! # let colors = fern::colors::ColoredLevelConfig::new();
 //! fern::Dispatch::new()
 //!     // ...
 //!     .format(move |out, message, record| {
@@ -39,6 +40,7 @@
 //!             message,
 //!         ))
 //!     })
+//!     # .into_log();
 //! ```
 //!
 //! [`ColoredLevelConfig`]: struct.ColoredLevelConfig.html
