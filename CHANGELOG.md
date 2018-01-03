@@ -1,3 +1,18 @@
+0.5.2 (2018-01-02)
+==================
+
+- Re-add compatibility for rust versions 1.16.0+, and add CI testing
+  with rustc 1.16.0 to ensure this is kept in the future.
+- Add some more general documentation updates and clarity increases.
+- Add a CHANGELOG.md which mirrors git tag releases.
+- Update documentation links to point to docs.rs rather than custom
+  hosted documentation.
+- Fix ColoredLevelConfig::default being an inherent method rather than
+  an implementation of the Default trait.
+- Add direct support for the syslog crate under the "syslog-3"
+  feature flag.
+  - Add a module worth of documentation for using fern with syslog.
+
 0.5.1 (2017-12-26)
 ==================
 
