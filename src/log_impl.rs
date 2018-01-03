@@ -19,7 +19,7 @@ pub enum LevelConfiguration {
     Many(HashMap<Cow<'static, str>, log::LevelFilter>),
 }
 
-pub(crate) struct Dispatch {
+pub struct Dispatch {
     pub output: Vec<Output>,
     pub default_level: log::LevelFilter,
     pub levels: LevelConfiguration,
@@ -48,7 +48,7 @@ pub struct FormatCallback<'a>(InnerFormatCallback<'a>);
 
 struct InnerFormatCallback<'a>(&'a mut bool, &'a Dispatch, &'a log::Record<'a>);
 
-pub(crate) enum Output {
+pub enum Output {
     Stdout(Stdout),
     Stderr(Stderr),
     File(File),
@@ -60,32 +60,32 @@ pub(crate) enum Output {
     OtherStatic(&'static Log),
 }
 
-pub(crate) struct Stdout {
+pub struct Stdout {
     pub stream: io::Stdout,
     pub line_sep: Cow<'static, str>,
 }
 
-pub(crate) struct Stderr {
+pub struct Stderr {
     pub stream: io::Stderr,
     pub line_sep: Cow<'static, str>,
 }
 
-pub(crate) struct File {
+pub struct File {
     pub stream: Mutex<BufWriter<fs::File>>,
     pub line_sep: Cow<'static, str>,
 }
 
-pub(crate) struct Sender {
+pub struct Sender {
     pub stream: Mutex<mpsc::Sender<String>>,
     pub line_sep: Cow<'static, str>,
 }
 
 #[cfg(feature = "syslog-3")]
-pub(crate) struct Syslog {
+pub struct Syslog {
     pub inner: syslog_3::Logger,
 }
 
-pub(crate) struct Null;
+pub struct Null;
 
 impl From<Vec<(Cow<'static, str>, log::LevelFilter)>> for LevelConfiguration {
     fn from(mut levels: Vec<(Cow<'static, str>, log::LevelFilter)>) -> Self {
