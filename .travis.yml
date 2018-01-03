@@ -8,6 +8,11 @@ rust:
 os:
 - linux
 - osx
+matrix:
+  include:
+  - os: linux
+    rust: 1.16.0
+    script: cargo build --verbose
 script:
 - cargo test --verbose
 - cargo test --verbose --features=colored
