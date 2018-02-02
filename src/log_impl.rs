@@ -326,12 +326,12 @@ impl Log for File {
 
     fn log(&self, record: &log::Record) {
         fallback_on_error(record, |record| {
+            // Formatting first prevents deadlocks on file-logging,
+            // when the process of formatting itself is logged.
+            let msg = format!("{}{}", record.args(), self.line_sep);
             let mut writer = self.stream.lock().unwrap_or_else(|e| e.into_inner());
-
-            write!(writer, "{}{}", record.args(), self.line_sep)?;
-
+            write!(writer, "{}", msg)?;
             writer.flush()?;
-
             Ok(())
         });
     }
