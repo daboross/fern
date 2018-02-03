@@ -49,7 +49,7 @@ test_script:
 - cargo test --verbose
 - cargo test --verbose --features=colored
 - cargo test --verbose --features=meta-logging-in-format
-- cargo test --verbose --all-features
+- cargo test --verbose --features=colored --features=meta-logging-in-format
 - cargo run --example cmd-program
 - cargo run --example cmd-program -- --verbose
 - cargo run --example colored --features colored
