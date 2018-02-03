@@ -21,15 +21,11 @@ fn test_basic_logging_file_logging() {
     {
         // Create a basic logger configuration
         let (_max_level, logger) = fern::Dispatch::new()
-        .format(|out, msg, record| {
-            out.finish(format_args!("[{}] {}", record.level(), msg))
-        })
-        // Only log messages Info and above
-        .level(log::LevelFilter::Info)
-        // Output to stdout and the log file in the temporary directory we made above to test
-        .chain(io::stdout())
-        .chain(fern::log_file(log_file).expect("Failed to open log file"))
-        .into_log();
+            .format(|out, msg, record| out.finish(format_args!("[{}] {}", record.level(), msg)))
+            .level(log::LevelFilter::Info)
+            .chain(io::stdout())
+            .chain(fern::log_file(log_file).expect("Failed to open log file"))
+            .into_log();
 
         let l = &*logger;
         manual_log(l, Trace, "SHOULD NOT DISPLAY");
@@ -85,11 +81,11 @@ fn test_custom_line_separators() {
     {
         // Create a basic logger configuration
         let (_max_level, logger) = fern::Dispatch::new()
-        // default format is just the message if not specified
-        // default log level is 'trace' if not specified (logs all messages)
-        // output to the log file with the "\r\n" line separator.
-        .chain(fern::Output::file(fern::log_file(&log_file).expect("Failed to open log file"), "\r\n"))
-        .into_log();
+            // default format is just the message if not specified
+            // default log level is 'trace' if not specified (logs all messages)
+            // output to the log file with the "\r\n" line separator.
+            .chain(fern::Output::file(fern::log_file(&log_file).expect("Failed to open log file"), "\r\n"))
+            .into_log();
 
         let l = &*logger;
         manual_log(l, Info, "message1");
