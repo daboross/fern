@@ -1,3 +1,12 @@
+Unreleased
+==========
+
+- Add a feature flag 'meta-logging-in-format' which adds code to allow
+  making log!() calls within a Display::fmt or Debug::fmt
+  implementation of something being logged. This is a niche use case
+  and involves an additional String allocations, so it's disabled by
+  default.
+
 0.5.2 (2018-01-02)
 ==================
 

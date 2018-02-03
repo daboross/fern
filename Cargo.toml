@@ -27,6 +27,7 @@ syslog = { version = "3.3", optional = true }
 
 [features]
 syslog-3 = ["syslog"]
+meta-logging-in-format = []
 
 [dev-dependencies]
 tempdir = "0.3"
@@ -43,6 +44,9 @@ required-features = ["colored"]
 [[example]]
 name = "syslog"
 required-features = ["syslog-3"]
+
+[[example]]
+name = "meta-logging"
 
 [package.metadata.docs.rs]
 all-features = true
