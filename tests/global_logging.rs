@@ -90,18 +90,15 @@ fn test_global_logger() {
 
     let verify_acquired = verify.0.lock().unwrap();
     assert_eq!(
-        verify_acquired.info,
-        true,
+        verify_acquired.info, true,
         "expected info message to be received"
     );
     assert_eq!(
-        verify_acquired.warn,
-        true,
+        verify_acquired.warn, true,
         "expected warn message to be received"
     );
     assert_eq!(
-        verify_acquired.error,
-        true,
+        verify_acquired.error, true,
         "expected error message to be received"
     );
 }

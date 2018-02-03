@@ -543,7 +543,8 @@ enum OutputInner {
     OtherBoxed(Box<Log>),
     /// Passes all messages to other logger.
     OtherStatic(&'static Log),
-    #[cfg(feature = "syslog-3")] Syslog(syslog_3::Logger),
+    #[cfg(feature = "syslog-3")]
+    Syslog(syslog_3::Logger),
 }
 
 /// Configuration for a logger output.

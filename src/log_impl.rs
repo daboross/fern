@@ -53,7 +53,8 @@ pub enum Output {
     Stderr(Stderr),
     File(File),
     Sender(Sender),
-    #[cfg(feature = "syslog-3")] Syslog(Syslog),
+    #[cfg(feature = "syslog-3")]
+    Syslog(Syslog),
     Dispatch(Dispatch),
     SharedDispatch(Arc<Dispatch>),
     OtherBoxed(Box<Log>),
