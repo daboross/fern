@@ -174,6 +174,8 @@
 //! See the [syslog] module for examples outputting to the unix syslog, or the [syslog full example program] for a more
 //! realistic sample.
 //!
+//! See the [meta] module for information on getting logging-within-logging working correctly.
+//!
 //! [`fern::Dispatch::new()`]: struct.Dispatch.html#method.new
 //! [`.format(|...| ...)`]: struct.Dispatch.html#method.format
 //! [`chrono::Local::now()`]: https://docs.rs/chrono/0.4/chrono/offset/local/struct.Local.html#method.now
@@ -201,6 +203,7 @@
 //! [`apply`]: struct.Dispatch.html#method.apply
 //! [colors]: colors/index.html
 //! [syslog]: syslog/index.html
+//! [meta]: meta/index.html
 #[cfg(feature = "colored")]
 extern crate colored;
 extern crate log;
@@ -223,6 +226,7 @@ mod errors;
 pub mod colors;
 #[cfg(feature = "syslog-3")]
 pub mod syslog;
+pub mod meta;
 
 /// A type alias for a log formatter.
 ///
