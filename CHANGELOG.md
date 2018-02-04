@@ -1,11 +1,9 @@
 Unreleased
 ==========
 
-- Add a feature flag 'meta-logging-in-format' which adds code to allow
-  making log!() calls within a Display::fmt or Debug::fmt
-  implementation of something being logged. This is a niche use case
-  and involves an additional String allocations, so it's disabled by
-  default.
+- Add support for `Display::fmt` implementations which call the global
+  logger via a 'meta-logging-in-format' flag.
+  - This is disabled by default, see 'meta' module for more info.
 
 0.5.2 (2018-01-02)
 ==================
@@ -26,8 +24,7 @@ Unreleased
 ==================
 
 - Re-add support for colored log levels with the 'colored' feature
-  - This was initially implemented in fern 0.4.4 by @nihilus, but
-    support was accidentally dropped in fern 0.5.0.
+  - Support for this was accidentally dropped in 0.5.0.
 - Fix the ability to run tests on windows, and refactor integration
   tests for developer clarity
 - Update documentation for clarity
