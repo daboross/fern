@@ -2,7 +2,7 @@ Unreleased
 ==========
 
 - Add support for `Display::fmt` implementations which call the global
-  logger via a 'meta-logging-in-format' flag.
+  logger via a 'meta-logging-in-format' flag. (thanks [@jakunar]!)
   - This is disabled by default, see 'meta' module for more info.
 
 0.5.2 (2018-01-02)
@@ -61,7 +61,7 @@ Short list of changes in 0.5.0:
 ==================
 
 - Add support for coloring log levels in Unix terminals using the
-  'colored' crate
+  'colored' crate (thanks [@nihiluis]!)
   - This is enabled via the 'colored' feature, and adds a fern::color
     module.
 
@@ -69,6 +69,7 @@ Short list of changes in 0.5.0:
 ==================
 
 - Add support for sending to an std::sync::mpsc::Sender as a log output
+  (thanks [@gingerDevilish]!)
 
 0.4.2 (2017-08-20)
 ==================
@@ -236,6 +237,7 @@ Additional Changes:
 ===================
 
 - Fixes compile warnings and errors for rustc version 522d09dfe
+  (thanks [@gareins]!)
  - Adds static life bound
  - Switches to using old_path feature instead of path feature
 
@@ -326,3 +328,8 @@ was added.
 ==================
 
 First release, version 0.1.0.
+
+[@gareins]: https://github.com/gareins
+[@gingerDevilish]: https://github.com/gingerDevilish
+[@nihiluis]: https://github.com/nihiluis
+[@jakunar]: https://github.com/jakunar
