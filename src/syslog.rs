@@ -1,4 +1,3 @@
-#![cfg(feature = "syslog-3")]
 /*!
 Example usage of `fern` with the `syslog` crate.
 
