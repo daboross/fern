@@ -1,6 +1,9 @@
 Unreleased
 ==========
 
+0.5.3 (2018-02-04)
+==================
+
 - Add support for `Display::fmt` implementations which call the global
   logger via a 'meta-logging-in-format' flag. (thanks [@jakunar]!)
   - This is disabled by default, see 'meta' module for more info.
