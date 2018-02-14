@@ -2,6 +2,8 @@ fern
 ====
 [![Linux Build Status][travis-image]][travis-builds]
 [![Windows Build Status][appveyor-image]][appveyor-builds]
+[![Coverage Status][coveralls-badge]][coveralls-builds]
+
 [![crates.io version badge][cratesio-badge]][fern-crate]
 
 Simple, efficient logging for [Rust].
@@ -69,6 +71,8 @@ See [CONTRIBUTING](./CONTRIBUTING.md) for technical information on contrbuting.
 [appveyor-image]: https://ci.appveyor.com/api/projects/status/github/daboross/fern?branch=master&svg=true
 [appveyor-builds]: https://ci.appveyor.com/project/daboross/fern
 [cratesio-badge]: http://meritbadge.herokuapp.com/fern
+[coveralls-badge]: https://coveralls.io/repos/github/daboross/fern/badge.svg
+[coveralls-builds]: https://coveralls.io/github/daboross/fern
 [fern-docs]: https://docs.rs/fern/
 [fern-crate]: https://crates.io/crates/fern
 [fern-example]: https://github.com/daboross/fern/tree/master/examples/cmd-program.rs

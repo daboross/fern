@@ -13,6 +13,16 @@ matrix:
   - os: linux
     rust: 1.16.0
     script: cargo build --verbose
+  - os: linux
+    rust: nightly
+    sudo: true
+    addons:
+      apt:
+        packages:
+        - libssl-dev
+    script: | # cargo tarpaulin
+      bash <(curl https://raw.githubusercontent.com/xd009642/tarpaulin/master/travis-install.sh) &&
+      cargo tarpaulin --features "colored syslog-3 meta-logging-in-format" --ciserver travis-ci --coveralls $TRAVIS_JOB_ID
 script:
 - cargo test --verbose
 - cargo test --verbose --features=colored
