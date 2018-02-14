@@ -68,6 +68,7 @@ See [CONTRIBUTING](./CONTRIBUTING.md) for technical information on contrbuting.
 [Rust]: https://www.rust-lang.org/
 [travis-image]: https://travis-ci.org/daboross/fern.svg?branch=master
 [travis-builds]: https://travis-ci.org/daboross/fern
+[appveyor-image]: https://ci.appveyor.com/api/projects/status/ofdv9657k88jbpel/branch/master?svg=true
 [appveyor-image]: https://ci.appveyor.com/api/projects/status/github/daboross/fern?branch=master&svg=true
 [appveyor-builds]: https://ci.appveyor.com/project/daboross/fern
 [cratesio-badge]: http://meritbadge.herokuapp.com/fern
