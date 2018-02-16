@@ -159,7 +159,7 @@ impl Dispatch {
     /// Note: If the child logger is also a Dispatch, and cannot accept any log records, it will be dropped. This
     /// only happens if the child either has no children itself, or has a minimum log level of [`LevelFilter::Off`]
     ///
-    /// [`LevelFilter::Off`]: https://doc.rust-lang.org/log/log/enum.LevelFilter.html
+    /// [`LevelFilter::Off`]: https://docs.rs/log/0.4/log/enum.LevelFilter.html#variant.Off
     ///
     /// Example usage:
     ///
@@ -177,12 +177,15 @@ impl Dispatch {
         self
     }
 
-    /// Sets the overarching level filter for this logger. This will filter all messages which do not fit under another
-    /// filter set by `level_for`.
+    /// Sets the overarching level filter for this logger. All messages not already filtered by
+    /// something set by [`Dispatch::level_for`] will be affected.
+    ///
+    /// All messages filtered will be discarded if less severe than the given level.
     ///
     /// Default level is [`LevelFilter::Trace`].
     ///
-    /// [`LevelFilter::Trace`]: https://doc.rust-lang.org/log/log/enum.LevelFilter.html
+    /// [`Dispatch::level_filter`]: #method.level_for
+    /// [`LevelFilter::Trace`]: https://docs.rs/log/0.4/log/enum.LevelFilter.html#variant.Trace
     ///
     /// Example usage:
     ///
