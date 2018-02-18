@@ -413,6 +413,10 @@ impl Dispatch {
                     max_child_level = log::LevelFilter::Trace;
                     Some(log_impl::Output::Syslog(log_impl::Syslog { inner: log }))
                 }
+                OutputInner::Panic => {
+                    max_child_level = log::LevelFilter::Trace;
+                    Some(log_impl::Output::Panic(log_impl::Panic))
+                }
                 OutputInner::Dispatch(child_dispatch) => {
                     let (child_level, child) = child_dispatch.into_dispatch();
                     if child_level > log::LevelFilter::Off {
@@ -546,9 +550,55 @@ enum OutputInner {
     OtherBoxed(Box<Log>),
     /// Passes all messages to other logger.
     OtherStatic(&'static Log),
+    /// Passes all messages to the syslog.
     #[cfg(feature = "syslog-3")]
     Syslog(syslog_3::Logger),
+    /// Panics with messages text for all messages.
+    Panic,
 }
+
+/// Logger which will panic whenever anything is logged. The panic
+/// will be exactly the message of the log.
+///
+/// `Panic` is useful primarily as a secondary logger, filtered by warning or error.
+///
+/// # Examples
+///
+/// This configuration will output all messages to stdout and panic if an Error message
+/// is sent.
+///
+/// ```
+/// # extern crate fern;
+/// # extern crate log;
+/// fern::Dispatch::new()
+///     // format, etc.
+///     .chain(std::io::stdout())
+///     .chain(
+///         fern::Dispatch::new()
+///             .level(log::LevelFilter::Error)
+///             .chain(fern::Panic)
+///     )
+///     # /*
+///     .apply()?;
+///     # */ .into_log();
+/// ```
+///
+/// This function sets up a "panic on warn+" logger, and ignores the error if it has been
+/// set up before. One could call this in test functions, for example, to error on warn-level
+/// messages.
+///
+/// ```no_run
+/// # extern crate fern;
+/// # extern crate log;
+/// fn setup_panic_logging() {
+///     fern::Dispatch::new()
+///         .level(log::LevelFilter::Warn)
+///         .chain(fern::Panic)
+///         .apply()
+///         .ok(); // ignore result - it's ok if we try to set this up multiple times
+/// }
+/// ```
+pub struct Panic;
 
 /// Configuration for a logger output.
 pub struct Output(OutputInner);
@@ -648,6 +698,13 @@ impl From<Box<syslog_3::Logger>> for Output {
     /// identical to that created by passing a raw `syslog::Logger`.
     fn from(log: Box<syslog_3::Logger>) -> Self {
         Output(OutputInner::Syslog(*log))
+    }
+}
+
+impl From<Panic> for Output {
+    /// Creates an output logger which will panic with message text for all messages.
+    fn from(_: Panic) -> Self {
+        Output(OutputInner::Panic)
     }
 }
 
@@ -847,6 +904,7 @@ impl fmt::Debug for OutputInner {
             OutputInner::OtherStatic { .. } => f.debug_tuple("Output::OtherStatic")
                 .field(&"<boxed logger>")
                 .finish(),
+            OutputInner::Panic => f.debug_tuple("Output::Panic").finish(),
         }
     }
 }

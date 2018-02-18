@@ -215,7 +215,7 @@ use std::path::Path;
 use std::fs::{File, OpenOptions};
 use std::{fmt, io};
 
-pub use builders::{Dispatch, Output};
+pub use builders::{Dispatch, Output, Panic};
 pub use log_impl::FormatCallback;
 pub use errors::InitError;
 
