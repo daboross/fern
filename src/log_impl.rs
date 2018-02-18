@@ -59,6 +59,7 @@ pub enum Output {
     SharedDispatch(Arc<Dispatch>),
     OtherBoxed(Box<Log>),
     OtherStatic(&'static Log),
+    Panic(Panic),
 }
 
 pub struct Stdout {
@@ -85,6 +86,8 @@ pub struct Sender {
 pub struct Syslog {
     pub inner: syslog_3::Logger,
 }
+
+pub struct Panic;
 
 pub struct Null;
 
@@ -164,6 +167,7 @@ impl Log for Output {
             Output::OtherStatic(ref s) => s.enabled(metadata),
             #[cfg(feature = "syslog-3")]
             Output::Syslog(ref s) => s.enabled(metadata),
+            Output::Panic(ref s) => s.enabled(metadata),
         }
     }
 
@@ -179,6 +183,7 @@ impl Log for Output {
             Output::OtherStatic(ref s) => s.log(record),
             #[cfg(feature = "syslog-3")]
             Output::Syslog(ref s) => s.log(record),
+            Output::Panic(ref s) => s.log(record),
         }
     }
 
@@ -194,6 +199,7 @@ impl Log for Output {
             Output::OtherStatic(ref s) => s.flush(),
             #[cfg(feature = "syslog-3")]
             Output::Syslog(ref s) => s.flush(),
+            Output::Panic(ref s) => s.flush(),
         }
     }
 }
@@ -407,6 +413,18 @@ impl Log for Syslog {
             Ok(())
         });
     }
+    fn flush(&self) {}
+}
+
+impl Log for Panic {
+    fn enabled(&self, _: &log::Metadata) -> bool {
+        true
+    }
+
+    fn log(&self, record: &log::Record) {
+        panic!("{}", record.args());
+    }
+
     fn flush(&self) {}
 }
 
