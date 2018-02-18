@@ -1,6 +1,11 @@
 Unreleased
 ==========
 
+- Add a log handler which panics on all messages. This can be used in
+  test configurations to turn warning or error messages into hard
+  errors.
+- meta: add test coverage reporting via tarpaulin and coveralls
+
 0.5.3 (2018-02-04)
 ==================
 
