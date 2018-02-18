@@ -1,6 +1,9 @@
 Unreleased
 ==========
 
+0.5.4 (2018-02-17)
+==================
+
 - Add a log handler which panics on all messages. This can be used in
   test configurations to turn warning or error messages into hard
   errors.
