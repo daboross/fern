@@ -60,6 +60,7 @@ pub enum Output {
     OtherBoxed(Box<Log>),
     OtherStatic(&'static Log),
     Panic(Panic),
+    Writer(Writer),
 }
 
 pub struct Stdout {
@@ -79,6 +80,11 @@ pub struct File {
 
 pub struct Sender {
     pub stream: Mutex<mpsc::Sender<String>>,
+    pub line_sep: Cow<'static, str>,
+}
+
+pub struct Writer {
+    pub stream: Mutex<Box<Write + Send>>,
     pub line_sep: Cow<'static, str>,
 }
 
@@ -168,6 +174,7 @@ impl Log for Output {
             #[cfg(feature = "syslog-3")]
             Output::Syslog(ref s) => s.enabled(metadata),
             Output::Panic(ref s) => s.enabled(metadata),
+            Output::Writer(ref s) => s.enabled(metadata),
         }
     }
 
@@ -184,6 +191,7 @@ impl Log for Output {
             #[cfg(feature = "syslog-3")]
             Output::Syslog(ref s) => s.log(record),
             Output::Panic(ref s) => s.log(record),
+            Output::Writer(ref s) => s.log(record),
         }
     }
 
@@ -200,6 +208,7 @@ impl Log for Output {
             #[cfg(feature = "syslog-3")]
             Output::Syslog(ref s) => s.flush(),
             Output::Panic(ref s) => s.flush(),
+            Output::Writer(ref s) => s.flush(),
         }
     }
 }
@@ -336,43 +345,50 @@ macro_rules! std_log_impl {
 std_log_impl!(Stdout);
 std_log_impl!(Stderr);
 
-impl Log for File {
-    fn enabled(&self, _: &log::Metadata) -> bool {
-        true
-    }
-
-    fn log(&self, record: &log::Record) {
-        fallback_on_error(record, |record| {
-            if cfg!(feature = "meta-logging-in-format") {
-                // Formatting first prevents deadlocks on file-logging,
-                // when the process of formatting itself is logged.
-                // note: this is only ever needed if some Debug, Display, or other
-                // formatting trait itself is logging.
-                let msg = format!("{}{}", record.args(), self.line_sep);
-
-                let mut writer = self.stream.lock().unwrap_or_else(|e| e.into_inner());
-
-                write!(writer, "{}", msg)?;
-
-                writer.flush()?;
-            } else {
-                let mut writer = self.stream.lock().unwrap_or_else(|e| e.into_inner());
-
-                write!(writer, "{}{}", record.args(), self.line_sep)?;
-
-                writer.flush()?;
+macro_rules! writer_log_impl {
+    ($ident:ident) => {
+        impl Log for $ident {
+            fn enabled(&self, _: &log::Metadata) -> bool {
+                true
             }
-            Ok(())
-        });
-    }
 
-    fn flush(&self) {
-        let _ = self.stream
-            .lock()
-            .unwrap_or_else(|e| e.into_inner())
-            .flush();
-    }
+            fn log(&self, record: &log::Record) {
+                fallback_on_error(record, |record| {
+                    if cfg!(feature = "meta-logging-in-format") {
+                        // Formatting first prevents deadlocks on file-logging,
+                        // when the process of formatting itself is logged.
+                        // note: this is only ever needed if some Debug, Display, or other
+                        // formatting trait itself is logging.
+                        let msg = format!("{}{}", record.args(), self.line_sep);
+
+                        let mut writer = self.stream.lock().unwrap_or_else(|e| e.into_inner());
+
+                        write!(writer, "{}", msg)?;
+
+                        writer.flush()?;
+                    } else {
+                        let mut writer = self.stream.lock().unwrap_or_else(|e| e.into_inner());
+
+                        write!(writer, "{}{}", record.args(), self.line_sep)?;
+
+                        writer.flush()?;
+                    }
+                    Ok(())
+                });
+            }
+
+            fn flush(&self) {
+                let _ = self.stream
+                    .lock()
+                    .unwrap_or_else(|e| e.into_inner())
+                    .flush();
+            }
+        }
+    };
 }
+
+writer_log_impl!(File);
+writer_log_impl!(Writer);
 
 impl Log for Sender {
     fn enabled(&self, _: &log::Metadata) -> bool {
