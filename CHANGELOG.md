@@ -1,6 +1,9 @@
 Unreleased
 ==========
 
+0.5.5 (2018-03-25)
+==================
+
 - Add a log handler into an arbitrary `Write` object.
 
 0.5.4 (2018-02-17)
