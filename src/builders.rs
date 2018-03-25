@@ -1,4 +1,5 @@
 use std::borrow::Cow;
+use std::io::Write;
 use std::sync::{Arc, Mutex};
 use std::sync::mpsc::Sender;
 use std::{cmp, fmt, fs, io};
@@ -401,6 +402,13 @@ impl Dispatch {
                         line_sep: line_sep,
                     }))
                 }
+                OutputInner::Writer { stream, line_sep } => {
+                    max_child_level = log::LevelFilter::Trace;
+                    Some(log_impl::Output::Writer(log_impl::Writer {
+                        stream: Mutex::new(stream),
+                        line_sep: line_sep,
+                    }))
+                }
                 OutputInner::Sender { stream, line_sep } => {
                     max_child_level = log::LevelFilter::Trace;
                     Some(log_impl::Output::Sender(log_impl::Sender {
@@ -537,6 +545,11 @@ enum OutputInner {
         stream: fs::File,
         line_sep: Cow<'static, str>,
     },
+    /// Writes all messages to the writer with `line_sep` separator.
+    Writer {
+        stream: Box<Write + Send>,
+        line_sep: Cow<'static, str>,
+    },
     /// Writes all messages to mpst::Sender with `line_sep` separator.
     Sender {
         stream: Sender<String>,
@@ -638,6 +651,19 @@ impl From<fs::File> for Output {
     fn from(file: fs::File) -> Self {
         Output(OutputInner::File {
             stream: file,
+            line_sep: "\n".into(),
+        })
+    }
+}
+
+impl From<Box<Write + Send>> for Output {
+    /// Creates an output logger which writes all messages to the writer with `\n` as the separator.
+    ///
+    /// This does no buffering and it is up to the writer to do buffering as needed (eg. wrap it in
+    /// `BufWriter`). However, flush is called after each log record.
+    fn from(writer: Box<Write + Send>) -> Self {
+        Output(OutputInner::Writer {
+            stream: writer,
             line_sep: "\n".into(),
         })
     }
@@ -756,6 +782,43 @@ impl Output {
     pub fn file<T: Into<Cow<'static, str>>>(file: fs::File, line_sep: T) -> Self {
         Output(OutputInner::File {
             stream: file,
+            line_sep: line_sep.into(),
+        })
+    }
+
+    /// Returns a logger using arbitrary write object and custom separator.
+    ///
+    /// If the default separator of `\n` is acceptable, an `Box<Write + Send>` instance can be
+    /// passed into [`Dispatch::chain`] directly.
+    ///
+    /// ```no_run
+    /// # fn setup_logger() -> Result<(), fern::InitError> {
+    /// fern::Dispatch::new()
+    ///     // Explicit cast to the right trait object so the `From` implementation is chosen.
+    ///     .chain(Box::new(std::io::Cursor::new(Vec::<u8>::new())) as Box<std::io::Write + Send>)
+    ///     # .into_log();
+    /// #     Ok(())
+    /// # }
+    /// #
+    /// # fn main() { setup_logger().expect("failed to set up logger"); }
+    /// ```
+    ///
+    /// ```no_run
+    /// # fn setup_logger() -> Result<(), fern::InitError> {
+    /// let writer: Box<std::io::Write + Send> = Box::new(std::io::Cursor::new(Vec::<u8>::new()));
+    /// fern::Dispatch::new()
+    ///     .chain(fern::Output::writer(Box::new(std::io::Cursor::new(Vec::<u8>::new())), "\r\n"))
+    ///     # .into_log();
+    /// #     Ok(())
+    /// # }
+    /// #
+    /// # fn main() { setup_logger().expect("failed to set up logger"); }
+    /// ```
+    ///
+    /// [`Dispatch::chain`]: struct.Dispatch.html#method.chain
+    pub fn writer<T: Into<Cow<'static, str>>>(writer: Box<Write + Send>, line_sep: T) -> Self {
+        Output(OutputInner::Writer {
+            stream: writer,
             line_sep: line_sep.into(),
         })
     }
@@ -881,6 +944,13 @@ impl fmt::Debug for OutputInner {
                 ref line_sep,
             } => f.debug_struct("Output::File")
                 .field("stream", stream)
+                .field("line_sep", line_sep)
+                .finish(),
+            OutputInner::Writer {
+                ref line_sep,
+                ..
+            } => f.debug_struct("Output::Writer")
+                .field("stream", &"<unknown writer>")
                 .field("line_sep", line_sep)
                 .finish(),
             OutputInner::Sender {
