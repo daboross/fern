@@ -42,6 +42,10 @@ name = "colored"
 required-features = ["colored"]
 
 [[example]]
+name = "pretty-colored"
+required-features = ["colored"]
+
+[[example]]
 name = "syslog"
 required-features = ["syslog-3"]
 
