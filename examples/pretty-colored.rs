@@ -12,7 +12,6 @@ extern crate log;
 
 use fern::colors::{Color, ColoredLevelConfig};
 
-// ===================== Logging Set Up =====================
 fn main() {
     set_up_logging();
     // let's simulate some logging
@@ -75,10 +74,9 @@ fn set_up_logging() {
             ));
         })
         // set the default log level
-        .level(log::LevelFilter::Trace)
+        .level(log::LevelFilter::Warn)
         // set module (actually, it's target) specific log levels
-        .level_for("more_color", log::LevelFilter::Trace)
-        .level_for("silly", log::LevelFilter::Trace)
+        .level_for("pretty_colored", log::LevelFilter::Trace)
         // output to stdout
         .chain(std::io::stdout())
         .apply().unwrap();
