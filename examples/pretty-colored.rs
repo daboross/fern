@@ -17,7 +17,7 @@ fn main() {
     // let's simulate some logging
     info!("starting simulation!");
     for i in 0..26 {
-        trace!("loading: {}%, very verbose debbuging information", 4*i);
+        trace!("loading: {}%, very verbose debbuging information", 4 * i);
         if 5 == i {
             debug!("this is taking so long... boooring!");
         } else if 10 == i {
@@ -73,9 +73,13 @@ fn set_up_logging() {
                 message = message,
             ));
         })
-        // set the default log level
+        // set the default log level. to filter out verbose log messages from dependencies, set
+        // this to Warn and overwrite the log level for your crate.
         .level(log::LevelFilter::Warn)
-        // set module (actually, it's target) specific log levels
+        // change log levels for individual modules. Note: This looks for the record's target
+        // field which defaults to the module path but can be overwritten with the `target`
+        // parameter:
+        // `info!(target="special_target", "This log message is about special_target");`
         .level_for("pretty_colored", log::LevelFilter::Trace)
         // output to stdout
         .chain(std::io::stdout())
