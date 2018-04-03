@@ -220,6 +220,57 @@ impl ColoredLevelConfig {
             Level::Trace => self.trace,
         }
     }
+
+    /// Returns the ansi escape sequence for the foreground color of the given log level.
+    pub fn get_ansi_fg(&self, level: &Level) -> &'static str {
+        match self.get_color(level).to_fg_str() {
+            "30" => "\x1B[30m",
+            "31" => "\x1B[31m",
+            "32" => "\x1B[32m",
+            "33" => "\x1B[33m",
+            "34" => "\x1B[34m",
+            "35" => "\x1B[35m",
+            "36" => "\x1B[36m",
+            "37" => "\x1B[37m",
+            "90" => "\x1B[90m",
+            "91" => "\x1B[91m",
+            "92" => "\x1B[92m",
+            "93" => "\x1B[93m",
+            "94" => "\x1B[94m",
+            "95" => "\x1B[95m",
+            "96" => "\x1B[96m",
+            "97" => "\x1B[97m",
+            _ => "{unknown color}",
+        }
+    }
+
+    /// Returns the ansi escape sequence for the background color of the given log level.
+    pub fn get_ansi_bg(&self, level: &Level) -> &'static str {
+        match self.get_color(level).to_fg_str() {
+            "40" => "\x1B[40m",
+            "41" => "\x1B[41m",
+            "42" => "\x1B[42m",
+            "43" => "\x1B[43m",
+            "44" => "\x1B[44m",
+            "45" => "\x1B[45m",
+            "46" => "\x1B[46m",
+            "47" => "\x1B[47m",
+            "100" => "\x1B[100m",
+            "101" => "\x1B[101m",
+            "102" => "\x1B[102m",
+            "103" => "\x1B[103m",
+            "104" => "\x1B[104m",
+            "105" => "\x1B[105m",
+            "106" => "\x1B[106m",
+            "107" => "\x1B[107m",
+            _ => "{unknown color}",
+        }
+    }
+
+    /// Returns the ansi escape sequence which resets the color and style to the defaults
+    pub fn get_ansi_reset() -> &'static str {
+        "\x1B[0m"
+    }
 }
 
 impl Default for ColoredLevelConfig {
