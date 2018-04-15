@@ -1,6 +1,8 @@
 Unreleased
 ==========
 
+- Add another fuller example for colored logging (thanks [@digitalatigid]!)
+
 0.5.5 (2018-03-25)
 ==================
 
@@ -350,3 +352,4 @@ First release, version 0.1.0.
 [@nihiluis]: https://github.com/nihiluis
 [@jakunar]: https://github.com/jakunar
 [@vorner]: https://github.com/vorner
+[@digitalatigid]: https://github.com/digitalatigid

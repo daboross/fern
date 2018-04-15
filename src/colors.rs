@@ -9,10 +9,12 @@
 //!
 //! ---
 //!
-//! Colors are currently supported mainly for the log-level. Meaning you can configure the "INFO" / "WARN"
-//! / "ERROR" text itself to be a different color depending on which of those it is.
+//! Colors are mainly supported via coloring the log level itself, but it's also possible to color
+//! each entire log line based off of the log level.
 //!
-//! To do this, the [`ColoredLevelConfig`] structure allows configuration of per-level colors.
+//! First, here's an example which colors the log levels themselves ("INFO" / "WARN" text will have
+//! color, but won't color the rest of the line). [`ColoredLevelConfig`] lets us configure the
+//! colors per-level, but also has sane defaults.
 //!
 //! ```
 //! use fern::colors::{Color, ColoredLevelConfig};
@@ -43,7 +45,13 @@
 //!     # .into_log();
 //! ```
 //!
+//! ---
+//!
+//! Coloring levels is nice, but the alternative is good to. For an example application coloring
+//! each entire log line with the right color, see [examples/pretty-colored.rs][ex].
+//!
 //! [`ColoredLevelConfig`]: struct.ColoredLevelConfig.html
+//! [ex]: https://github.com/daboross/fern/blob/master/examples/pretty-colored.rs
 use std::fmt;
 pub use colored::Color;
 use log::Level;
