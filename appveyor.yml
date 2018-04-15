@@ -53,6 +53,7 @@ test_script:
 - cargo run --example cmd-program
 - cargo run --example cmd-program -- --verbose
 - cargo run --example colored --features colored
+- cargo run --example pretty-colored --features colored
 
 cache:
 - target
