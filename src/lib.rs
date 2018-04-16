@@ -254,7 +254,7 @@ pub type Filter = Fn(&log::Metadata) -> bool + Send + Sync + 'static;
 ///
 /// [`OpenOptions`]: https://doc.rust-lang.org/std/fs/struct.OpenOptions.html
 #[inline]
-pub fn log_file<P: AsRef<Path>>(path: P) -> io::Result<File> {
+pub fn log_file<P: AsRef<Path>>(path: P) -> File {
     OpenOptions::new()
         .write(true)
         .create(true)
