@@ -185,7 +185,7 @@ impl Dispatch {
     ///
     /// Default level is [`LevelFilter::Trace`].
     ///
-    /// [`Dispatch::level_filter`]: #method.level_for
+    /// [`Dispatch::level_for`]: #method.level_for
     /// [`LevelFilter::Trace`]: https://docs.rs/log/0.4/log/enum.LevelFilter.html#variant.Trace
     ///
     /// Example usage:
