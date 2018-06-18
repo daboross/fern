@@ -23,10 +23,11 @@
 //!
 //! # Example setup
 //!
-//! With fern, all logger configuration is done via builder-like methods on instances of the [`Dispatch`] structure.
+//! With fern, all logger configuration is done via builder-like methods on
+//! instances of the [`Dispatch`] structure.
 //!
-//! Here's an example logger which formats messages, and sends everything Debug and above to both stdout and
-//! an output.log file:
+//! Here's an example logger which formats messages, and sends everything Debug
+//! and above to both stdout and an output.log file:
 //!
 //! ```no_run
 //! extern crate fern;
@@ -75,7 +76,8 @@
 //!
 //! [`chrono::Local::now()`]
 //!
-//! Get the current time in the local timezone using the [`chrono`] library. See the [time-and-date docs].
+//! Get the current time in the local timezone using the [`chrono`] library.
+//! See the [time-and-date docs].
 //!
 //! ___
 //!
@@ -89,10 +91,11 @@
 //!
 //! Call the `fern::FormattingCallback` to submit the formatted message.
 //!
-//! This roundabout way is slightly odd, but it allows for very fast logging. No string allocation
-//! required!
+//! This roundabout way is slightly odd, but it allows for very fast logging.
+//! No string allocation required!
 //!
-//! [`format_args!()`] has the same format as [`println!()`] \(and every other [`std::fmt`]-based macro).
+//! [`format_args!()`] has the same format as [`println!()`] \(and every other
+//! [`std::fmt`]-based macro).
 //!
 //! ---
 //!
@@ -104,9 +107,11 @@
 //!
 //! [`.chain(std::io::stdout())`]
 //!
-//! Add a child to the logger. All messages which pass the filters will be sent to stdout.
+//! Add a child to the logger. All messages which pass the filters will be sent
+//! to stdout.
 //!
-//! [`Dispatch::chain`] accepts [`Stdout`], [`Stderr`], [`File`] and other [`Dispatch`] instances.
+//! [`Dispatch::chain`] accepts [`Stdout`], [`Stderr`], [`File`] and other
+//! [`Dispatch`] instances.
 //!
 //! ---
 //!
@@ -120,12 +125,15 @@
 //!
 //! [`.apply()`][`.apply`]
 //!
-//! Consume the configuration and instantiate it as the current runtime global logger.
+//! Consume the configuration and instantiate it as the current runtime global
+//! logger.
 //!
-//! This will fail if and only if `.apply()` or equivalent form another crate has already been used this runtime.
+//! This will fail if and only if `.apply()` or equivalent form another crate
+//! has already been used this runtime.
 //!
-//! Since the binary crate is the only one ever setting up logging, the [`apply`] result can be reasonably unwrapped:
-//! it's a bug if any crate is calling this method more than once.
+//! Since the binary crate is the only one ever setting up logging, the
+//! [`apply`] result can be reasonably unwrapped: it's a bug if any crate is
+//! calling this method more than once.
 //!
 //! ---
 //!
@@ -139,8 +147,8 @@
 //!
 //! # Logging
 //!
-//! Once the logger has been set, it will pick up all logging calls from your crate and all libraries you
-//! depend on.
+//! Once the logger has been set, it will pick up all logging calls from your
+//! crate and all libraries you depend on.
 //!
 //! ```rust
 //! # #[macro_use]
@@ -166,15 +174,17 @@
 //!
 //! # More
 //!
-//! The [`Dispatch` documentation] has example usages of each method, and the [full example program] might be useful
-//! for using fern in a larger application context.
+//! The [`Dispatch` documentation] has example usages of each method, and the
+//! [full example program] might be useful for using fern in a larger
+//! application context.
 //!
 //! See the [colors] module for examples using ANSI terminal coloring.
 //!
-//! See the [syslog] module for examples outputting to the unix syslog, or the [syslog full example program] for a more
-//! realistic sample.
+//! See the [syslog] module for examples outputting to the unix syslog, or the
+//! [syslog full example program] for a more realistic sample.
 //!
-//! See the [meta] module for information on getting logging-within-logging working correctly.
+//! See the [meta] module for information on getting logging-within-logging
+//! working correctly.
 //!
 //! [`fern::Dispatch::new()`]: struct.Dispatch.html#method.new
 //! [`.format(|...| ...)`]: struct.Dispatch.html#method.format
@@ -211,30 +221,33 @@ extern crate log;
 extern crate syslog as syslog_3;
 
 use std::convert::AsRef;
-use std::path::Path;
 use std::fs::{File, OpenOptions};
+use std::path::Path;
 use std::{fmt, io};
 
 pub use builders::{Dispatch, Output, Panic};
-pub use log_impl::FormatCallback;
 pub use errors::InitError;
+pub use log_impl::FormatCallback;
 
 mod builders;
-mod log_impl;
 mod errors;
+mod log_impl;
+
 #[cfg(feature = "colored")]
 pub mod colors;
 #[cfg(feature = "syslog-3")]
 pub mod syslog;
+
 pub mod meta;
 
 /// A type alias for a log formatter.
 ///
-/// As of fern `0.5`, the passed `fmt::Arguments` will always be the same as the given `log::Record`'s
-/// `.args()`.
+/// As of fern `0.5`, the passed `fmt::Arguments` will always be the same as
+/// the given `log::Record`'s `.args()`.
 pub type Formatter = Fn(FormatCallback, &fmt::Arguments, &log::Record) + Sync + Send + 'static;
 
-/// A type alias for a log filter. Returning true means the record should succeed - false means it should fail.
+/// A type alias for a log filter. Returning true means the record should
+/// succeed - false means it should fail.
 pub type Filter = Fn(&log::Metadata) -> bool + Send + Sync + 'static;
 
 /// Convenience method for opening a log file with common options.

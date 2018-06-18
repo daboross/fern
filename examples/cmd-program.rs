@@ -11,8 +11,9 @@ fn setup_logging(verbosity: u64) -> Result<(), fern::InitError> {
 
     base_config = match verbosity {
         0 => {
-            // Let's say we depend on something which whose "info" level messages are too verbose
-            // to include in end-user output. If we don't need them, let's not include them.
+            // Let's say we depend on something which whose "info" level messages are too
+            // verbose to include in end-user output. If we don't need them,
+            // let's not include them.
             base_config
                 .level(log::LevelFilter::Info)
                 .level_for("overly-verbose-target", log::LevelFilter::Warn)
@@ -83,7 +84,8 @@ fn main() {
     debug!("DEBUG output enabled.");
     trace!("TRACE output enabled.");
 
-    // Emulate a library we're using which has tons of debugging on the 'info' level.
+    // Emulate a library we're using which has tons of debugging on the 'info'
+    // level.
     info!(target: "overly-verbose-target", "hey, another library here, we're starting.");
 
     for i in 0..5 {

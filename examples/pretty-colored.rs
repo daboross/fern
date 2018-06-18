@@ -1,9 +1,11 @@
-//! This example shows how to configure fern to output really nicely colored logs
-//!  - when the log level is error, the whole line is red
-//!  - when the log level is warn, the whole line is yellow
-//!  - when the log level is info, the level name is green and the rest of the line is white
-//!  - when the log level is debug, the whole line is white
-//!  - when the log level is trace, the whole line is gray ("bright black")
+//! This example shows how to configure fern to output really nicely colored
+//! logs
+//! - when the log level is error, the whole line is red
+//! - when the log level is warn, the whole line is yellow
+//! - when the log level is info, the level name is green and the rest of the
+//!   line is white
+//! - when the log level is debug, the whole line is white
+//! - when the log level is trace, the whole line is gray ("bright black")
 
 extern crate chrono;
 extern crate fern;
@@ -41,9 +43,6 @@ fn main() {
     }
 }
 
-
-
-
 // ===================== Logging Set Up =====================
 fn set_up_logging() {
     // configure colors for the whole line
@@ -57,10 +56,9 @@ fn set_up_logging() {
         .trace(Color::BrightBlack);
 
     // configure colors for the name of the level.
-    // since almost all of them are the some as the color for the whole line, we just clone
-    // `colors_line` and overwrite our changes
-    let colors_level = colors_line.clone()
-        .info(Color::Green);
+    // since almost all of them are the some as the color for the whole line, we
+    // just clone `colors_line` and overwrite our changes
+    let colors_level = colors_line.clone().info(Color::Green);
     // here we set up our fern Dispatch
     fern::Dispatch::new()
         .format(move |out, message, record| {

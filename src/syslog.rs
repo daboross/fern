@@ -24,9 +24,11 @@ fern::Dispatch::new()
 # fn main() { setup_logging().ok(); }
 ```
 
-One thing with `syslog` is that you don't generally want to apply any log formatting. The system logger will handle
-that for you, however you may want to format messages if you additionally send them to stdout. Fortunately, fern makes
-this easy:
+One thing with `syslog` is that you don't generally want to apply any log formatting. The system
+logger will handle that for you.
+
+However, you probably will want to format messages you also send to stdout! Fortunately, selective
+configuration is easy with fern:
 
 ```no_run
 # extern crate fern;
@@ -76,9 +78,9 @@ in order to work.
 #
 # fn setup_logging() -> Result<(), fern::InitError> {
 fern::Dispatch::new()
-    // by default only accept warning messages from libraries so as not to spam
+    // by default only accept warning messages from libraries so we don't spam
     .level(log::LevelFilter::Warn)
-    // but accept Info if we explicitly mention it
+    // but accept Info and Debug if we explicitly mention syslog
     .level_for("explicit-syslog", log::LevelFilter::Debug)
     .chain(syslog::unix(syslog::Facility::LOG_USER)?)
     .apply()?;
@@ -87,15 +89,16 @@ fern::Dispatch::new()
 # fn main() { setup_logging().ok(); }
 ```
 
-With this configuration, only warning messages will get through by default, and since 'explicit-syslog'
-is not the name of the crate, we can only send info / debug messages if we do so explicitly:
+With this configuration, only warning messages will get through by default. If we do want to
+send info or debug messages, we can do so explicitly:
 
 ```no_run
 # #[macro_use]
 # extern crate log;
 # fn main() {
 debug!("this won't get through");
-info!("neither will this"); // especially if this is a library you depend on.
+// especially useful if this is from library you depend on.
+info!("neither will this");
 warn!("this will!");
 
 info!(target: "explicit-syslog", "this will also show up!");

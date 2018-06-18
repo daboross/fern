@@ -1,7 +1,8 @@
-//! This provides testing of the 'meta-logging' feature, which allows for deadlock-free logging within
-//! logging formatters.
+//! This provides testing of the 'meta-logging' feature, which allows for
+//! deadlock-free logging within logging formatters.
 //!
-//! These tests *will* deadlock if the feature is not enabled, so they're disabled by default.
+//! These tests *will* deadlock if the feature is not enabled, so they're
+//! disabled by default.
 #![cfg(feature = "meta-logging-in-format")]
 extern crate fern;
 extern crate log;
@@ -17,8 +18,8 @@ use log::Log;
 
 use support::manual_log;
 
-// in order to actually trigger the situation that deadlocks, we need a custom Display implementation
-// which performs logging:
+// in order to actually trigger the situation that deadlocks, we need a custom
+// Display implementation which performs logging:
 struct VerboseDisplayThing<'a> {
     log_copy: &'a Log,
     msg: &'a str,

@@ -1,7 +1,3 @@
-max_width = 120
-comment_width = 120
 report_fixme = "unnumbered"
 use_try_shorthand = true
-write_mode = "overwrite"
 condense_wildcard_suffixes = true
-format_strings = false

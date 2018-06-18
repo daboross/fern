@@ -1,7 +1,7 @@
 use std::borrow::Cow;
 use std::io::Write;
-use std::sync::{Arc, Mutex};
 use std::sync::mpsc::Sender;
+use std::sync::{Arc, Mutex};
 use std::{cmp, fmt, fs, io};
 
 use log::{self, Log};
@@ -13,12 +13,14 @@ use syslog_3;
 
 /// The base dispatch logger.
 ///
-/// This allows for formatting log records, limiting what records can be passed through, and then dispatching records
-/// to other dispatch loggers or output loggers.
+/// This allows for formatting log records, limiting what records can be passed
+/// through, and then dispatching records to other dispatch loggers or output
+/// loggers.
 ///
-/// Note that all methods are position-insensitive. `Dispatch::new().format(a).chain(b)` produces the exact same result
-/// as `Dispatch::new().chain(b).format(a)`. Given this, it is preferred to put 'format' and other modifiers before 'chain'
-/// for the sake of clarity.
+/// Note that all methods are position-insensitive.
+/// `Dispatch::new().format(a).chain(b)` produces the exact same result
+/// as `Dispatch::new().chain(b).format(a)`. Given this, it is preferred to put
+/// 'format' and other modifiers before 'chain' for the sake of clarity.
 ///
 /// Example usage demonstrating all features:
 ///
@@ -28,7 +30,7 @@ use syslog_3;
 /// extern crate log;
 /// extern crate fern;
 ///
-/// use std::{io, fs};
+/// use std::{fs, io};
 ///
 /// # fn setup_logger() -> Result<(), fern::InitError> {
 /// fern::Dispatch::new()
@@ -46,7 +48,7 @@ use syslog_3;
 ///             .level(log::LevelFilter::Warn)
 ///             // accept info messages from the current crate too
 ///             .level_for("my_crate", log::LevelFilter::Info)
-///             // `std::io::Stdout`, `std::io::Stderr` and `std::io::File` can be directly passed in.
+///             // `io::Stdout`, `io::Stderr` and `io::File` can be directly passed in.
 ///             .chain(io::stdout()),
 ///     )
 ///     .chain(
@@ -55,9 +57,9 @@ use syslog_3;
 ///             .level(log::LevelFilter::Trace)
 ///             // except for hyper, in that case only show info messages
 ///             .level_for("hyper", log::LevelFilter::Info)
-///             // `log_file(x)` equates to `OpenOptions::new().write(true).append(true).create(true).open(x)`
+///             // `log_file(x)` equates to
+///             // `OpenOptions::new().write(true).append(true).create(true).open(x)`
 ///             .chain(fern::log_file("persistent-log.log")?)
-///             // chain accepts io::File objects, so you can provide your own options too.
 ///             .chain(fs::OpenOptions::new()
 ///                 .write(true)
 ///                 .create(true)
@@ -69,7 +71,7 @@ use syslog_3;
 ///         fern::Dispatch::new()
 ///             .level(log::LevelFilter::Error)
 ///             .filter(|_meta_data| {
-///                 // let's randomly only send half of the error messages to stderr, that'll be fun!
+///                 // as an example, randomly reject half of the messages
 ///                 # /*
 ///                 rand::random()
 ///                 # */
@@ -77,7 +79,7 @@ use syslog_3;
 ///             })
 ///             .chain(io::stderr()),
 ///     )
-///     // and finally, set as the global logger! This fails if and only if the global logger has already been set.
+///     // and finally, set as the global logger!
 ///     .apply()?;
 /// # Ok(())
 /// # }
@@ -95,7 +97,8 @@ pub struct Dispatch {
 
 /// Logger which is usable as an output for multiple other loggers.
 ///
-/// This struct contains a built logger stored in an [`Arc`], and can be safely cloned.
+/// This struct contains a built logger stored in an [`Arc`], and can be
+/// safely cloned.
 ///
 /// See [`Dispatch::into_shared`].
 ///
@@ -120,17 +123,22 @@ impl Dispatch {
         }
     }
 
-    /// Sets the formatter of this dispatch. The closure should accept a callback, a message and a log record, and
-    /// write the resulting format to the writer.
+    /// Sets the formatter of this dispatch. The closure should accept a
+    /// callback, a message and a log record, and write the resulting
+    /// format to the writer.
     ///
-    /// The log record is passed for completeness, but the `args()` method of the record should be ignored, and the
-    /// [`fmt::Arguments`] given should be used instead. `record.args()` may be used to retrieve the _original_ log
-    /// message, but in order to allow for true log chaining, formatters should use the given message instead whenever
+    /// The log record is passed for completeness, but the `args()` method of
+    /// the record should be ignored, and the [`fmt::Arguments`] given
+    /// should be used instead. `record.args()` may be used to retrieve the
+    /// _original_ log message, but in order to allow for true log
+    /// chaining, formatters should use the given message instead whenever
     /// including the message in the output.
     ///
-    /// To avoid all allocation of intermediate results, the formatter is "completed" by calling a callback, which then
-    /// calls the rest of the logging chain with the new formatted message. The callback object keeps track of if it was
-    /// called or not via a stack boolean as well, so if you don't use `out.finish` the log message will continue down
+    /// To avoid all allocation of intermediate results, the formatter is
+    /// "completed" by calling a callback, which then calls the rest of the
+    /// logging chain with the new formatted message. The callback object keeps
+    /// track of if it was called or not via a stack boolean as well, so if
+    /// you don't use `out.finish` the log message will continue down
     /// the logger chain unformatted.
     ///
     /// [`fmt::Arguments`]: https://doc.rust-lang.org/std/fmt/struct.Arguments.html
@@ -138,10 +146,14 @@ impl Dispatch {
     /// Example usage:
     ///
     /// ```
-    /// fern::Dispatch::new()
-    ///     .format(|out, message, record| {
-    ///         out.finish(format_args!("[{}][{}] {}", record.level(), record.target(), message))
-    ///     })
+    /// fern::Dispatch::new().format(|out, message, record| {
+    ///     out.finish(format_args!(
+    ///         "[{}][{}] {}",
+    ///         record.level(),
+    ///         record.target(),
+    ///         message
+    ///     ))
+    /// })
     ///     # .into_log();
     /// ```
     #[inline]
@@ -155,10 +167,13 @@ impl Dispatch {
 
     /// Adds a child to this dispatch.
     ///
-    /// All log records which pass all filters will be formatted and then sent to all child loggers in sequence.
+    /// All log records which pass all filters will be formatted and then sent
+    /// to all child loggers in sequence.
     ///
-    /// Note: If the child logger is also a Dispatch, and cannot accept any log records, it will be dropped. This
-    /// only happens if the child either has no children itself, or has a minimum log level of [`LevelFilter::Off`]
+    /// Note: If the child logger is also a Dispatch, and cannot accept any log
+    /// records, it will be dropped. This only happens if the child either
+    /// has no children itself, or has a minimum log level of
+    /// [`LevelFilter::Off`].
     ///
     /// [`LevelFilter::Off`]: https://docs.rs/log/0.4/log/enum.LevelFilter.html#variant.Off
     ///
@@ -166,10 +181,7 @@ impl Dispatch {
     ///
     /// ```
     /// fern::Dispatch::new()
-    ///     .chain(
-    ///         fern::Dispatch::new()
-    ///             .chain(std::io::stdout())
-    ///     )
+    ///     .chain(fern::Dispatch::new().chain(std::io::stdout()))
     ///     # .into_log();
     /// ```
     #[inline]
@@ -178,10 +190,12 @@ impl Dispatch {
         self
     }
 
-    /// Sets the overarching level filter for this logger. All messages not already filtered by
-    /// something set by [`Dispatch::level_for`] will be affected.
+    /// Sets the overarching level filter for this logger. All messages not
+    /// already filtered by something set by [`Dispatch::level_for`] will
+    /// be affected.
     ///
-    /// All messages filtered will be discarded if less severe than the given level.
+    /// All messages filtered will be discarded if less severe than the given
+    /// level.
     ///
     /// Default level is [`LevelFilter::Trace`].
     ///
@@ -206,19 +220,24 @@ impl Dispatch {
         self
     }
 
-    /// Sets a per-target log level filter. Default target for log messages is `crate_name::module_name` or
-    /// `crate_name` for logs in the crate root. Targets can also be set with `info!(target: "target-name", ...)`.
+    /// Sets a per-target log level filter. Default target for log messages is
+    /// `crate_name::module_name` or
+    /// `crate_name` for logs in the crate root. Targets can also be set with
+    /// `info!(target: "target-name", ...)`.
     ///
-    /// For each log record fern will first try to match the most specific level_for, and then progressively more
-    /// general ones until either a matching level is found, or the default level is used.
+    /// For each log record fern will first try to match the most specific
+    /// level_for, and then progressively more general ones until either a
+    /// matching level is found, or the default level is used.
     ///
-    /// For example, a log for the target `hyper::http::h1` will first test a level_for for `hyper::http::h1`, then
-    /// for `hyper::http`, then for `hyper`, then use the default level.
+    /// For example, a log for the target `hyper::http::h1` will first test a
+    /// level_for for `hyper::http::h1`, then for `hyper::http`, then for
+    /// `hyper`, then use the default level.
     ///
     /// Examples:
     ///
-    /// A program wants to include a lot of debugging output, but the library "hyper" is known to work well, so
-    /// debug output from it should be excluded:
+    /// A program wants to include a lot of debugging output, but the library
+    /// "hyper" is known to work well, so debug output from it should be
+    /// excluded:
     ///
     /// ```
     /// # extern crate log;
@@ -232,23 +251,28 @@ impl Dispatch {
     /// # }
     /// ```
     ///
-    /// A program has a ton of debug output per-module, but there is so much that debugging more than one module at a
-    /// time is not very useful. The command line accepts a list of modules to debug, while keeping the rest of the
-    /// program at info level:
+    /// A program has a ton of debug output per-module, but there is so much
+    /// that debugging more than one module at a time is not very useful.
+    /// The command line accepts a list of modules to debug, while keeping the
+    /// rest of the program at info level:
     ///
     /// ```
     /// # extern crate log;
     /// # extern crate fern;
     /// #
     /// fn setup_logging<T, I>(verbose_modules: T) -> Result<(), fern::InitError>
-    ///     where I: AsRef<str>,
-    ///           T: IntoIterator<Item = I>
+    /// where
+    ///     I: AsRef<str>,
+    ///     T: IntoIterator<Item = I>,
     /// {
-    ///     let mut config = fern::Dispatch::new().level(log::LevelFilter::Info);
+    ///     let mut config = fern::Dispatch::new()
+    ///         .level(log::LevelFilter::Info);
     ///
     ///     for module_name in verbose_modules {
-    ///         config = config.level_for(format!("my_crate_name::{}", module_name.as_ref()),
-    ///                                   log::LevelFilter::Debug);
+    ///         config = config.level_for(
+    ///             format!("my_crate_name::{}", module_name.as_ref()),
+    ///             log::LevelFilter::Debug,
+    ///         );
     ///     }
     ///
     ///     config.chain(std::io::stdout()).apply()?;
@@ -256,13 +280,19 @@ impl Dispatch {
     ///     Ok(())
     /// }
     /// #
-    /// # fn main() { let _ = setup_logging(&["hi"]); } // we're ok with apply() failing.
+    /// # // we're ok with apply() failing.
+    /// # fn main() { let _ = setup_logging(&["hi"]); }
     /// ```
     #[inline]
-    pub fn level_for<T: Into<Cow<'static, str>>>(mut self, module: T, level: log::LevelFilter) -> Self {
+    pub fn level_for<T: Into<Cow<'static, str>>>(
+        mut self,
+        module: T,
+        level: log::LevelFilter,
+    ) -> Self {
         let module = module.into();
 
-        if let Some((index, _)) = self.levels
+        if let Some((index, _)) = self
+            .levels
             .iter()
             .enumerate()
             .find(|&(_, &(ref name, _))| name == &module)
@@ -274,16 +304,21 @@ impl Dispatch {
         self
     }
 
-    /// Adds a custom filter which can reject messages passing through this logger.
+    /// Adds a custom filter which can reject messages passing through this
+    /// logger.
     ///
-    /// The logger will continue to process log records only if all filters return `true`.
+    /// The logger will continue to process log records only if all filters
+    /// return `true`.
     ///
-    /// [`Dispatch::level`] and [`Dispatch::level_for`] are preferred if applicable.
+    /// [`Dispatch::level`] and [`Dispatch::level_for`] are preferred if
+    /// applicable.
     ///
     /// [`Dispatch::level`]: #method.level
     /// [`Dispatch::level_for`]: #method.level_for
     ///
     /// Example usage:
+    ///
+    /// This sends error level messages to stderr and others to stdout.
     ///
     /// ```
     /// # extern crate log;
@@ -292,12 +327,19 @@ impl Dispatch {
     /// # fn main() {
     /// fern::Dispatch::new()
     ///     .level(log::LevelFilter::Info)
-    ///     .filter(|metadata| {
-    ///         // Reject messages with the `Error` log level.
-    ///         //
-    ///         // This could be useful for sending Error messages to stderr and avoiding duplicate messages in stdout.
-    ///         metadata.level() != log::LevelFilter::Error
-    ///     })
+    ///     .chain(
+    ///         fern::Dispatch::new()
+    ///             .filter(|metadata| {
+    ///                 // Reject messages with the `Error` log level.
+    ///                 metadata.level() != log::LevelFilter::Error
+    ///             })
+    ///             .chain(std::io::stderr()),
+    ///     )
+    ///     .chain(
+    ///         fern::Dispatch::new()
+    ///             .level(log::LevelFilter::Error)
+    ///             .chain(std::io::stdout()),
+    ///     )
     ///     # .into_log();
     /// # }
     #[inline]
@@ -309,15 +351,17 @@ impl Dispatch {
         self
     }
 
-    /// Builds this dispatch and stores it in a clonable structure containing an [`Arc`].
+    /// Builds this dispatch and stores it in a clonable structure containing
+    /// an [`Arc`].
     ///
-    /// Once "shared", the dispatch can be used as an output for multiple other dispatch loggers.
+    /// Once "shared", the dispatch can be used as an output for multiple other
+    /// dispatch loggers.
     ///
     /// Example usage:
     ///
-    /// This separates info and warn messages, sending info to stdout + a log file, and
-    /// warn to stderr + the same log file. Shared is used so the program only opens "file.log"
-    /// once.
+    /// This separates info and warn messages, sending info to stdout + a log
+    /// file, and warn to stderr + the same log file. Shared is used so the
+    /// program only opens "file.log" once.
     ///
     /// ```no_run
     /// # extern crate log;
@@ -333,8 +377,7 @@ impl Dispatch {
     ///     .level(log::LevelFilter::Debug)
     ///     .filter(|metadata|
     ///         // keep only info and debug (reject warn and error)
-    ///         metadata.level() <= log::Level::Info
-    ///     )
+    ///         metadata.level() <= log::Level::Info)
     ///     .chain(std::io::stdout())
     ///     .chain(file_out.clone());
     ///
@@ -366,7 +409,8 @@ impl Dispatch {
 
     /// Builds this into the actual logger implementation.
     ///
-    /// This could probably be refactored, but having everything in one place is also nice.
+    /// This could probably be refactored, but having everything in one place
+    /// is also nice.
     fn into_dispatch(self) -> (log::LevelFilter, log_impl::Dispatch) {
         let Dispatch {
             format,
@@ -478,12 +522,15 @@ impl Dispatch {
         (real_min, dispatch)
     }
 
-    /// Builds this logger into a `Box<log::Log>` and calculates the minimum log level needed to have any effect.
+    /// Builds this logger into a `Box<log::Log>` and calculates the minimum
+    /// log level needed to have any effect.
     ///
-    /// While this method is exposed publicly, [`Dispatch::apply`] is typically used instead.
+    /// While this method is exposed publicly, [`Dispatch::apply`] is typically
+    /// used instead.
     ///
-    /// The returned LevelFilter is a calculation for all level filters of this logger and child loggers, and is the
-    /// minimum log level needed to for a record to have any chance of passing through this logger.
+    /// The returned LevelFilter is a calculation for all level filters of this
+    /// logger and child loggers, and is the minimum log level needed to
+    /// for a record to have any chance of passing through this logger.
     ///
     /// [`Dispatch::apply`]: #method.apply
     ///
@@ -515,7 +562,8 @@ impl Dispatch {
     ///
     /// # Errors:
     ///
-    /// This function will return an error if a global logger has already been set to a previous logger.
+    /// This function will return an error if a global logger has already been
+    /// set to a previous logger.
     ///
     /// [`log`]: https://github.com/rust-lang-nursery/log
     pub fn apply(self) -> Result<(), log::SetLoggerError> {
@@ -573,12 +621,13 @@ enum OutputInner {
 /// Logger which will panic whenever anything is logged. The panic
 /// will be exactly the message of the log.
 ///
-/// `Panic` is useful primarily as a secondary logger, filtered by warning or error.
+/// `Panic` is useful primarily as a secondary logger, filtered by warning or
+/// error.
 ///
 /// # Examples
 ///
-/// This configuration will output all messages to stdout and panic if an Error message
-/// is sent.
+/// This configuration will output all messages to stdout and panic if an Error
+/// message is sent.
 ///
 /// ```
 /// # extern crate fern;
@@ -596,8 +645,10 @@ enum OutputInner {
 ///     # */ .into_log();
 /// ```
 ///
-/// This function sets up a "panic on warn+" logger, and ignores the error if it has been
-/// set up before. One could call this in test functions, for example, to error on warn-level
+/// This sets up a "panic on warn+" logger, and ignores errors so it can be
+/// called multiple times.
+///
+/// This might be useful in test setup, for example, to disallow warn-level
 /// messages.
 ///
 /// ```no_run
@@ -608,7 +659,8 @@ enum OutputInner {
 ///         .level(log::LevelFilter::Warn)
 ///         .chain(fern::Panic)
 ///         .apply()
-///         .ok(); // ignore result - it's ok if we try to set this up multiple times
+///         // ignore errors from setting up logging twice
+///         .ok();
 /// }
 /// ```
 pub struct Panic;
@@ -645,7 +697,8 @@ impl From<&'static Log> for Output {
 }
 
 impl From<fs::File> for Output {
-    /// Creates an output logger which writes all messages to the file with `\n` as the separator.
+    /// Creates an output logger which writes all messages to the file with
+    /// `\n` as the separator.
     ///
     /// File writes are buffered and flushed once per log record.
     fn from(file: fs::File) -> Self {
@@ -657,10 +710,12 @@ impl From<fs::File> for Output {
 }
 
 impl From<Box<Write + Send>> for Output {
-    /// Creates an output logger which writes all messages to the writer with `\n` as the separator.
+    /// Creates an output logger which writes all messages to the writer with
+    /// `\n` as the separator.
     ///
-    /// This does no buffering and it is up to the writer to do buffering as needed (eg. wrap it in
-    /// `BufWriter`). However, flush is called after each log record.
+    /// This does no buffering and it is up to the writer to do buffering as
+    /// needed (eg. wrap it in `BufWriter`). However, flush is called after
+    /// each log record.
     fn from(writer: Box<Write + Send>) -> Self {
         Output(OutputInner::Writer {
             stream: writer,
@@ -670,7 +725,8 @@ impl From<Box<Write + Send>> for Output {
 }
 
 impl From<io::Stdout> for Output {
-    /// Creates an output logger which writes all messages to stdout with the given handle and `\n` as the separator.
+    /// Creates an output logger which writes all messages to stdout with the
+    /// given handle and `\n` as the separator.
     fn from(stream: io::Stdout) -> Self {
         Output(OutputInner::Stdout {
             stream: stream,
@@ -680,7 +736,8 @@ impl From<io::Stdout> for Output {
 }
 
 impl From<io::Stderr> for Output {
-    /// Creates an output logger which writes all messages to stderr with the given handle and `\n` as the separator.
+    /// Creates an output logger which writes all messages to stderr with the
+    /// given handle and `\n` as the separator.
     fn from(stream: io::Stderr) -> Self {
         Output(OutputInner::Stderr {
             stream: stream,
@@ -690,7 +747,8 @@ impl From<io::Stderr> for Output {
 }
 
 impl From<Sender<String>> for Output {
-    /// Creates an output logger which writes all messages to the given mpsc::Sender with  '\n' as the separator.
+    /// Creates an output logger which writes all messages to the given
+    /// mpsc::Sender with  '\n' as the separator.
     ///
     /// All messages sent to the mpsc channel are suffixed with '\n'.
     fn from(stream: Sender<String>) -> Self {
@@ -703,10 +761,11 @@ impl From<Sender<String>> for Output {
 
 #[cfg(feature = "syslog-3")]
 impl From<syslog_3::Logger> for Output {
-    /// Creates an output logger which writes all messages to the given syslog output.
+    /// Creates an output logger which writes all messages to the given syslog
+    /// output.
     ///
-    /// Log levels are translated trace => debug, debug => debug, info => informational, warn => warning, and
-    /// error => error.
+    /// Log levels are translated trace => debug, debug => debug, info =>
+    /// informational, warn => warning, and error => error.
     fn from(log: syslog_3::Logger) -> Self {
         Output(OutputInner::Syslog(log))
     }
@@ -714,13 +773,15 @@ impl From<syslog_3::Logger> for Output {
 
 #[cfg(feature = "syslog-3")]
 impl From<Box<syslog_3::Logger>> for Output {
-    /// Creates an output logger which writes all messages to the given syslog output.
+    /// Creates an output logger which writes all messages to the given syslog
+    /// output.
     ///
-    /// Log levels are translated trace => debug, debug => debug, info => informational, warn => warning, and
-    /// error => error.
+    /// Log levels are translated trace => debug, debug => debug, info =>
+    /// informational, warn => warning, and error => error.
     ///
-    /// Note that while this takes a Box<Logger> for convenience (syslog methods return Boxes), it will be
-    /// immediately unboxed upon storage in the configuration structure. This will create a configuration
+    /// Note that while this takes a Box<Logger> for convenience (syslog
+    /// methods return Boxes), it will be immediately unboxed upon storage
+    /// in the configuration structure. This will create a configuration
     /// identical to that created by passing a raw `syslog::Logger`.
     fn from(log: Box<syslog_3::Logger>) -> Self {
         Output(OutputInner::Syslog(*log))
@@ -728,7 +789,8 @@ impl From<Box<syslog_3::Logger>> for Output {
 }
 
 impl From<Panic> for Output {
-    /// Creates an output logger which will panic with message text for all messages.
+    /// Creates an output logger which will panic with message text for all
+    /// messages.
     fn from(_: Panic) -> Self {
         Output(OutputInner::Panic)
     }
@@ -737,8 +799,8 @@ impl From<Panic> for Output {
 impl Output {
     /// Returns a file logger using a custom separator.
     ///
-    /// If the default separator of `\n` is acceptable, an [`fs::File`] instance can be passed into
-    /// [`Dispatch::chain`] directly.
+    /// If the default separator of `\n` is acceptable, an [`fs::File`]
+    /// instance can be passed into [`Dispatch::chain`] directly.
     ///
     /// ```no_run
     /// # fn setup_logger() -> Result<(), fern::InitError> {
@@ -760,7 +822,6 @@ impl Output {
     /// # }
     /// #
     /// # fn main() { setup_logger().expect("failed to set up logger"); }
-    ///
     /// ```
     ///
     /// Example usage (using [`fern::log_file`]):
@@ -788,14 +849,17 @@ impl Output {
 
     /// Returns a logger using arbitrary write object and custom separator.
     ///
-    /// If the default separator of `\n` is acceptable, an `Box<Write + Send>` instance can be
-    /// passed into [`Dispatch::chain`] directly.
+    /// If the default separator of `\n` is acceptable, an `Box<Write + Send>`
+    /// instance can be passed into [`Dispatch::chain`] directly.
     ///
     /// ```no_run
     /// # fn setup_logger() -> Result<(), fern::InitError> {
+    /// // Anything implementing 'Write' works.
+    /// let mut writer = std::io::Cursor::new(Vec::<u8>::new());
+    ///
     /// fern::Dispatch::new()
-    ///     // Explicit cast to the right trait object so the `From` implementation is chosen.
-    ///     .chain(Box::new(std::io::Cursor::new(Vec::<u8>::new())) as Box<std::io::Write + Send>)
+    ///     // as long as we explicitly cast into a type-erased Box
+    ///     .chain(Box::new(writer) as Box<std::io::Write + Send>)
     ///     # .into_log();
     /// #     Ok(())
     /// # }
@@ -803,11 +867,14 @@ impl Output {
     /// # fn main() { setup_logger().expect("failed to set up logger"); }
     /// ```
     ///
+    /// Example usage:
+    ///
     /// ```no_run
     /// # fn setup_logger() -> Result<(), fern::InitError> {
-    /// let writer: Box<std::io::Write + Send> = Box::new(std::io::Cursor::new(Vec::<u8>::new()));
+    /// let writer = Box::new(std::io::Cursor::new(Vec::<u8>::new()));
+    ///
     /// fern::Dispatch::new()
-    ///     .chain(fern::Output::writer(Box::new(std::io::Cursor::new(Vec::<u8>::new())), "\r\n"))
+    ///     .chain(fern::Output::writer(writer, "\r\n"))
     ///     # .into_log();
     /// #     Ok(())
     /// # }
@@ -825,12 +892,22 @@ impl Output {
 
     /// Returns an stdout logger using a custom separator.
     ///
-    /// If the default separator of `\n` is acceptable, an `io::Stdout` instance can be passed into
-    /// `Dispatch::chain()` directly.
+    /// If the default separator of `\n` is acceptable, an `io::Stdout`
+    /// instance can be passed into `Dispatch::chain()` directly.
     ///
     /// ```
     /// fern::Dispatch::new()
     ///     .chain(std::io::stdout())
+    ///     # .into_log();
+    /// ```
+    ///
+    /// Example usage:
+    ///
+    /// ```
+    /// fern::Dispatch::new()
+    ///     // some unix tools use null bytes as message terminators so
+    ///     // newlines in messages can be treated differently.
+    ///     .chain(fern::Output::stdout("\0"))
     ///     # .into_log();
     /// ```
     pub fn stdout<T: Into<Cow<'static, str>>>(line_sep: T) -> Self {
@@ -842,12 +919,20 @@ impl Output {
 
     /// Returns an stderr logger using a custom separator.
     ///
-    /// If the default separator of `\n` is acceptable, an `io::Stderr` instance can be passed into
-    /// `Dispatch::chain()` directly.
+    /// If the default separator of `\n` is acceptable, an `io::Stderr`
+    /// instance can be passed into `Dispatch::chain()` directly.
     ///
     /// ```
     /// fern::Dispatch::new()
     ///     .chain(std::io::stderr())
+    ///     # .into_log();
+    /// ```
+    ///
+    /// Example usage:
+    ///
+    /// ```
+    /// fern::Dispatch::new()
+    ///     .chain(fern::Output::stderr("\n\n\n"))
     ///     # .into_log();
     /// ```
     pub fn stderr<T: Into<Cow<'static, str>>>(line_sep: T) -> Self {
@@ -859,10 +944,12 @@ impl Output {
 
     /// Returns a mpsc::Sender logger using a custom separator.
     ///
-    /// If the default separator of `\n` is acceptable, an `mpsc::Sender<String>` instance can be passed into
-    /// `Dispatch::chain()` directly.
+    /// If the default separator of `\n` is acceptable, an
+    /// `mpsc::Sender<String>` instance can be passed into `Dispatch::
+    /// chain()` directly.
     ///
-    /// Each log message will be suffixed with the separator, then sent as a single String to the given sender.
+    /// Each log message will be suffixed with the separator, then sent as a
+    /// single String to the given sender.
     ///
     /// ```
     /// use std::sync::mpsc::channel;
@@ -928,50 +1015,58 @@ impl fmt::Debug for OutputInner {
             OutputInner::Stdout {
                 ref stream,
                 ref line_sep,
-            } => f.debug_struct("Output::Stdout")
+            } => f
+                .debug_struct("Output::Stdout")
                 .field("stream", stream)
                 .field("line_sep", line_sep)
                 .finish(),
             OutputInner::Stderr {
                 ref stream,
                 ref line_sep,
-            } => f.debug_struct("Output::Stderr")
+            } => f
+                .debug_struct("Output::Stderr")
                 .field("stream", stream)
                 .field("line_sep", line_sep)
                 .finish(),
             OutputInner::File {
                 ref stream,
                 ref line_sep,
-            } => f.debug_struct("Output::File")
+            } => f
+                .debug_struct("Output::File")
                 .field("stream", stream)
                 .field("line_sep", line_sep)
                 .finish(),
-            OutputInner::Writer {
-                ref line_sep,
-                ..
-            } => f.debug_struct("Output::Writer")
+            OutputInner::Writer { ref line_sep, .. } => f
+                .debug_struct("Output::Writer")
                 .field("stream", &"<unknown writer>")
                 .field("line_sep", line_sep)
                 .finish(),
             OutputInner::Sender {
                 ref stream,
                 ref line_sep,
-            } => f.debug_struct("Output::Sender")
+            } => f
+                .debug_struct("Output::Sender")
                 .field("stream", stream)
                 .field("line_sep", line_sep)
                 .finish(),
             #[cfg(feature = "syslog-3")]
-            OutputInner::Syslog(_) => f.debug_tuple("Output::Syslog")
+            OutputInner::Syslog(_) => f
+                .debug_tuple("Output::Syslog")
                 .field(&"<unprintable syslog::Logger>")
                 .finish(),
-            OutputInner::Dispatch(ref dispatch) => f.debug_tuple("Output::Dispatch").field(dispatch).finish(),
-            OutputInner::SharedDispatch(_) => f.debug_tuple("Output::SharedDispatch")
+            OutputInner::Dispatch(ref dispatch) => {
+                f.debug_tuple("Output::Dispatch").field(dispatch).finish()
+            }
+            OutputInner::SharedDispatch(_) => f
+                .debug_tuple("Output::SharedDispatch")
                 .field(&"<built Dispatch logger>")
                 .finish(),
-            OutputInner::OtherBoxed { .. } => f.debug_tuple("Output::OtherBoxed")
+            OutputInner::OtherBoxed { .. } => f
+                .debug_tuple("Output::OtherBoxed")
                 .field(&"<boxed logger>")
                 .finish(),
-            OutputInner::OtherStatic { .. } => f.debug_tuple("Output::OtherStatic")
+            OutputInner::OtherStatic { .. } => f
+                .debug_tuple("Output::OtherStatic")
                 .field(&"<boxed logger>")
                 .finish(),
             OutputInner::Panic => f.debug_tuple("Output::Panic").finish(),

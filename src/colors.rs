@@ -1,6 +1,7 @@
 //! Support for ANSI terminal colors via the colored crate.
 //!
-//! To enable support for colors, add the `"colored"` feature in your `Cargo.toml`:
+//! To enable support for colors, add the `"colored"` feature in your
+//! `Cargo.toml`:
 //!
 //! ```toml
 //! [dependencies]
@@ -9,16 +10,16 @@
 //!
 //! ---
 //!
-//! Colors are mainly supported via coloring the log level itself, but it's also possible to color
-//! each entire log line based off of the log level.
+//! Colors are mainly supported via coloring the log level itself, but it's
+//! also possible to color each entire log line based off of the log level.
 //!
-//! First, here's an example which colors the log levels themselves ("INFO" / "WARN" text will have
-//! color, but won't color the rest of the line). [`ColoredLevelConfig`] lets us configure the
-//! colors per-level, but also has sane defaults.
+//! First, here's an example which colors the log levels themselves ("INFO" /
+//! "WARN" text will have color, but won't color the rest of the line).
+//! [`ColoredLevelConfig`] lets us configure the colors per-level, but also has
+//! sane defaults.
 //!
 //! ```
 //! use fern::colors::{Color, ColoredLevelConfig};
-//!
 //!
 //! let mut colors = ColoredLevelConfig::new()
 //!     // use builder methods
@@ -47,12 +48,14 @@
 //!
 //! ---
 //!
-//! Coloring levels is nice, but the alternative is good to. For an example application coloring
-//! each entire log line with the right color, see [examples/pretty-colored.rs][ex].
+//! Coloring levels is nice, but the alternative is good to. For an example
+//! application coloring each entire log line with the right color, see
+//! [examples/pretty-colored.rs][ex].
 //!
 //! [`ColoredLevelConfig`]: struct.ColoredLevelConfig.html
 //! [ex]: https://github.com/daboross/fern/blob/master/examples/pretty-colored.rs
 use std::fmt;
+
 pub use colored::Color;
 use log::Level;
 
@@ -62,15 +65,17 @@ trait ColoredLogLevel {
     fn colored(&self, color: Color) -> WithFgColor<Level>;
 }
 
-/// Opaque structure which represents some text data and a color to display it with.
+/// Opaque structure which represents some text data and a color to display it
+/// with.
 ///
-/// This implements [`fmt::Display`] to displaying the inner text (usually a log level) with ANSI color markers before
-/// to set the color and after to reset the color.
+/// This implements [`fmt::Display`] to displaying the inner text (usually a
+/// log level) with ANSI color markers before to set the color and after to
+/// reset the color.
 ///
 /// `WithFgColor` instances can be created and displayed without any allocation.
-// this is necessary in order to avoid using colored::ColorString, which has a Display
-// implementation involving many allocations, and would involve two more string allocations
-// even to create it.
+// this is necessary in order to avoid using colored::ColorString, which has a
+// Display implementation involving many allocations, and would involve two
+// more string allocations even to create it.
 //
 // [`fmt::Display`]: https://doc.rust-lang.org/std/fmt/trait.Display.html
 pub struct WithFgColor<T>
@@ -206,12 +211,13 @@ impl ColoredLevelConfig {
         self
     }
 
-    /// Colors the given log level with the color in this configuration corresponding to it's
-    /// level.
+    /// Colors the given log level with the color in this configuration
+    /// corresponding to it's level.
     ///
-    /// The structure returned is opaque, but will print the Level surrounded by ANSI color
-    /// codes when displayed. This will work correctly for UNIX terminals, but due to a lack
-    /// of support from the [`colored`] crate, this will not function in Windows.
+    /// The structure returned is opaque, but will print the Level surrounded
+    /// by ANSI color codes when displayed. This will work correctly for
+    /// UNIX terminals, but due to a lack of support from the [`colored`]
+    /// crate, this will not function in Windows.
     ///
     /// [`colored`]: https://github.com/mackwic/colored
     pub fn color(&self, level: Level) -> WithFgColor<Level> {
@@ -269,9 +275,10 @@ impl ColoredLogLevel for Level {
 
 #[cfg(test)]
 mod test {
-    use super::WithFgColor;
-    use colored::Colorize;
     use colored::Color::*;
+    use colored::Colorize;
+
+    use super::WithFgColor;
 
     #[test]
     fn fg_color_matches_colored_behavior() {

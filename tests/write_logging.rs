@@ -3,8 +3,8 @@ extern crate fern;
 extern crate log;
 
 use std::io;
-use std::sync::Arc;
 use std::sync::atomic::{AtomicBool, Ordering};
+use std::sync::Arc;
 
 use log::Level::*;
 

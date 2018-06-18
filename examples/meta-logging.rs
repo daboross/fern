@@ -1,7 +1,7 @@
 //! This is an example to test the "meta-logging-in-format" fern cargo features.
 //!
-//! The example will hang if the feature is disabled, and will produce cohesive logs
-//! if it's enabled.
+//! The example will hang if the feature is disabled, and will produce cohesive
+//! logs if it's enabled.
 extern crate fern;
 #[macro_use]
 extern crate log;
@@ -13,12 +13,14 @@ fn main() {
         .chain(std::io::stdout())
         .chain(std::io::stderr())
         .chain(fern::log_file("hello.txt").unwrap())
-        .format(move |out, message, record| out.finish(format_args!("[{}] {}", record.level(), message)))
+        .format(move |out, message, record| {
+            out.finish(format_args!("[{}] {}", record.level(), message))
+        })
         .apply()
         .unwrap();
 
-    // in order to actually trigger the situation that deadlocks, we need a custom Display implementation
-    // which performs logging:
+    // in order to actually trigger the situation that deadlocks, we need a custom
+    // Display implementation which performs logging:
     struct Thing<'a>(&'a str);
 
     impl<'a> fmt::Display for Thing<'a> {

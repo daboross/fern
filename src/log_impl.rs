@@ -1,7 +1,7 @@
-use std::io::{self, BufWriter, Write};
 use std::borrow::Cow;
-use std::sync::{Arc, Mutex};
+use std::io::{self, BufWriter, Write};
 use std::sync::mpsc;
+use std::sync::{Arc, Mutex};
 use std::{fmt, fs};
 
 use std::collections::HashMap;
@@ -29,17 +29,17 @@ pub struct Dispatch {
 
 /// Callback struct for use within a formatter closure
 ///
-/// Callbacks are used for formatting in order to allow usage of [`std::fmt`]-based formatting without
-/// the allocation of the formatted result which would be required to return it.
+/// Callbacks are used for formatting in order to allow usage of
+/// [`std::fmt`]-based formatting without the allocation of the formatted
+/// result which would be required to return it.
 ///
 /// Example usage:
 ///
 /// ```
-/// fern::Dispatch::new()
-///     .format(|callback: fern::FormatCallback, message, record| {
-///         callback.finish(format_args!("[{}] {}", record.level(), message))
-///     })
-///     # ;
+/// fern::Dispatch::new().format(|callback: fern::FormatCallback, message, record| {
+///     callback.finish(format_args!("[{}] {}", record.level(), message))
+/// })
+/// # ;
 /// ```
 ///
 /// [`std::fmt`]: https://doc.rust-lang.org/std/fmt/index.html
@@ -123,9 +123,10 @@ impl LevelConfiguration {
                     return Some(level);
                 }
 
-                // The manual for loop here lets us just iterate over the module string once while
-                // still finding each sub-module. For the module string "hyper::http::h1", this loop
-                // will test first "hyper::http" then "hyper".
+                // The manual for loop here lets us just iterate over the module string once
+                // while still finding each sub-module. For the module string
+                // "hyper::http::h1", this loop will test first "hyper::http"
+                // then "hyper".
                 let mut last_char_colon = false;
 
                 for (index, ch) in module.char_indices().rev() {
@@ -226,7 +227,8 @@ impl Log for Null {
 impl Log for Dispatch {
     fn enabled(&self, metadata: &log::Metadata) -> bool {
         metadata.level()
-            <= self.levels
+            <= self
+                .levels
                 .find_module(metadata.target())
                 .unwrap_or(self.default_level) && self.filters.iter().all(|f| f(metadata))
     }
@@ -235,11 +237,16 @@ impl Log for Dispatch {
         if self.enabled(record.metadata()) {
             match self.format {
                 Some(ref format) => {
-                    // flag to ensure the log message is completed even if the formatter doesn't complete the callback.
+                    // flag to ensure the log message is completed even if the formatter doesn't
+                    // complete the callback.
                     let mut callback_called_flag = false;
 
                     (format)(
-                        FormatCallback(InnerFormatCallback(&mut callback_called_flag, self, record)),
+                        FormatCallback(InnerFormatCallback(
+                            &mut callback_called_flag,
+                            self,
+                            record,
+                        )),
                         record.args(),
                         record,
                     );
@@ -273,8 +280,8 @@ impl Dispatch {
 impl<'a> FormatCallback<'a> {
     /// Complete the formatting call that this FormatCallback was created for.
     ///
-    /// This will call the rest of the logging chain using the given formatted message
-    /// as the new payload message.
+    /// This will call the rest of the logging chain using the given formatted
+    /// message as the new payload message.
     ///
     /// Example usage:
     ///
@@ -295,7 +302,8 @@ impl<'a> FormatCallback<'a> {
         // let the dispatch know that we did in fact get called.
         *callback_called_flag = true;
 
-        // NOTE: This needs to be updated whenever new things are added to `log::Record`.
+        // NOTE: This needs to be updated whenever new things are added to
+        // `log::Record`.
         let new_record = log::RecordBuilder::new()
             .args(formatted_message)
             .metadata(record.metadata().clone())
@@ -321,9 +329,10 @@ macro_rules! std_log_impl {
             fn log(&self, record: &log::Record) {
                 fallback_on_error(record, |record| {
                     if cfg!(feature = "meta-logging-in-format") {
-                        // Formatting first prevents deadlocks when the process of formatting itself is logged.
-                        // note: this is only ever needed if some Debug, Display, or other formatting trait
-                        // itself is logging things too.
+                        // Formatting first prevents deadlocks when the process of formatting
+                        // itself is logged. note: this is only ever needed if some
+                        // Debug, Display, or other formatting trait itself is
+                        // logging things too.
                         let msg = format!("{}{}", record.args(), self.line_sep);
 
                         write!(self.stream.lock(), "{}", msg)?;
@@ -378,7 +387,8 @@ macro_rules! writer_log_impl {
             }
 
             fn flush(&self) {
-                let _ = self.stream
+                let _ = self
+                    .stream
                     .lock()
                     .unwrap_or_else(|e| e.into_inner())
                     .flush();
@@ -574,7 +584,8 @@ mod test {
         assert_eq!(config.find_module("root"), Some(Trace));
         assert_eq!(config.find_module("root::other_module"), Some(Trace));
 
-        // We want to ensure that it does pick up most specific level before trying anything more general.
+        // We want to ensure that it does pick up most specific level before trying
+        // anything more general.
         assert_eq!(config.find_module("root::sub1"), Some(Debug));
         assert_eq!(config.find_module("root::sub1::other_module"), Some(Debug));
 
