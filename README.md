@@ -63,7 +63,7 @@ If you have a use case fern does not cover, please file an issue. This is immens
 
 If you're interested in helping fix an [existing issue](https://github.com/daboross/fern/issues), or an issue you just filed, help is appreciated.
 
-See [CONTRIBUTING](./CONTRIBUTING.md) for technical information on contrbuting.
+See [CONTRIBUTING](./CONTRIBUTING.md) for technical information on contributing.
 
 [Rust]: https://www.rust-lang.org/
 [travis-image]: https://travis-ci.org/daboross/fern.svg?branch=master
