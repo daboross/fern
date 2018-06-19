@@ -7,6 +7,7 @@ Unreleased
   - Includes support for RFC5424 formatting, but requires manually
     transforming the log record into the key/value pairs syslog
     expects.
+- Add shorthand for calling an arbitrary function as a logging backend
 
 0.5.5 (2018-03-25)
 ==================

@@ -1049,6 +1049,41 @@ impl Output {
             transform: Box::new(transform),
         })
     }
+
+    /// Returns a logger which simply calls the given function with each message.
+    ///
+    /// The function will be called inline in the thread the log occurs on.
+    ///
+    /// Example usage:
+    ///
+    /// ```
+    /// fern::Dispatch::new()
+    ///     .chain(fern::Output::call(|record| {
+    ///         // this is mundane, but you can do anything here.
+    ///         println!("{}", record.args());
+    ///     }))
+    ///     # .into_log();
+    /// ```
+    pub fn call<F>(func: F) -> Self
+    where
+        F: Fn(&log::Record) + Sync + Send + 'static,
+    {
+        struct CallShim<F>(F);
+        impl<F> log::Log for CallShim<F>
+        where
+            F: Fn(&log::Record) + Sync + Send + 'static,
+        {
+            fn enabled(&self, _: &log::Metadata) -> bool {
+                true
+            }
+            fn log(&self, record: &log::Record) {
+                (self.0)(record)
+            }
+            fn flush(&self) {}
+        }
+
+        Self::from(Box::new(CallShim(func)) as Box<log::Log>)
+    }
 }
 
 impl Default for Dispatch {
