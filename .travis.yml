@@ -14,7 +14,7 @@ matrix:
     rust: 1.16.0
     script: cargo build --verbose
   - os: linux
-    rust: nightly
+    rust: stable
     sudo: true
     addons:
       apt:
@@ -23,6 +23,10 @@ matrix:
     script: | # cargo tarpaulin
       bash <(curl https://raw.githubusercontent.com/xd009642/tarpaulin/master/travis-install.sh) &&
       cargo tarpaulin --all-features --ciserver travis-ci --coveralls $TRAVIS_JOB_ID
+  allow_failures:
+    - script: | # cargo tarpaulin
+        bash <(curl https://raw.githubusercontent.com/xd009642/tarpaulin/master/travis-install.sh) &&
+        cargo tarpaulin --all-features --ciserver travis-ci --coveralls $TRAVIS_JOB_ID
 script:
 - cargo test --verbose
 - cargo test --verbose --features=colored
