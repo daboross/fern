@@ -2,6 +2,11 @@ Unreleased
 ==========
 
 - Add another fuller example for colored logging (thanks [@digitalatigid]!)
+- Add support for syslog version 4.0.0 under feature flag `syslog-4`.
+  - Does not remove syslog-3 support
+  - Includes support for RFC5424 formatting, but requires manually
+    transforming the log record into the key/value pairs syslog
+    expects.
 
 0.5.5 (2018-03-25)
 ==================
