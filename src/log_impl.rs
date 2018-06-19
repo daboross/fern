@@ -450,7 +450,7 @@ impl Log for Sender {
     fn flush(&self) {}
 }
 
-#[cfg(feature = "syslog-4")]
+#[cfg(any(feature = "syslog-3", feature = "syslog-4"))]
 macro_rules! send_syslog {
     ($logger:expr, $level:expr, $message:expr) => {
         use log::Level;
@@ -578,6 +578,7 @@ impl fmt::Display for LogError {
         match *self {
             LogError::Io(ref e) => write!(f, "{}", e),
             LogError::Send(ref e) => write!(f, "{}", e),
+            #[cfg(feature = "syslog-4")]
             LogError::Syslog4(ref e) => write!(f, "{}", e),
         }
     }
@@ -595,6 +596,7 @@ impl From<mpsc::SendError<String>> for LogError {
     }
 }
 
+#[cfg(feature = "syslog-4")]
 impl From<syslog_4::Error> for LogError {
     fn from(error: syslog_4::Error) -> Self {
         LogError::Syslog4(error)
