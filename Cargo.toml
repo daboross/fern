@@ -23,10 +23,12 @@ coveralls = { repository = "daboross/fern" }
 [dependencies]
 log = { version = "0.4", features = ["std"] }
 colored = { version = "1.5", optional = true }
-syslog = { version = "3.3", optional = true }
+syslog3 = { version = "3", optional = true }
+syslog = { version = "4", optional = true }
 
 [features]
-syslog-3 = ["syslog"]
+syslog-3 = ["syslog3"]
+syslog-4 = ["syslog"]
 meta-logging-in-format = []
 
 [dev-dependencies]
@@ -47,6 +49,10 @@ required-features = ["colored"]
 
 [[example]]
 name = "syslog"
+required-features = ["syslog-4"]
+
+[[example]]
+name = "syslog3"
 required-features = ["syslog-3"]
 
 [[example]]

@@ -12,6 +12,8 @@ use {Filter, Formatter};
 
 #[cfg(feature = "syslog-3")]
 use syslog_3;
+#[cfg(feature = "syslog-4")]
+use {syslog_4, Syslog4Rfc3164Logger, Syslog4Rfc5424Logger};
 
 pub enum LevelConfiguration {
     JustDefault,
@@ -54,7 +56,11 @@ pub enum Output {
     File(File),
     Sender(Sender),
     #[cfg(feature = "syslog-3")]
-    Syslog(Syslog),
+    Syslog3(Syslog3),
+    #[cfg(feature = "syslog-4")]
+    Syslog4Rfc3164(Syslog4Rfc3164),
+    #[cfg(feature = "syslog-4")]
+    Syslog4Rfc5424(Syslog4Rfc5424),
     Dispatch(Dispatch),
     SharedDispatch(Arc<Dispatch>),
     OtherBoxed(Box<Log>),
@@ -89,8 +95,21 @@ pub struct Writer {
 }
 
 #[cfg(feature = "syslog-3")]
-pub struct Syslog {
+pub struct Syslog3 {
     pub inner: syslog_3::Logger,
+}
+
+#[cfg(feature = "syslog-4")]
+pub struct Syslog4Rfc3164 {
+    pub inner: Mutex<Syslog4Rfc3164Logger>,
+}
+
+#[cfg(feature = "syslog-4")]
+pub struct Syslog4Rfc5424 {
+    pub inner: Mutex<Syslog4Rfc5424Logger>,
+    pub transform: Box<
+        Fn(&log::Record) -> (i32, HashMap<String, HashMap<String, String>>, String) + Sync + Send,
+    >,
 }
 
 pub struct Panic;
@@ -173,7 +192,11 @@ impl Log for Output {
             Output::OtherBoxed(ref s) => s.enabled(metadata),
             Output::OtherStatic(ref s) => s.enabled(metadata),
             #[cfg(feature = "syslog-3")]
-            Output::Syslog(ref s) => s.enabled(metadata),
+            Output::Syslog3(ref s) => s.enabled(metadata),
+            #[cfg(feature = "syslog-4")]
+            Output::Syslog4Rfc3164(ref s) => s.enabled(metadata),
+            #[cfg(feature = "syslog-4")]
+            Output::Syslog4Rfc5424(ref s) => s.enabled(metadata),
             Output::Panic(ref s) => s.enabled(metadata),
             Output::Writer(ref s) => s.enabled(metadata),
         }
@@ -190,7 +213,11 @@ impl Log for Output {
             Output::OtherBoxed(ref s) => s.log(record),
             Output::OtherStatic(ref s) => s.log(record),
             #[cfg(feature = "syslog-3")]
-            Output::Syslog(ref s) => s.log(record),
+            Output::Syslog3(ref s) => s.log(record),
+            #[cfg(feature = "syslog-4")]
+            Output::Syslog4Rfc3164(ref s) => s.log(record),
+            #[cfg(feature = "syslog-4")]
+            Output::Syslog4Rfc5424(ref s) => s.log(record),
             Output::Panic(ref s) => s.log(record),
             Output::Writer(ref s) => s.log(record),
         }
@@ -207,7 +234,11 @@ impl Log for Output {
             Output::OtherBoxed(ref s) => s.flush(),
             Output::OtherStatic(ref s) => s.flush(),
             #[cfg(feature = "syslog-3")]
-            Output::Syslog(ref s) => s.flush(),
+            Output::Syslog3(ref s) => s.flush(),
+            #[cfg(feature = "syslog-4")]
+            Output::Syslog4Rfc3164(ref s) => s.flush(),
+            #[cfg(feature = "syslog-4")]
+            Output::Syslog4Rfc5424(ref s) => s.flush(),
             Output::Panic(ref s) => s.flush(),
             Output::Writer(ref s) => s.flush(),
         }
@@ -419,22 +450,65 @@ impl Log for Sender {
     fn flush(&self) {}
 }
 
+#[cfg(feature = "syslog-4")]
+macro_rules! send_syslog {
+    ($logger:expr, $level:expr, $message:expr) => {
+        use log::Level;
+        match $level {
+            Level::Error => $logger.err($message)?,
+            Level::Warn => $logger.warning($message)?,
+            Level::Info => $logger.info($message)?,
+            Level::Debug | Level::Trace => $logger.debug($message)?,
+        }
+    };
+}
+
 #[cfg(feature = "syslog-3")]
-impl Log for Syslog {
+impl Log for Syslog3 {
     fn enabled(&self, _: &log::Metadata) -> bool {
         true
     }
 
     fn log(&self, record: &log::Record) {
         fallback_on_error(record, |record| {
-            use log::Level;
             let message = record.args();
-            match record.level() {
-                Level::Error => self.inner.err(message)?,
-                Level::Warn => self.inner.warning(message)?,
-                Level::Info => self.inner.info(message)?,
-                Level::Debug | Level::Trace => self.inner.debug(message)?,
-            };
+            send_syslog!(self.inner, record.level(), message);
+
+            Ok(())
+        });
+    }
+    fn flush(&self) {}
+}
+
+#[cfg(feature = "syslog-4")]
+impl Log for Syslog4Rfc3164 {
+    fn enabled(&self, _: &log::Metadata) -> bool {
+        true
+    }
+
+    fn log(&self, record: &log::Record) {
+        fallback_on_error(record, |record| {
+            let message = record.args().to_string();
+            let mut log = self.inner.lock().unwrap_or_else(|e| e.into_inner());
+            send_syslog!(log, record.level(), message);
+
+            Ok(())
+        });
+    }
+    fn flush(&self) {}
+}
+
+#[cfg(feature = "syslog-4")]
+impl Log for Syslog4Rfc5424 {
+    fn enabled(&self, _: &log::Metadata) -> bool {
+        true
+    }
+
+    fn log(&self, record: &log::Record) {
+        fallback_on_error(record, |record| {
+            let transformed = (self.transform)(record);
+            let mut log = self.inner.lock().unwrap_or_else(|e| e.into_inner());
+            send_syslog!(log, record.level(), transformed);
 
             Ok(())
         });
@@ -495,6 +569,8 @@ fn backup_logging(record: &log::Record, error: &LogError) {
 enum LogError {
     Io(io::Error),
     Send(mpsc::SendError<String>),
+    #[cfg(feature = "syslog-4")]
+    Syslog4(syslog_4::Error),
 }
 
 impl fmt::Display for LogError {
@@ -502,6 +578,7 @@ impl fmt::Display for LogError {
         match *self {
             LogError::Io(ref e) => write!(f, "{}", e),
             LogError::Send(ref e) => write!(f, "{}", e),
+            LogError::Syslog4(ref e) => write!(f, "{}", e),
         }
     }
 }
@@ -515,6 +592,12 @@ impl From<io::Error> for LogError {
 impl From<mpsc::SendError<String>> for LogError {
     fn from(error: mpsc::SendError<String>) -> Self {
         LogError::Send(error)
+    }
+}
+
+impl From<syslog_4::Error> for LogError {
+    fn from(error: syslog_4::Error) -> Self {
+        LogError::Syslog4(error)
     }
 }
 

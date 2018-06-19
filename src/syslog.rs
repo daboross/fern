@@ -5,8 +5,8 @@ Be sure to depend on `syslog` and the `syslog` feature in `Cargo.toml`:
 
 ```toml
 [dependencies]
-fern = { version = "0.5", features = ["syslog-3"] }]
-syslog = "3.3"
+fern = { version = "0.5", features = ["syslog-4"] }]
+syslog = "4"
 ```
 
 To use `syslog`, simply create the log you want, and pass it into `Dispatch::chain`:
@@ -15,7 +15,48 @@ To use `syslog`, simply create the log you want, and pass it into `Dispatch::cha
 extern crate fern;
 extern crate syslog;
 
-# fn setup_logging() -> Result<(), fern::InitError> {
+# fn setup_logging() -> Result<(), Box<std::error::Error>> {
+let formatter = syslog::Formatter3164 {
+    facility: syslog::Facility::LOG_USER,
+    hostname: None,
+    process: "hello-world".to_owned(),
+    pid: 0,
+};
+
+fern::Dispatch::new()
+    .chain(syslog::unix(formatter)?)
+    .apply()?;
+# Ok(())
+# }
+# fn main() { setup_logging().ok(); }
+```
+
+---
+
+## Alternate syslog versions
+
+If you're using syslog=4.0.0 exactly, one line "ok" will be printed to stdout on log configuration.
+This is [a bug in syslog](https://github.com/Geal/rust-syslog/issues/39), and there is nothing we
+can change in fern to fix that.
+
+One way to avoid this is to use an earlier version of syslog, which `fern` also supports. To do
+this, depend on `syslog = 3` instead.
+
+```toml
+[dependencies]
+fern = { version = "0.5", features = ["syslog-3"] }]
+syslog = "3"
+```
+
+The setup is very similar, except with less configuration to start the syslog logger:
+
+```rust
+extern crate fern;
+# /*
+extern crate syslog;
+# */ extern crate syslog3 as syslog;
+
+# fn setup_logging() -> Result<(), Box<std::error::Error>> {
 fern::Dispatch::new()
     .chain(syslog::unix(syslog::Facility::LOG_USER)?)
     .apply()?;
@@ -23,6 +64,11 @@ fern::Dispatch::new()
 # }
 # fn main() { setup_logging().ok(); }
 ```
+
+The rest of this document applies to both syslog 3 and syslog 4, but the examples will be using
+syslog 4 as it is the latest version.
+
+---
 
 One thing with `syslog` is that you don't generally want to apply any log formatting. The system
 logger will handle that for you.
@@ -35,7 +81,14 @@ configuration is easy with fern:
 # extern crate log;
 # extern crate syslog;
 #
-# fn setup_logging() -> Result<(), fern::InitError> {
+# fn setup_logging() -> Result<(), Box<std::error::Error>> {
+let syslog_formatter = syslog::Formatter3164 {
+    facility: syslog::Facility::LOG_USER,
+    hostname: None,
+    process: "hello-world".to_owned(),
+    pid: 0,
+};
+
 // top level config
 fern::Dispatch::new()
     .chain(
@@ -55,7 +108,7 @@ fern::Dispatch::new()
         // syslog config
         fern::Dispatch::new()
             .level(log::LevelFilter::Info)
-            .chain(syslog::unix(syslog::Facility::LOG_USER)?)
+            .chain(syslog::unix(syslog_formatter)?)
     )
     .apply()?;
 # Ok(())
@@ -76,13 +129,19 @@ in order to work.
 # extern crate log;
 # extern crate syslog;
 #
-# fn setup_logging() -> Result<(), fern::InitError> {
+# fn setup_logging() -> Result<(), Box<std::error::Error>> {
+# let formatter = syslog::Formatter3164 {
+#     facility: syslog::Facility::LOG_USER,
+#     hostname: None,
+#     process: "hello-world".to_owned(),
+#     pid: 0,
+# };
 fern::Dispatch::new()
     // by default only accept warning messages from libraries so we don't spam
     .level(log::LevelFilter::Warn)
     // but accept Info and Debug if we explicitly mention syslog
     .level_for("explicit-syslog", log::LevelFilter::Debug)
-    .chain(syslog::unix(syslog::Facility::LOG_USER)?)
+    .chain(syslog::unix(formatter)?)
     .apply()?;
 # Ok(())
 # }

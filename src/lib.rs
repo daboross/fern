@@ -217,13 +217,18 @@
 #[cfg(feature = "colored")]
 extern crate colored;
 extern crate log;
+#[cfg(feature = "syslog-4")]
+extern crate syslog as syslog_4;
 #[cfg(feature = "syslog-3")]
-extern crate syslog as syslog_3;
+extern crate syslog3 as syslog_3;
 
 use std::convert::AsRef;
 use std::fs::{File, OpenOptions};
 use std::path::Path;
 use std::{fmt, io};
+
+#[cfg(feature = "syslog-4")]
+use std::collections::HashMap;
 
 pub use builders::{Dispatch, Output, Panic};
 pub use errors::InitError;
@@ -235,7 +240,7 @@ mod log_impl;
 
 #[cfg(feature = "colored")]
 pub mod colors;
-#[cfg(feature = "syslog-3")]
+#[cfg(all(feature = "syslog-3", feature = "syslog-4"))]
 pub mod syslog;
 
 pub mod meta;
@@ -249,6 +254,17 @@ pub type Formatter = Fn(FormatCallback, &fmt::Arguments, &log::Record) + Sync + 
 /// A type alias for a log filter. Returning true means the record should
 /// succeed - false means it should fail.
 pub type Filter = Fn(&log::Metadata) -> bool + Send + Sync + 'static;
+
+#[cfg(feature = "syslog-4")]
+type Syslog4Rfc3164Logger =
+    syslog_4::Logger<syslog_4::LoggerBackend, String, syslog_4::Formatter3164>;
+
+#[cfg(feature = "syslog-4")]
+type Syslog4Rfc5424Logger = syslog_4::Logger<
+    syslog_4::LoggerBackend,
+    (i32, HashMap<String, HashMap<String, String>>, String),
+    syslog_4::Formatter5424,
+>;
 
 /// Convenience method for opening a log file with common options.
 ///

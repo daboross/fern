@@ -1,21 +1,16 @@
 extern crate fern;
 #[macro_use]
 extern crate log;
-extern crate syslog;
+// This is necessary because `fern` depends on both version 3 and 4.
+extern crate syslog3 as syslog;
 
-fn setup_logging() -> Result<(), Box<std::error::Error>> {
-    let syslog_fmt = syslog::Formatter3164 {
-        facility: syslog::Facility::LOG_USER,
-        hostname: None,
-        process: "fern-syslog-example".into(),
-        pid: 0,
-    };
+fn setup_logging() -> Result<(), fern::InitError> {
     fern::Dispatch::new()
         // by default only accept warning messages so as not to spam
         .level(log::LevelFilter::Warn)
         // but accept Info if we explicitly mention it
         .level_for("explicit-syslog", log::LevelFilter::Info)
-        .chain(syslog::unix(syslog_fmt)?)
+        .chain(syslog::unix(syslog::Facility::LOG_USER)?)
         .apply()?;
 
     Ok(())

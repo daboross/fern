@@ -4,12 +4,17 @@ use std::sync::mpsc::Sender;
 use std::sync::{Arc, Mutex};
 use std::{cmp, fmt, fs, io};
 
+#[cfg(feature = "syslog-4")]
+use std::collections::HashMap;
+
 use log::{self, Log};
 
 use {log_impl, Filter, FormatCallback, Formatter};
 
 #[cfg(feature = "syslog-3")]
 use syslog_3;
+#[cfg(feature = "syslog-4")]
+use {Syslog4Rfc3164Logger, Syslog4Rfc5424Logger};
 
 /// The base dispatch logger.
 ///
@@ -461,9 +466,24 @@ impl Dispatch {
                     }))
                 }
                 #[cfg(feature = "syslog-3")]
-                OutputInner::Syslog(log) => {
+                OutputInner::Syslog3(log) => {
                     max_child_level = log::LevelFilter::Trace;
-                    Some(log_impl::Output::Syslog(log_impl::Syslog { inner: log }))
+                    Some(log_impl::Output::Syslog3(log_impl::Syslog3 { inner: log }))
+                }
+                #[cfg(feature = "syslog-4")]
+                OutputInner::Syslog4Rfc3164(logger) => {
+                    max_child_level = log::LevelFilter::Trace;
+                    Some(log_impl::Output::Syslog4Rfc3164(log_impl::Syslog4Rfc3164 {
+                        inner: Mutex::new(logger),
+                    }))
+                }
+                #[cfg(feature = "syslog-4")]
+                OutputInner::Syslog4Rfc5424 { logger, transform } => {
+                    max_child_level = log::LevelFilter::Trace;
+                    Some(log_impl::Output::Syslog4Rfc5424(log_impl::Syslog4Rfc5424 {
+                        inner: Mutex::new(logger),
+                        transform,
+                    }))
                 }
                 OutputInner::Panic => {
                     max_child_level = log::LevelFilter::Trace;
@@ -613,7 +633,20 @@ enum OutputInner {
     OtherStatic(&'static Log),
     /// Passes all messages to the syslog.
     #[cfg(feature = "syslog-3")]
-    Syslog(syslog_3::Logger),
+    Syslog3(syslog_3::Logger),
+    /// Passes all messages to the syslog.
+    #[cfg(feature = "syslog-4")]
+    Syslog4Rfc3164(Syslog4Rfc3164Logger),
+    /// Sends all messages through the transform then passes to the syslog.
+    #[cfg(feature = "syslog-4")]
+    Syslog4Rfc5424 {
+        logger: Syslog4Rfc5424Logger,
+        transform: Box<
+            Fn(&log::Record) -> (i32, HashMap<String, HashMap<String, String>>, String)
+                + Sync
+                + Send,
+        >,
+    },
     /// Panics with messages text for all messages.
     Panic,
 }
@@ -766,8 +799,10 @@ impl From<syslog_3::Logger> for Output {
     ///
     /// Log levels are translated trace => debug, debug => debug, info =>
     /// informational, warn => warning, and error => error.
+    ///
+    /// This requires the `"syslog-3"` feature.
     fn from(log: syslog_3::Logger) -> Self {
-        Output(OutputInner::Syslog(log))
+        Output(OutputInner::Syslog3(log))
     }
 }
 
@@ -783,8 +818,29 @@ impl From<Box<syslog_3::Logger>> for Output {
     /// methods return Boxes), it will be immediately unboxed upon storage
     /// in the configuration structure. This will create a configuration
     /// identical to that created by passing a raw `syslog::Logger`.
+    ///
+    /// This requires the `"syslog-3"` feature.
     fn from(log: Box<syslog_3::Logger>) -> Self {
-        Output(OutputInner::Syslog(*log))
+        Output(OutputInner::Syslog3(*log))
+    }
+}
+
+#[cfg(feature = "syslog-4")]
+impl From<Syslog4Rfc3164Logger> for Output {
+    /// Creates an output logger which writes all messages to the given syslog.
+    ///
+    /// Log levels are translated trace => debug, debug => debug, info =>
+    /// informational, warn => warning, and error => error.
+    ///
+    /// Note that due to https://github.com/Geal/rust-syslog/issues/41,
+    /// logging to this backend requires one allocation per log call.
+    ///
+    /// This is for RFC 3164 loggers. To use an RFC 5424 logger, use the
+    /// [`Output::syslog_5424`] helper method.
+    ///
+    /// This requires the `"syslog-4"` feature.
+    fn from(log: Syslog4Rfc3164Logger) -> Self {
+        Output(OutputInner::Syslog4Rfc3164(log))
     }
 }
 
@@ -965,6 +1021,34 @@ impl Output {
             line_sep: line_sep.into(),
         })
     }
+
+    /// Returns a logger which logs into an RFC5424 syslog.
+    ///
+    /// This method takes an additional transform method to turn the log data
+    /// into RFC5424 data.
+    ///
+    /// I've honestly got no clue what the expected keys and values are for
+    /// this kind of logging, so I'm just going to link [the rfc] instead.
+    ///
+    /// If you're an expert on syslog logging and would like to contribute
+    /// an example to put here, it would be gladly accepted!
+    ///
+    /// This requires the `"syslog-4"` feature.
+    ///
+    /// [the rfc]: https://tools.ietf.org/html/rfc5424
+    #[cfg(feature = "syslog-4")]
+    pub fn syslog_5424<F>(logger: Syslog4Rfc5424Logger, transform: F) -> Self
+    where
+        F: Fn(&log::Record) -> (i32, HashMap<String, HashMap<String, String>>, String)
+            + Sync
+            + Send
+            + 'static,
+    {
+        Output(OutputInner::Syslog4Rfc5424 {
+            logger,
+            transform: Box::new(transform),
+        })
+    }
 }
 
 impl Default for Dispatch {
@@ -1050,8 +1134,18 @@ impl fmt::Debug for OutputInner {
                 .field("line_sep", line_sep)
                 .finish(),
             #[cfg(feature = "syslog-3")]
-            OutputInner::Syslog(_) => f
-                .debug_tuple("Output::Syslog")
+            OutputInner::Syslog3(_) => f
+                .debug_tuple("Output::Syslog3")
+                .field(&"<unprintable syslog::Logger>")
+                .finish(),
+            #[cfg(feature = "syslog-4")]
+            OutputInner::Syslog4Rfc3164 { .. } => f
+                .debug_tuple("Output::Syslog4Rfc3164")
+                .field(&"<unprintable syslog::Logger>")
+                .finish(),
+            #[cfg(feature = "syslog-4")]
+            OutputInner::Syslog4Rfc5424 { .. } => f
+                .debug_tuple("Output::Syslog4Rfc5424")
                 .field(&"<unprintable syslog::Logger>")
                 .finish(),
             OutputInner::Dispatch(ref dispatch) => {
