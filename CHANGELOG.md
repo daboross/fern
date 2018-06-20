@@ -1,6 +1,9 @@
 Unreleased
 ==========
 
+0.5.6 (2018-06-19)
+==================
+
 - Add another fuller example for colored logging (thanks [@digitalatigid]!)
 - Add support for syslog version 4.0.0 under feature flag `syslog-4`.
   - Does not remove syslog-3 support
