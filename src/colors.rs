@@ -91,7 +91,10 @@ where
     T: fmt::Display,
 {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "\x1B[{}m{}\x1B[0m", self.color.to_fg_str(), self.text)
+        write!(f, "\x1B[{}m", self.color.to_fg_str())?;
+        fmt::Display::fmt(&self.text, f)?;
+        write!(f, "\x1B[0m")?;
+        Ok(())
     }
 }
 
@@ -304,6 +307,16 @@ mod test {
                 format!("{}", "test".color(color)),
                 format!(
                     "{}",
+                    WithFgColor {
+                        text: "test",
+                        color: color,
+                    }
+                )
+            );
+            assert_eq!(
+                format!("{:^7}", "test".color(color)),
+                format!(
+                    "{:^7}",
                     WithFgColor {
                         text: "test",
                         color: color,
