@@ -313,16 +313,20 @@ mod test {
                     }
                 )
             );
-            assert_eq!(
-                format!("{:^7}", "test".color(color)),
-                format!(
-                    "{:^7}",
-                    WithFgColor {
-                        text: "test",
-                        color: color,
-                    }
-                )
-            );
         }
+    }
+
+    #[test]
+    fn fg_color_respects_formatting_flags() {
+        let s = format!(
+            "{:^8}",
+            WithFgColor {
+                text: "test",
+                color: Yellow,
+            }
+        );
+        assert!(s.contains("  test  "));
+        assert!(!s.contains("   test  "));
+        assert!(!s.contains("  test   "));
     }
 }
