@@ -1,6 +1,9 @@
 Unreleased
 ==========
 
+- Fix colored log level display to honor formatting flags such as "{:>5}"
+  (thanks [@ExpHP]!)
+
 0.5.6 (2018-06-19)
 ==================
 
@@ -362,3 +365,4 @@ First release, version 0.1.0.
 [@jakunar]: https://github.com/jakunar
 [@vorner]: https://github.com/vorner
 [@digitalatigid]: https://github.com/digitalatigid
+[@ExpHP]: https://github.com/ExpHP
