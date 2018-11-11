@@ -1,6 +1,10 @@
 Unreleased
 ==========
 
+
+0.5.7 (2018-11-11)
+==================
+
 - Fix colored log level display to honor formatting flags such as "{:>5}"
   (thanks [@ExpHP]!)
 
