@@ -25,6 +25,7 @@ log = { version = "0.4", features = ["std"] }
 colored = { version = "1.5", optional = true }
 syslog3 = { version = "3", optional = true }
 syslog = { version = "4", optional = true }
+chrono = "0.4"
 
 [features]
 syslog-3 = ["syslog3"]
@@ -38,6 +39,9 @@ clap = "2.22"
 
 [[example]]
 name = "cmd-program"
+
+[[example]]
+name = "date-based-file-log"
 
 [[example]]
 name = "colored"

@@ -255,6 +255,8 @@ pub type Formatter = Fn(FormatCallback, &fmt::Arguments, &log::Record) + Sync + 
 /// succeed - false means it should fail.
 pub type Filter = Fn(&log::Metadata) -> bool + Send + Sync + 'static;
 
+pub use builders::DateBasedLogFile;
+
 #[cfg(feature = "syslog-4")]
 type Syslog4Rfc3164Logger =
     syslog_4::Logger<syslog_4::LoggerBackend, String, syslog_4::Formatter3164>;
@@ -290,3 +292,4 @@ pub fn log_file<P: AsRef<Path>>(path: P) -> io::Result<File> {
         .append(true)
         .open(path)
 }
+
