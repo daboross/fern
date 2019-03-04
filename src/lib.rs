@@ -217,9 +217,9 @@
 #[cfg(feature = "colored")]
 extern crate colored;
 extern crate log;
-#[cfg(feature = "syslog-4")]
+#[cfg(all(feature = "syslog-4", not(windows)))]
 extern crate syslog as syslog_4;
-#[cfg(feature = "syslog-3")]
+#[cfg(all(feature = "syslog-3", not(windows)))]
 extern crate syslog3 as syslog_3;
 
 use std::convert::AsRef;
@@ -240,7 +240,7 @@ mod log_impl;
 
 #[cfg(feature = "colored")]
 pub mod colors;
-#[cfg(all(feature = "syslog-3", feature = "syslog-4"))]
+#[cfg(all(not(windows), feature = "syslog-3", feature = "syslog-4"))]
 pub mod syslog;
 
 pub mod meta;
@@ -255,11 +255,11 @@ pub type Formatter = Fn(FormatCallback, &fmt::Arguments, &log::Record) + Sync + 
 /// succeed - false means it should fail.
 pub type Filter = Fn(&log::Metadata) -> bool + Send + Sync + 'static;
 
-#[cfg(feature = "syslog-4")]
+#[cfg(all(feature = "syslog-4", not(windows)))]
 type Syslog4Rfc3164Logger =
     syslog_4::Logger<syslog_4::LoggerBackend, String, syslog_4::Formatter3164>;
 
-#[cfg(feature = "syslog-4")]
+#[cfg(all(feature = "syslog-4", not(windows)))]
 type Syslog4Rfc5424Logger = syslog_4::Logger<
     syslog_4::LoggerBackend,
     (i32, HashMap<String, HashMap<String, String>>, String),
