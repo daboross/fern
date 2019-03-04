@@ -10,9 +10,9 @@ use log::{self, Log};
 
 use {Filter, Formatter};
 
-#[cfg(feature = "syslog-3")]
+#[cfg(all(not(windows), feature = "syslog-3"))]
 use syslog_3;
-#[cfg(feature = "syslog-4")]
+#[cfg(all(not(windows), feature = "syslog-4"))]
 use {syslog_4, Syslog4Rfc3164Logger, Syslog4Rfc5424Logger};
 
 pub enum LevelConfiguration {
@@ -55,11 +55,11 @@ pub enum Output {
     Stderr(Stderr),
     File(File),
     Sender(Sender),
-    #[cfg(feature = "syslog-3")]
+    #[cfg(all(not(windows), feature = "syslog-3"))]
     Syslog3(Syslog3),
-    #[cfg(feature = "syslog-4")]
+    #[cfg(all(not(windows), feature = "syslog-4"))]
     Syslog4Rfc3164(Syslog4Rfc3164),
-    #[cfg(feature = "syslog-4")]
+    #[cfg(all(not(windows), feature = "syslog-4"))]
     Syslog4Rfc5424(Syslog4Rfc5424),
     Dispatch(Dispatch),
     SharedDispatch(Arc<Dispatch>),
@@ -94,17 +94,17 @@ pub struct Writer {
     pub line_sep: Cow<'static, str>,
 }
 
-#[cfg(feature = "syslog-3")]
+#[cfg(all(not(windows), feature = "syslog-3"))]
 pub struct Syslog3 {
     pub inner: syslog_3::Logger,
 }
 
-#[cfg(feature = "syslog-4")]
+#[cfg(all(not(windows), feature = "syslog-4"))]
 pub struct Syslog4Rfc3164 {
     pub inner: Mutex<Syslog4Rfc3164Logger>,
 }
 
-#[cfg(feature = "syslog-4")]
+#[cfg(all(not(windows), feature = "syslog-4"))]
 pub struct Syslog4Rfc5424 {
     pub inner: Mutex<Syslog4Rfc5424Logger>,
     pub transform: Box<
@@ -191,11 +191,11 @@ impl Log for Output {
             Output::SharedDispatch(ref s) => s.enabled(metadata),
             Output::OtherBoxed(ref s) => s.enabled(metadata),
             Output::OtherStatic(ref s) => s.enabled(metadata),
-            #[cfg(feature = "syslog-3")]
+            #[cfg(all(not(windows), feature = "syslog-3"))]
             Output::Syslog3(ref s) => s.enabled(metadata),
-            #[cfg(feature = "syslog-4")]
+            #[cfg(all(not(windows), feature = "syslog-4"))]
             Output::Syslog4Rfc3164(ref s) => s.enabled(metadata),
-            #[cfg(feature = "syslog-4")]
+            #[cfg(all(not(windows), feature = "syslog-4"))]
             Output::Syslog4Rfc5424(ref s) => s.enabled(metadata),
             Output::Panic(ref s) => s.enabled(metadata),
             Output::Writer(ref s) => s.enabled(metadata),
@@ -212,11 +212,11 @@ impl Log for Output {
             Output::SharedDispatch(ref s) => s.log(record),
             Output::OtherBoxed(ref s) => s.log(record),
             Output::OtherStatic(ref s) => s.log(record),
-            #[cfg(feature = "syslog-3")]
+            #[cfg(all(not(windows), feature = "syslog-3"))]
             Output::Syslog3(ref s) => s.log(record),
-            #[cfg(feature = "syslog-4")]
+            #[cfg(all(not(windows), feature = "syslog-4"))]
             Output::Syslog4Rfc3164(ref s) => s.log(record),
-            #[cfg(feature = "syslog-4")]
+            #[cfg(all(not(windows), feature = "syslog-4"))]
             Output::Syslog4Rfc5424(ref s) => s.log(record),
             Output::Panic(ref s) => s.log(record),
             Output::Writer(ref s) => s.log(record),
@@ -233,11 +233,11 @@ impl Log for Output {
             Output::SharedDispatch(ref s) => s.flush(),
             Output::OtherBoxed(ref s) => s.flush(),
             Output::OtherStatic(ref s) => s.flush(),
-            #[cfg(feature = "syslog-3")]
+            #[cfg(all(not(windows), feature = "syslog-3"))]
             Output::Syslog3(ref s) => s.flush(),
-            #[cfg(feature = "syslog-4")]
+            #[cfg(all(not(windows), feature = "syslog-4"))]
             Output::Syslog4Rfc3164(ref s) => s.flush(),
-            #[cfg(feature = "syslog-4")]
+            #[cfg(all(not(windows), feature = "syslog-4"))]
             Output::Syslog4Rfc5424(ref s) => s.flush(),
             Output::Panic(ref s) => s.flush(),
             Output::Writer(ref s) => s.flush(),
@@ -480,7 +480,7 @@ impl Log for Syslog3 {
     fn flush(&self) {}
 }
 
-#[cfg(feature = "syslog-4")]
+#[cfg(all(not(windows), feature = "syslog-4"))]
 impl Log for Syslog4Rfc3164 {
     fn enabled(&self, _: &log::Metadata) -> bool {
         true
@@ -498,7 +498,7 @@ impl Log for Syslog4Rfc3164 {
     fn flush(&self) {}
 }
 
-#[cfg(feature = "syslog-4")]
+#[cfg(all(not(windows), feature = "syslog-4"))]
 impl Log for Syslog4Rfc5424 {
     fn enabled(&self, _: &log::Metadata) -> bool {
         true
@@ -569,7 +569,7 @@ fn backup_logging(record: &log::Record, error: &LogError) {
 enum LogError {
     Io(io::Error),
     Send(mpsc::SendError<String>),
-    #[cfg(feature = "syslog-4")]
+    #[cfg(all(not(windows), feature = "syslog-4"))]
     Syslog4(syslog_4::Error),
 }
 
@@ -578,7 +578,7 @@ impl fmt::Display for LogError {
         match *self {
             LogError::Io(ref e) => write!(f, "{}", e),
             LogError::Send(ref e) => write!(f, "{}", e),
-            #[cfg(feature = "syslog-4")]
+            #[cfg(all(not(windows), feature = "syslog-4"))]
             LogError::Syslog4(ref e) => write!(f, "{}", e),
         }
     }
@@ -596,7 +596,7 @@ impl From<mpsc::SendError<String>> for LogError {
     }
 }
 
-#[cfg(feature = "syslog-4")]
+#[cfg(all(not(windows), feature = "syslog-4"))]
 impl From<syslog_4::Error> for LogError {
     fn from(error: syslog_4::Error) -> Self {
         LogError::Syslog4(error)
