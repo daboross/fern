@@ -317,7 +317,7 @@ impl Dispatch {
     ///
     /// This is recursive, and checks children.
     fn deep_enabled(&self, metadata: &log::Metadata) -> bool {
-        self.shallow_enabled(metadata) && self.output.iter().map(|l| l.enabled()).any()
+        self.shallow_enabled(metadata) && self.output.iter().any(|l| l.enabled(metadata))
     }
 }
 
