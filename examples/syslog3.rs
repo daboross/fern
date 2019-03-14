@@ -1,9 +1,11 @@
 extern crate fern;
 #[macro_use]
 extern crate log;
+#[cfg(not(windows))]
 // This is necessary because `fern` depends on both version 3 and 4.
 extern crate syslog3 as syslog;
 
+#[cfg(not(windows))]
 fn setup_logging() -> Result<(), fern::InitError> {
     fern::Dispatch::new()
         // by default only accept warning messages so as not to spam
@@ -16,6 +18,7 @@ fn setup_logging() -> Result<(), fern::InitError> {
     Ok(())
 }
 
+#[cfg(not(windows))]
 fn main() {
     setup_logging().expect("failed to initialize logging.");
 
@@ -37,4 +40,9 @@ fn main() {
     info!(target: "explicit-syslog", "hello to the syslog! this is rust.");
 
     warn!("AHHH something's on fire.");
+}
+
+#[cfg(windows)]
+fn main() {
+    panic!("this example does not work on Windows.");
 }

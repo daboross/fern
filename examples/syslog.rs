@@ -1,8 +1,10 @@
 extern crate fern;
 #[macro_use]
 extern crate log;
+#[cfg(not(windows))]
 extern crate syslog;
 
+#[cfg(not(windows))]
 fn setup_logging() -> Result<(), Box<std::error::Error>> {
     let syslog_fmt = syslog::Formatter3164 {
         facility: syslog::Facility::LOG_USER,
@@ -21,6 +23,7 @@ fn setup_logging() -> Result<(), Box<std::error::Error>> {
     Ok(())
 }
 
+#[cfg(not(windows))]
 fn main() {
     setup_logging().expect("failed to initialize logging.");
 
@@ -42,4 +45,9 @@ fn main() {
     info!(target: "explicit-syslog", "hello to the syslog! this is rust.");
 
     warn!("AHHH something's on fire.");
+}
+
+#[cfg(windows)]
+fn main() {
+    panic!("this example does not work on Windows.");
 }

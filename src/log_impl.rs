@@ -463,7 +463,7 @@ macro_rules! send_syslog {
     };
 }
 
-#[cfg(feature = "syslog-3")]
+#[cfg(all(not(windows), feature = "syslog-3"))]
 impl Log for Syslog3 {
     fn enabled(&self, _: &log::Metadata) -> bool {
         true

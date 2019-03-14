@@ -38,3 +38,5 @@ script:
 - cargo run --example cmd-program -- --verbose
 - cargo run --example colored --features colored
 - cargo run --example pretty-colored --features colored
+- cargo run --example syslog --features syslog-4
+- cargo run --example syslog3 --features syslog-3

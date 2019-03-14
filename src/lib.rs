@@ -217,9 +217,9 @@
 #[cfg(feature = "colored")]
 extern crate colored;
 extern crate log;
-#[cfg(all(feature = "syslog-4", not(windows)))]
+#[cfg(all(not(windows), feature = "syslog-4"))]
 extern crate syslog as syslog_4;
-#[cfg(all(feature = "syslog-3", not(windows)))]
+#[cfg(all(not(windows), feature = "syslog-3"))]
 extern crate syslog3 as syslog_3;
 
 use std::convert::AsRef;
@@ -227,7 +227,7 @@ use std::fs::{File, OpenOptions};
 use std::path::Path;
 use std::{fmt, io};
 
-#[cfg(feature = "syslog-4")]
+#[cfg(all(not(windows), feature = "syslog-4"))]
 use std::collections::HashMap;
 
 pub use builders::{Dispatch, Output, Panic};
@@ -255,11 +255,11 @@ pub type Formatter = Fn(FormatCallback, &fmt::Arguments, &log::Record) + Sync + 
 /// succeed - false means it should fail.
 pub type Filter = Fn(&log::Metadata) -> bool + Send + Sync + 'static;
 
-#[cfg(all(feature = "syslog-4", not(windows)))]
+#[cfg(all(not(windows), feature = "syslog-4"))]
 type Syslog4Rfc3164Logger =
     syslog_4::Logger<syslog_4::LoggerBackend, String, syslog_4::Formatter3164>;
 
-#[cfg(all(feature = "syslog-4", not(windows)))]
+#[cfg(all(not(windows), feature = "syslog-4"))]
 type Syslog4Rfc5424Logger = syslog_4::Logger<
     syslog_4::LoggerBackend,
     (i32, HashMap<String, HashMap<String, String>>, String),
