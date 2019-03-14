@@ -257,15 +257,11 @@ impl Log for Null {
 
 impl Log for Dispatch {
     fn enabled(&self, metadata: &log::Metadata) -> bool {
-        metadata.level()
-            <= self
-                .levels
-                .find_module(metadata.target())
-                .unwrap_or(self.default_level) && self.filters.iter().all(|f| f(metadata))
+        self.deep_enabled(metadata)
     }
 
     fn log(&self, record: &log::Record) {
-        if self.enabled(record.metadata()) {
+        if self.shallow_enabled(record.metadata()) {
             match self.format {
                 Some(ref format) => {
                     // flag to ensure the log message is completed even if the formatter doesn't
@@ -305,6 +301,23 @@ impl Dispatch {
         for log in &self.output {
             log.log(record);
         }
+    }
+
+    /// Check whether this log's filters prevent the given log from happening.
+    fn shallow_enabled(&self, metadata: &log::Metadata) -> bool {
+        metadata.level()
+            <= self
+                .levels
+                .find_module(metadata.target())
+                .unwrap_or(self.default_level)
+            && self.filters.iter().all(|f| f(metadata))
+    }
+
+    /// Check whether a log with the given metadata would eventually end up outputting something.
+    ///
+    /// This is recursive, and checks children.
+    fn deep_enabled(&self, metadata: &log::Metadata) -> bool {
+        self.shallow_enabled(metadata) && self.output.iter().map(|l| l.enabled()).any()
     }
 }
 
