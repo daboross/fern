@@ -2,6 +2,16 @@ Unreleased
 ==========
 
 
+0.5.8 (2019-03-25)
+==================
+
+- Change `syslog` feature to no longer re-export anything on Windows.
+  Previously, using `syslog` on windows would simply fail to compile.
+  (thanks [@17dec]!)
+- Fix `log_enabled!` macro only checking dispatch at surface and not
+  at sub-levels. Actually logging still only does a shallow check, but
+  now `log_enabled!()` should be actually accurate.
+
 0.5.7 (2018-11-11)
 ==================
 
@@ -370,3 +380,4 @@ First release, version 0.1.0.
 [@vorner]: https://github.com/vorner
 [@digitalatigid]: https://github.com/digitalatigid
 [@ExpHP]: https://github.com/ExpHP
+[@17dec]: https://github.com/17dec
