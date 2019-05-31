@@ -460,6 +460,7 @@ impl Dispatch {
                         line_sep: line_sep,
                     }))
                 }
+                #[cfg(all(not(windows), feature = "re-open"))]
                 OutputInner::Reopen { stream, line_sep } => {
                     max_child_level = log::LevelFilter::Trace;
                     Some(log_impl::Output::Reopen(log_impl::Reopen {
@@ -661,6 +662,7 @@ enum OutputInner {
         line_sep: Cow<'static, str>,
     },
     /// Writes all messages to the reopen::Reopen file with `line_sep` separator.
+    #[cfg(all(not(windows), feature = "re-open"))]
     Reopen {
         stream: reopen::Reopen<fs::File>,
         line_sep: Cow<'static, str>,
@@ -809,8 +811,9 @@ impl From<Box<Write + Send>> for Output {
     }
 }
 
+#[cfg(all(not(windows), feature = "re-open"))]
 impl From<reopen::Reopen<fs::File>> for Output {
-    /// Creates an output logger which writes all messages to the writer contained
+    /// Creates an output logger which writes all messages to the file contained
     /// in the Reopen struct, using `\n` as the separator.
     fn from(reopen: reopen::Reopen<fs::File>) -> Self {
         Output(OutputInner::Reopen {
@@ -1010,6 +1013,30 @@ impl Output {
     }
 
     /// Returns a reopenable logger, i.e., handling SIGHUP.
+    ///
+    /// If the default separator of `\n` is acceptable, a `Reopen`
+    /// instance can be passed into [`Dispatch::chain`] directly.
+    ///
+    /// ```no_run
+    /// # fn setup_logger() -> Result<(), fern::InitError> {
+    /// let reopenable = Reopen::new(
+    ///     Box::new(|| OpenOptions
+    ///         .new()
+    ///         .create(true)
+    ///         .write(true)
+    ///         .open("/tmp/output.log")
+    ///     )).unwrap();
+    ///
+    /// fern::Dispatch::new()
+    ///     .chain(reopenable)
+    ///     # .into_log();
+    /// #     Ok(())
+    /// # }
+    /// #
+    /// # fn main() { setup_logger().expect("failed to set up logger"); }
+    /// ```
+    /// [`Dispatch::chain`]: struct.Dispatch.html#method.chain
+     #[cfg(all(not(windows), feature = "re-open"))]
     pub fn reopen<T: Into<Cow<'static, str>>>(reopen: reopen::Reopen<fs::File>, line_sep: T) -> Self {
         Output(OutputInner::Reopen {
             stream: reopen,
@@ -1231,6 +1258,7 @@ impl fmt::Debug for OutputInner {
                 .field("stream", &"<unknown writer>")
                 .field("line_sep", line_sep)
                 .finish(),
+            #[cfg(all(not(windows), feature = "re-open"))]
             OutputInner::Reopen { ref line_sep, .. } => f
                 .debug_struct("Output::Reopen")
                 .field("stream", &"<unknown reopen file>")
