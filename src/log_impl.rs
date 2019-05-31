@@ -1,8 +1,12 @@
+extern crate chrono;
+
 use std::borrow::Cow;
 use std::io::{self, BufWriter, Write};
 use std::sync::mpsc;
 use std::sync::{Arc, Mutex};
+use std::cell::RefCell;
 use std::{fmt, fs};
+use std::fs::OpenOptions;
 
 use std::collections::HashMap;
 
@@ -67,6 +71,7 @@ pub enum Output {
     OtherStatic(&'static Log),
     Panic(Panic),
     Writer(Writer),
+    DateBasedFileLog(DateBasedLogFile)
 }
 
 pub struct Stdout {
@@ -115,6 +120,55 @@ pub struct Syslog4Rfc5424 {
 pub struct Panic;
 
 pub struct Null;
+
+//Custom file logger which we will be able to manipulate the name
+#[derive(Debug)]
+pub struct DateBasedLogFile{
+    pub line_sep:  Cow<'static, str>,
+    pub file_suffix: Cow<'static, str>,
+    pub file_name: Cow<'static, str>,
+    pub log_file_state : Mutex<DateBasedLogFileState>,
+}
+
+#[derive(Debug)]
+pub struct DateBasedLogFileState {
+    curr_file_suffix: RefCell<String>,
+    is_writeable: RefCell<bool>,
+    file_stream: RefCell<BufWriter<fs::File>>,
+}
+
+impl DateBasedLogFileState{
+    pub fn new(curr_file_suffix: &str, is_writeable: bool, file_stream: BufWriter<fs::File>) -> DateBasedLogFileState{
+        DateBasedLogFileState{
+            curr_file_suffix: RefCell::new(curr_file_suffix.to_string()),
+            is_writeable: RefCell::new(is_writeable),
+            file_stream: RefCell::new(file_stream),
+        }
+    }
+}
+
+impl DateBasedLogFile{
+
+    pub fn get_suffix(file_suffix_pattern: &str) -> String {
+        chrono::Local::now().format(file_suffix_pattern).to_string()
+    }
+
+    pub fn get_file_name(file_name: &str, file_suffix: &str) -> String {
+        let mut file_name_full = file_name.to_string();
+        file_name_full.push('.');
+        file_name_full.push_str(&file_suffix);
+        file_name_full
+    }
+
+    pub fn open_log_file(path: &str) -> io::Result<fs::File> {
+        OpenOptions::new()
+            .write(true)
+            .create(true)
+            .append(true)
+            .open(path)
+    }
+}
+
 
 impl From<Vec<(Cow<'static, str>, log::LevelFilter)>> for LevelConfiguration {
     fn from(mut levels: Vec<(Cow<'static, str>, log::LevelFilter)>) -> Self {
@@ -199,6 +253,7 @@ impl Log for Output {
             Output::Syslog4Rfc5424(ref s) => s.enabled(metadata),
             Output::Panic(ref s) => s.enabled(metadata),
             Output::Writer(ref s) => s.enabled(metadata),
+            Output::DateBasedFileLog(ref s)=> s.enabled(metadata),
         }
     }
 
@@ -220,6 +275,7 @@ impl Log for Output {
             Output::Syslog4Rfc5424(ref s) => s.log(record),
             Output::Panic(ref s) => s.log(record),
             Output::Writer(ref s) => s.log(record),
+            Output::DateBasedFileLog(ref s) => s.log(record),
         }
     }
 
@@ -241,6 +297,7 @@ impl Log for Output {
             Output::Syslog4Rfc5424(ref s) => s.flush(),
             Output::Panic(ref s) => s.flush(),
             Output::Writer(ref s) => s.flush(),
+            Output::DateBasedFileLog(ref s) => s.flush(),
         }
     }
 }
@@ -541,6 +598,73 @@ impl Log for Panic {
     fn flush(&self) {}
 }
 
+impl Log for DateBasedLogFile {
+    fn enabled(&self, _: &log::Metadata) -> bool {
+        true
+    }
+
+    fn log(&self, record: &log::Record) {
+        fallback_on_error(record, |record| {
+            let log_file_state = self.log_file_state.lock().unwrap_or_else(|e| e.into_inner());
+
+            if *log_file_state.is_writeable.borrow() {
+                if cfg!(feature = "meta-logging-in-format") {
+                    // Formatting first prevents deadlocks on file-logging,
+                    // when the process of formatting itself is logged.
+                    // note: this is only ever needed if some Debug, Display, or other
+                    // formatting trait itself is logging.
+                    let msg = format!("{}{}", record.args(), self.line_sep);
+
+                    let mut writer = log_file_state.file_stream.borrow_mut();
+
+                    write!(writer, "{}", msg)?;
+
+                    writer.flush()?;
+                } else {
+                    let mut writer = log_file_state.file_stream.borrow_mut();
+
+                    write!(writer, "{}{}", record.args(), self.line_sep)?;
+
+                    writer.flush()?;
+                }
+
+                //now check if log needs to be rotated
+                let new_file_suffix = DateBasedLogFile::get_suffix(&self.file_suffix);
+                let mut curr_file_suffix = log_file_state.curr_file_suffix.borrow_mut();
+
+                if !curr_file_suffix.eq(&new_file_suffix) {
+                    *curr_file_suffix = new_file_suffix;
+
+                    let file_name_full = DateBasedLogFile::get_file_name(&self.file_name, &curr_file_suffix);
+                    let file_open_result = DateBasedLogFile::open_log_file(&file_name_full);
+
+                    if let Ok(l_file) = file_open_result {
+                        let mut file_stream = log_file_state.file_stream.borrow_mut();
+                        *file_stream = BufWriter::new(l_file);
+                    }else{
+                        let mut is_writeable = log_file_state.is_writeable.borrow_mut();
+                        *is_writeable = false;
+                    }
+                }
+
+                Ok(())
+            }else{
+                Err(LogError::CannotOpenFile)
+            }
+        });
+    }
+
+    fn flush(&self) {
+        let log_file_state = self.log_file_state.lock().unwrap_or_else(|e| e.into_inner());
+
+        if *log_file_state.is_writeable.borrow() {
+            let _ = log_file_state
+                .file_stream.borrow_mut()
+                .flush();
+        }
+    }
+}
+
 #[inline(always)]
 fn fallback_on_error<F>(record: &log::Record, log_func: F)
 where
@@ -584,6 +708,7 @@ enum LogError {
     Send(mpsc::SendError<String>),
     #[cfg(all(not(windows), feature = "syslog-4"))]
     Syslog4(syslog_4::Error),
+    CannotOpenFile,
 }
 
 impl fmt::Display for LogError {
@@ -593,6 +718,7 @@ impl fmt::Display for LogError {
             LogError::Send(ref e) => write!(f, "{}", e),
             #[cfg(all(not(windows), feature = "syslog-4"))]
             LogError::Syslog4(ref e) => write!(f, "{}", e),
+            LogError::CannotOpenFile => write!(f, "cannot open log file for writing."),
         }
     }
 }
