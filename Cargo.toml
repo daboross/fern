@@ -24,6 +24,7 @@ coveralls = { repository = "daboross/fern" }
 log = { version = "0.4", features = ["std"] }
 colored = { version = "1.5", optional = true }
 chrono = "0.4"
+reopen = "^0.3"
 
 [target."cfg(not(windows))".dependencies]
 syslog3 = { version = "3", optional = true }

@@ -1,3 +1,4 @@
+
 use std::borrow::Cow;
 use std::io::Write;
 use std::sync::mpsc::Sender;
@@ -459,6 +460,13 @@ impl Dispatch {
                         line_sep: line_sep,
                     }))
                 }
+                OutputInner::Reopen { stream, line_sep } => {
+                    max_child_level = log::LevelFilter::Trace;
+                    Some(log_impl::Output::Reopen(log_impl::Reopen {
+                        stream: Mutex::new(stream),
+                        line_sep: line_sep,
+                    }))
+                }
                 OutputInner::Sender { stream, line_sep } => {
                     max_child_level = log::LevelFilter::Trace;
                     Some(log_impl::Output::Sender(log_impl::Sender {
@@ -652,6 +660,11 @@ enum OutputInner {
         stream: Box<Write + Send>,
         line_sep: Cow<'static, str>,
     },
+    /// Writes all messages to the reopen::Reopen file with `line_sep` separator.
+    Reopen {
+        stream: reopen::Reopen<fs::File>,
+        line_sep: Cow<'static, str>,
+    },
     /// Writes all messages to mpst::Sender with `line_sep` separator.
     Sender {
         stream: Sender<String>,
@@ -792,6 +805,17 @@ impl From<Box<Write + Send>> for Output {
         Output(OutputInner::Writer {
             stream: writer,
             line_sep: "\n".into(),
+        })
+    }
+}
+
+impl From<reopen::Reopen<fs::File>> for Output {
+    /// Creates an output logger which writes all messages to the writer contained
+    /// in the Reopen struct, using `\n` as the separator.
+    fn from(reopen: reopen::Reopen<fs::File>) -> Self {
+        Output(OutputInner::Reopen {
+            stream: reopen,
+            line_sep: "\n".into(),    
         })
     }
 }
@@ -981,6 +1005,14 @@ impl Output {
     pub fn writer<T: Into<Cow<'static, str>>>(writer: Box<Write + Send>, line_sep: T) -> Self {
         Output(OutputInner::Writer {
             stream: writer,
+            line_sep: line_sep.into(),
+        })
+    }
+
+    /// Returns a reopenable logger, i.e., handling SIGHUP.
+    pub fn reopen<T: Into<Cow<'static, str>>>(reopen: reopen::Reopen<fs::File>, line_sep: T) -> Self {
+        Output(OutputInner::Reopen {
+            stream: reopen,
             line_sep: line_sep.into(),
         })
     }
@@ -1197,6 +1229,11 @@ impl fmt::Debug for OutputInner {
             OutputInner::Writer { ref line_sep, .. } => f
                 .debug_struct("Output::Writer")
                 .field("stream", &"<unknown writer>")
+                .field("line_sep", line_sep)
+                .finish(),
+            OutputInner::Reopen { ref line_sep, .. } => f
+                .debug_struct("Output::Reopen")
+                .field("stream", &"<unknown reopen file>")
                 .field("line_sep", line_sep)
                 .finish(),
             OutputInner::Sender {

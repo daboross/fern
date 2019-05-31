@@ -217,10 +217,12 @@
 #[cfg(feature = "colored")]
 extern crate colored;
 extern crate log;
+extern crate reopen;
 #[cfg(all(not(windows), feature = "syslog-4"))]
 extern crate syslog as syslog_4;
 #[cfg(all(not(windows), feature = "syslog-3"))]
 extern crate syslog3 as syslog_3;
+
 
 use std::convert::AsRef;
 use std::fs::{File, OpenOptions};

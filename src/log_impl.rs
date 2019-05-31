@@ -71,6 +71,7 @@ pub enum Output {
     OtherStatic(&'static Log),
     Panic(Panic),
     Writer(Writer),
+    Reopen(Reopen),
     DateBasedFileLog(DateBasedLogFile),
 }
 
@@ -96,6 +97,11 @@ pub struct Sender {
 
 pub struct Writer {
     pub stream: Mutex<Box<Write + Send>>,
+    pub line_sep: Cow<'static, str>,
+}
+
+pub struct Reopen {
+    pub stream: Mutex<reopen::Reopen<fs::File>>,
     pub line_sep: Cow<'static, str>,
 }
 
@@ -256,6 +262,7 @@ impl Log for Output {
             Output::Panic(ref s) => s.enabled(metadata),
             Output::Writer(ref s) => s.enabled(metadata),
             Output::DateBasedFileLog(ref s) => s.enabled(metadata),
+            Output::Reopen(ref s) => s.enabled(metadata),
         }
     }
 
@@ -277,6 +284,7 @@ impl Log for Output {
             Output::Syslog4Rfc5424(ref s) => s.log(record),
             Output::Panic(ref s) => s.log(record),
             Output::Writer(ref s) => s.log(record),
+            Output::Reopen(ref s) => s.log(record),
             Output::DateBasedFileLog(ref s) => s.log(record),
         }
     }
@@ -299,6 +307,7 @@ impl Log for Output {
             Output::Syslog4Rfc5424(ref s) => s.flush(),
             Output::Panic(ref s) => s.flush(),
             Output::Writer(ref s) => s.flush(),
+            Output::Reopen(ref s) => s.flush(),
             Output::DateBasedFileLog(ref s) => s.flush(),
         }
     }
@@ -502,6 +511,45 @@ macro_rules! writer_log_impl {
 
 writer_log_impl!(File);
 writer_log_impl!(Writer);
+
+impl Log for Reopen {
+    fn enabled(&self, _: &log::Metadata) -> bool {
+        true
+    }
+
+    fn log(&self, record: &log::Record) {
+        fallback_on_error(record, |record| {
+            if cfg!(feature = "meta-logging-in-format") {
+                // Formatting first prevents deadlocks on file-logging,
+                // when the process of formatting itself is logged.
+                // note: this is only ever needed if some Debug, Display, or other
+                // formatting trait itself is logging.
+                let msg = format!("{}{}", record.args(), self.line_sep);
+
+                let mut writer = self.stream.lock().unwrap_or_else(|e| e.into_inner());
+
+                write!(writer, "{}", msg)?;
+
+                writer.flush()?;
+            } else {
+                let mut writer = self.stream.lock().unwrap_or_else(|e| e.into_inner());
+
+                write!(writer, "{}{}", record.args(), self.line_sep)?;
+
+                writer.flush()?;
+            }
+            Ok(())
+        });
+    }
+
+    fn flush(&self) {
+        let _ = self
+            .stream
+            .lock()
+            .unwrap_or_else(|e| e.into_inner())
+            .flush();
+    }
+}
 
 impl Log for Sender {
     fn enabled(&self, _: &log::Metadata) -> bool {
