@@ -292,4 +292,3 @@ pub fn log_file<P: AsRef<Path>>(path: P) -> io::Result<File> {
         .append(true)
         .open(path)
 }
-

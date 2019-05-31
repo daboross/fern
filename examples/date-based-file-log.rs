@@ -2,7 +2,6 @@ extern crate fern;
 #[macro_use]
 extern crate log;
 
-
 fn setup_logging() -> Result<(), Box<std::error::Error>> {
     fern::Dispatch::new()
         // by default only accept warning messages so as not to spam

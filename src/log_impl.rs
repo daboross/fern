@@ -1,12 +1,12 @@
 extern crate chrono;
 
 use std::borrow::Cow;
+use std::cell::RefCell;
+use std::fs::OpenOptions;
 use std::io::{self, BufWriter, Write};
 use std::sync::mpsc;
 use std::sync::{Arc, Mutex};
-use std::cell::RefCell;
 use std::{fmt, fs};
-use std::fs::OpenOptions;
 
 use std::collections::HashMap;
 
@@ -71,7 +71,7 @@ pub enum Output {
     OtherStatic(&'static Log),
     Panic(Panic),
     Writer(Writer),
-    DateBasedFileLog(DateBasedLogFile)
+    DateBasedFileLog(DateBasedLogFile),
 }
 
 pub struct Stdout {
@@ -123,11 +123,11 @@ pub struct Null;
 
 //Custom file logger which we will be able to manipulate the name
 #[derive(Debug)]
-pub struct DateBasedLogFile{
-    pub line_sep:  Cow<'static, str>,
+pub struct DateBasedLogFile {
+    pub line_sep: Cow<'static, str>,
     pub file_suffix: Cow<'static, str>,
     pub file_name: Cow<'static, str>,
-    pub log_file_state : Mutex<DateBasedLogFileState>,
+    pub log_file_state: Mutex<DateBasedLogFileState>,
 }
 
 #[derive(Debug)]
@@ -137,9 +137,13 @@ pub struct DateBasedLogFileState {
     file_stream: RefCell<BufWriter<fs::File>>,
 }
 
-impl DateBasedLogFileState{
-    pub fn new(curr_file_suffix: &str, is_writeable: bool, file_stream: BufWriter<fs::File>) -> DateBasedLogFileState{
-        DateBasedLogFileState{
+impl DateBasedLogFileState {
+    pub fn new(
+        curr_file_suffix: &str,
+        is_writeable: bool,
+        file_stream: BufWriter<fs::File>,
+    ) -> DateBasedLogFileState {
+        DateBasedLogFileState {
             curr_file_suffix: RefCell::new(curr_file_suffix.to_string()),
             is_writeable: RefCell::new(is_writeable),
             file_stream: RefCell::new(file_stream),
@@ -147,8 +151,7 @@ impl DateBasedLogFileState{
     }
 }
 
-impl DateBasedLogFile{
-
+impl DateBasedLogFile {
     pub fn get_suffix(file_suffix_pattern: &str) -> String {
         chrono::Local::now().format(file_suffix_pattern).to_string()
     }
@@ -168,7 +171,6 @@ impl DateBasedLogFile{
             .open(path)
     }
 }
-
 
 impl From<Vec<(Cow<'static, str>, log::LevelFilter)>> for LevelConfiguration {
     fn from(mut levels: Vec<(Cow<'static, str>, log::LevelFilter)>) -> Self {
@@ -253,7 +255,7 @@ impl Log for Output {
             Output::Syslog4Rfc5424(ref s) => s.enabled(metadata),
             Output::Panic(ref s) => s.enabled(metadata),
             Output::Writer(ref s) => s.enabled(metadata),
-            Output::DateBasedFileLog(ref s)=> s.enabled(metadata),
+            Output::DateBasedFileLog(ref s) => s.enabled(metadata),
         }
     }
 
@@ -605,7 +607,10 @@ impl Log for DateBasedLogFile {
 
     fn log(&self, record: &log::Record) {
         fallback_on_error(record, |record| {
-            let log_file_state = self.log_file_state.lock().unwrap_or_else(|e| e.into_inner());
+            let log_file_state = self
+                .log_file_state
+                .lock()
+                .unwrap_or_else(|e| e.into_inner());
 
             if *log_file_state.is_writeable.borrow() {
                 if cfg!(feature = "meta-logging-in-format") {
@@ -635,32 +640,34 @@ impl Log for DateBasedLogFile {
                 if !curr_file_suffix.eq(&new_file_suffix) {
                     *curr_file_suffix = new_file_suffix;
 
-                    let file_name_full = DateBasedLogFile::get_file_name(&self.file_name, &curr_file_suffix);
+                    let file_name_full =
+                        DateBasedLogFile::get_file_name(&self.file_name, &curr_file_suffix);
                     let file_open_result = DateBasedLogFile::open_log_file(&file_name_full);
 
                     if let Ok(l_file) = file_open_result {
                         let mut file_stream = log_file_state.file_stream.borrow_mut();
                         *file_stream = BufWriter::new(l_file);
-                    }else{
+                    } else {
                         let mut is_writeable = log_file_state.is_writeable.borrow_mut();
                         *is_writeable = false;
                     }
                 }
 
                 Ok(())
-            }else{
+            } else {
                 Err(LogError::CannotOpenFile)
             }
         });
     }
 
     fn flush(&self) {
-        let log_file_state = self.log_file_state.lock().unwrap_or_else(|e| e.into_inner());
+        let log_file_state = self
+            .log_file_state
+            .lock()
+            .unwrap_or_else(|e| e.into_inner());
 
         if *log_file_state.is_writeable.borrow() {
-            let _ = log_file_state
-                .file_stream.borrow_mut()
-                .flush();
+            let _ = log_file_state.file_stream.borrow_mut().flush();
         }
     }
 }
@@ -800,9 +807,10 @@ mod test {
                 ("root::sub2::sub2.3::sub2.4", Error),
                 ("root::sub2::sub2.3", Warn),
                 ("root::sub3", Off),
-            ].into_iter()
-                .map(|(k, v)| (k.into(), v))
-                .collect(),
+            ]
+            .into_iter()
+            .map(|(k, v)| (k.into(), v))
+            .collect(),
         );
 
         assert_eq!(config.find_module("root"), Some(Trace));
@@ -854,9 +862,10 @@ mod test {
                 ("root::su", Debug),
                 ("root::su:b2", Info),
                 ("root::sub2", Warn),
-            ].into_iter()
-                .map(|(k, v)| (k.into(), v))
-                .collect(),
+            ]
+            .into_iter()
+            .map(|(k, v)| (k.into(), v))
+            .collect(),
         );
 
         assert_eq!(config.find_module("root"), Some(Trace));
@@ -879,9 +888,10 @@ mod test {
                 ("☸", Debug),
                 ("♲::☸", Info),
                 ("♲::\t", Debug),
-            ].into_iter()
-                .map(|(k, v)| (k.into(), v))
-                .collect(),
+            ]
+            .into_iter()
+            .map(|(k, v)| (k.into(), v))
+            .collect(),
         );
 
         assert_eq!(config.find_module("♲"), Some(Trace));

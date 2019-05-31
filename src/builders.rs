@@ -9,8 +9,8 @@ use std::collections::HashMap;
 
 use log::{self, Log};
 
-use {log_impl, Filter, FormatCallback, Formatter};
 use log_impl::DateBasedLogFileState;
+use {log_impl, Filter, FormatCallback, Formatter};
 
 #[cfg(all(not(windows), feature = "syslog-3"))]
 use syslog_3;
@@ -520,20 +520,35 @@ impl Dispatch {
                     max_child_level = log::LevelFilter::Trace;
                     Some(log_impl::Output::OtherStatic(child_log))
                 }
-                OutputInner::DataBasedFile { file_logger_info, line_sep} => {
+                OutputInner::DataBasedFile {
+                    file_logger_info,
+                    line_sep,
+                } => {
                     max_child_level = log::LevelFilter::Trace;
 
-                    let file_suffix = log_impl::DateBasedLogFile::get_suffix(&file_logger_info.file_suffix_pattern);
-                    let file_name_full = log_impl::DateBasedLogFile::get_file_name(&file_logger_info.file_name, &file_suffix);
-                    let file_open_result= log_impl::DateBasedLogFile::open_log_file(&file_name_full);
+                    let file_suffix = log_impl::DateBasedLogFile::get_suffix(
+                        &file_logger_info.file_suffix_pattern,
+                    );
+                    let file_name_full = log_impl::DateBasedLogFile::get_file_name(
+                        &file_logger_info.file_name,
+                        &file_suffix,
+                    );
+                    let file_open_result =
+                        log_impl::DateBasedLogFile::open_log_file(&file_name_full);
 
                     if let Ok(file) = file_open_result {
-                        Some(log_impl::Output::DateBasedFileLog(log_impl::DateBasedLogFile {
-                            line_sep: line_sep,
-                            file_suffix: file_logger_info.file_suffix_pattern,
-                            file_name: file_logger_info.file_name,
-                            log_file_state: Mutex::new(DateBasedLogFileState::new(&file_suffix,true,io::BufWriter::new(file))),
-                            }))
+                        Some(log_impl::Output::DateBasedFileLog(
+                            log_impl::DateBasedLogFile {
+                                line_sep: line_sep,
+                                file_suffix: file_logger_info.file_suffix_pattern,
+                                file_name: file_logger_info.file_name,
+                                log_file_state: Mutex::new(DateBasedLogFileState::new(
+                                    &file_suffix,
+                                    true,
+                                    io::BufWriter::new(file),
+                                )),
+                            },
+                        ))
                     } else {
                         None
                     }
@@ -669,7 +684,7 @@ enum OutputInner {
     /// Panics with messages text for all messages.
     Panic,
     //this is for custom date,timestamp suffix in file names
-    DataBasedFile{
+    DataBasedFile {
         file_logger_info: DateBasedLogFile,
         line_sep: Cow<'static, str>,
     },
@@ -1223,10 +1238,11 @@ impl fmt::Debug for OutputInner {
                 .field(&"<boxed logger>")
                 .finish(),
             OutputInner::Panic => f.debug_tuple("Output::Panic").finish(),
-            OutputInner::DataBasedFile  {
+            OutputInner::DataBasedFile {
                 ref file_logger_info,
-                ref line_sep
-            }=> f.debug_struct("Custom File")
+                ref line_sep,
+            } => f
+                .debug_struct("Custom File")
                 .field("file_logger_info", file_logger_info)
                 .field("line_sep", line_sep)
                 .finish(),
@@ -1243,26 +1259,25 @@ impl fmt::Debug for Output {
 #[derive(Debug)]
 ///This is used to generate log file which is suffixed based on date,hour,minute
 /// the log file will be rotated automatically when the date changes.
-pub struct DateBasedLogFile{
+pub struct DateBasedLogFile {
     file_name: Cow<'static, str>,
-    file_suffix_pattern: Cow<'static, str>
+    file_suffix_pattern: Cow<'static, str>,
 }
 
-impl DateBasedLogFile{
+impl DateBasedLogFile {
     /// Create new instance of the CustomFileLoggerInfo based on a given file_name and file_suffix_pattern
-    pub fn new(file_name: &'static str, file_suffix_pattern: &'static str) -> DateBasedLogFile{
-        DateBasedLogFile{
+    pub fn new(file_name: &'static str, file_suffix_pattern: &'static str) -> DateBasedLogFile {
+        DateBasedLogFile {
             file_name: file_name.into(),
-            file_suffix_pattern: file_suffix_pattern.into()
+            file_suffix_pattern: file_suffix_pattern.into(),
         }
     }
-
 
     /// Convenience method for opening a log file which will have a date based suffix
     /// in the format of ddmmyyyy
     /// The log file will rotate after each day
     ///
-    pub fn date_based(file_name_prefix: &'static str) -> DateBasedLogFile{
+    pub fn date_based(file_name_prefix: &'static str) -> DateBasedLogFile {
         DateBasedLogFile::new(file_name_prefix, "%d%m%Y")
     }
 
@@ -1270,7 +1285,7 @@ impl DateBasedLogFile{
     /// in the format of ddmmyyyyHH
     /// The log file will rotate after each hour
     ///
-    pub fn hour_based(file_name_prefix: &'static str) -> DateBasedLogFile{
+    pub fn hour_based(file_name_prefix: &'static str) -> DateBasedLogFile {
         DateBasedLogFile::new(file_name_prefix, "%d%m%Y%H")
     }
 
@@ -1278,18 +1293,18 @@ impl DateBasedLogFile{
     /// in the format of ddmmyyyyHHMM
     /// The log file will rotate after each minute
     ///
-    pub fn minute_based(file_name_prefix: &'static str) -> DateBasedLogFile{
+    pub fn minute_based(file_name_prefix: &'static str) -> DateBasedLogFile {
         DateBasedLogFile::new(file_name_prefix, "%d%m%Y%H%M")
     }
 }
 
-impl From<DateBasedLogFile> for Output{
+impl From<DateBasedLogFile> for Output {
     /// Creates an output logger which will output to a file
     /// file name will be formatted in the way required.
     fn from(file: DateBasedLogFile) -> Self {
-        Output(OutputInner::DataBasedFile{
+        Output(OutputInner::DataBasedFile {
             file_logger_info: file,
-            line_sep: "\n".into()
+            line_sep: "\n".into(),
         })
     }
 }

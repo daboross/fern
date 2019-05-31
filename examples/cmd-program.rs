@@ -59,7 +59,10 @@ fn setup_logging(verbosity: u64) -> Result<(), fern::InitError> {
         })
         .chain(io::stdout());
 
-    base_config.chain(file_config).chain(stdout_config).apply()?;
+    base_config
+        .chain(file_config)
+        .chain(stdout_config)
+        .apply()?;
 
     Ok(())
 }
