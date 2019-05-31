@@ -1282,6 +1282,9 @@ impl DateBasedLogFile {
             file_suffix_pattern: file_suffix_pattern.into(),
         }
     }
+    // TODO: before publishing, these three methods should be reviewed for possible removal or altering.
+    //       I know of no particular reason to favor ddmmyyyy or mmddyyyy or yyyymmdd for date formatting,
+    //       and since what is "normal" is culturally relative, I'm inclined to not include them.
 
     /// Convenience method for opening a log file which will have a date based suffix
     /// in the format of "ddmmyyyy".
