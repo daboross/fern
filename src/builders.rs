@@ -1272,7 +1272,11 @@ impl DateBasedLogFile {
     /// for more information.
     ///
     /// [`chrono::format::strftime`]: https://docs.rs/chrono/0.4.6/chrono/format/strftime/index.html
-    pub fn new(file_name: &'static str, file_suffix_pattern: &'static str) -> DateBasedLogFile {
+    pub fn new<T, U>(file_name: T, file_suffix_pattern: U) -> DateBasedLogFile
+    where
+        T: Into<Cow<'static, str>>,
+        U: Into<Cow<'static, str>>,
+    {
         DateBasedLogFile {
             file_name: file_name.into(),
             file_suffix_pattern: file_suffix_pattern.into(),
@@ -1283,7 +1287,10 @@ impl DateBasedLogFile {
     /// in the format of "ddmmyyyy".
     ///
     /// The log file will rotate after each day.
-    pub fn date_based(file_name_prefix: &'static str) -> DateBasedLogFile {
+    pub fn date_based<T>(file_name_prefix: T) -> DateBasedLogFile
+    where
+        T: Into<Cow<'static, str>>,
+    {
         DateBasedLogFile::new(file_name_prefix, "%d%m%Y")
     }
 
@@ -1291,7 +1298,10 @@ impl DateBasedLogFile {
     /// in the format of "ddmmyyyyHH".
     ///
     /// The log file will rotate after each hour.
-    pub fn hour_based(file_name_prefix: &'static str) -> DateBasedLogFile {
+    pub fn hour_based<T>(file_name_prefix: T) -> DateBasedLogFile
+    where
+        T: Into<Cow<'static, str>>,
+    {
         DateBasedLogFile::new(file_name_prefix, "%d%m%Y%H")
     }
 
@@ -1299,7 +1309,10 @@ impl DateBasedLogFile {
     /// in the format of "ddmmyyyyHHMM".
     ///
     /// The log file will rotate after each minute.
-    pub fn minute_based(file_name_prefix: &'static str) -> DateBasedLogFile {
+    pub fn minute_based<T>(file_name_prefix: T) -> DateBasedLogFile
+    where
+        T: Into<Cow<'static, str>>,
+    {
         DateBasedLogFile::new(file_name_prefix, "%d%m%Y%H%M")
     }
 }
