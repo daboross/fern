@@ -18,8 +18,8 @@ use {Filter, Formatter};
 use syslog_3;
 #[cfg(all(not(windows), feature = "syslog-4"))]
 use {syslog_4, Syslog4Rfc3164Logger, Syslog4Rfc5424Logger};
-#[cfg(all(not(windows), feature = "re-open"))]
-use reopen;
+#[cfg(all(not(windows), feature = "re-open-03"))]
+use reopen03;
 
 pub enum LevelConfiguration {
     JustDefault,
@@ -74,7 +74,7 @@ pub enum Output {
     Panic(Panic),
     Writer(Writer),
     DateBasedFileLog(DateBasedLogFile),
-    #[cfg(all(not(windows), feature = "re-open"))]
+    #[cfg(all(not(windows), feature = "re-open-03"))]
     Reopen(Reopen),
 }
 
@@ -103,9 +103,9 @@ pub struct Writer {
     pub line_sep: Cow<'static, str>,
 }
 
-#[cfg(all(not(windows), feature = "re-open"))]
+#[cfg(all(not(windows), feature = "re-open-03"))]
 pub struct Reopen {
-    pub stream: Mutex<reopen::Reopen<fs::File>>,
+    pub stream: Mutex<reopen03::Reopen<fs::File>>,
     pub line_sep: Cow<'static, str>,
 }
 
@@ -266,7 +266,7 @@ impl Log for Output {
             Output::Panic(ref s) => s.enabled(metadata),
             Output::Writer(ref s) => s.enabled(metadata),
             Output::DateBasedFileLog(ref s) => s.enabled(metadata),
-            #[cfg(all(not(windows), feature = "re-open"))]
+            #[cfg(all(not(windows), feature = "re-open-03"))]
             Output::Reopen(ref s) => s.enabled (metadata),
         }
     }
@@ -290,7 +290,7 @@ impl Log for Output {
             Output::Panic(ref s) => s.log(record),
             Output::Writer(ref s) => s.log(record),
             Output::DateBasedFileLog(ref s) => s.log(record),
-            #[cfg(all(not(windows), feature = "re-open"))]
+            #[cfg(all(not(windows), feature = "re-open-03"))]
             Output::Reopen(ref s) => s.log(record),
         }
     }
@@ -314,7 +314,7 @@ impl Log for Output {
             Output::Panic(ref s) => s.flush(),
             Output::Writer(ref s) => s.flush(),
             Output::DateBasedFileLog(ref s) => s.flush(),
-            #[cfg(all(not(windows), feature = "re-open"))]
+            #[cfg(all(not(windows), feature = "re-open-03"))]
             Output::Reopen(ref s) => s.flush(),
         }
     }
@@ -519,7 +519,7 @@ macro_rules! writer_log_impl {
 writer_log_impl!(File);
 writer_log_impl!(Writer);
 
-#[cfg(all(not(windows), feature = "re-open"))]
+#[cfg(all(not(windows), feature = "re-open-03"))]
 writer_log_impl!(Reopen);
 
 impl Log for Sender {

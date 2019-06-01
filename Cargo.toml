@@ -28,12 +28,12 @@ chrono = "0.4"
 [target."cfg(not(windows))".dependencies]
 syslog3 = { version = "3", optional = true }
 syslog = { version = "4", optional = true }
-reopen = { version = "^0.3", optional = true }
+reopen03 = { package = "reopen", version = "^0.3", optional = true }
 
 [features]
 syslog-3 = ["syslog3"]
 syslog-4 = ["syslog"]
-re-open = ["reopen"]
+re-open-03 = ["reopen03"]
 meta-logging-in-format = []
 
 [dev-dependencies]

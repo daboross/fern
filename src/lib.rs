@@ -221,8 +221,8 @@ extern crate log;
 extern crate syslog as syslog_4;
 #[cfg(all(not(windows), feature = "syslog-3"))]
 extern crate syslog3 as syslog_3;
-#[cfg(all(not(windows), feature = "re-open"))]
-extern crate reopen;
+#[cfg(all(not(windows), feature = "re-open-03"))]
+extern crate reopen03;
 
 
 use std::convert::AsRef;
@@ -312,11 +312,11 @@ pub fn log_file<P: AsRef<Path>>(path: P) -> io::Result<File> {
 /// See [`OpenOptions`] for more information.
 ///
 /// [`OpenOptions`]: https://doc.rust-lang.org/std/fs/struct.OpenOptions.html
-#[cfg(all(not(windows), feature = "re-open"))]
+#[cfg(all(not(windows), feature = "re-open-03"))]
 #[inline]
-pub fn log_reopen(path: &Path) -> io::Result<reopen::Reopen<File>> {
+pub fn log_reopen(path: &Path) -> io::Result<reopen03::Reopen<File>> {
     let p = path.to_owned();
-    reopen::Reopen::new(Box::new(move || { 
+    reopen03::Reopen::new(Box::new(move || { 
         OpenOptions::new()
             .create(true)
             .write(true)
