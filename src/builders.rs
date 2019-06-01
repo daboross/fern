@@ -1018,17 +1018,18 @@ impl Output {
     /// instance can be passed into [`Dispatch::chain`] directly.
     ///
     /// ```no_run
+    /// use std::fs::OpenOptions;
     /// # fn setup_logger() -> Result<(), fern::InitError> {
-    /// let reopenable = Reopen::new(
-    ///     Box::new(|| OpenOptions
-    ///         .new()
+    /// let reopenable = reopen::Reopen::new(
+    ///     Box::new(|| OpenOptions::new()
     ///         .create(true)
     ///         .write(true)
+    ///         .append(true)
     ///         .open("/tmp/output.log")
     ///     )).unwrap();
     ///
     /// fern::Dispatch::new()
-    ///     .chain(reopenable)
+    ///     .chain(fern::Output::reopen(reopenable, "\n"))
     ///     # .into_log();
     /// #     Ok(())
     /// # }
