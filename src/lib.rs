@@ -221,7 +221,7 @@ extern crate log;
 extern crate syslog as syslog_4;
 #[cfg(all(not(windows), feature = "syslog-3"))]
 extern crate syslog3 as syslog_3;
-#[cfg(all(not(windows), feature = "reopen"))]
+#[cfg(all(not(windows), feature = "re-open"))]
 extern crate reopen;
 
 
@@ -294,4 +294,33 @@ pub fn log_file<P: AsRef<Path>>(path: P) -> io::Result<File> {
         .create(true)
         .append(true)
         .open(path)
+}
+
+/// Convenience method for opening a re-openable log file with common options.
+///
+/// The file opening is equivalent to:
+///
+/// ```no_run
+/// std::fs::OpenOptions::new()
+///     .write(true)
+///     .create(true)
+///     .append(true)
+///     .open("filename")
+/// # ;
+/// ```
+///
+/// See [`OpenOptions`] for more information.
+///
+/// [`OpenOptions`]: https://doc.rust-lang.org/std/fs/struct.OpenOptions.html
+#[cfg(all(not(windows), feature = "re-open"))]
+#[inline]
+pub fn log_reopen(path: &Path) -> io::Result<reopen::Reopen<File>> {
+    let p = path.to_owned();
+    reopen::Reopen::new(Box::new(move || { 
+        OpenOptions::new()
+            .create(true)
+            .write(true)
+            .append(true)
+            .open(&p)
+    }))
 }
