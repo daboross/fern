@@ -12,6 +12,7 @@ mod support;
 
 use support::manual_log;
 
+#[cfg(all(not(windows), feature = "reopen-03"))]
 #[test]
 fn test_basic_logging_reopen_logging() {
     // Create a temporary directory to put a log file into for testing
@@ -72,6 +73,7 @@ fn test_basic_logging_reopen_logging() {
         .expect("Failed to clean up temporary directory");
 }
 
+#[cfg(all(not(windows), feature = "reopen-03"))]
 #[test]
 fn test_custom_line_separators() {
     // Create a temporary directory to put a log file into for testing
