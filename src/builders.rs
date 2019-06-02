@@ -17,8 +17,8 @@ use {log_impl, Filter, FormatCallback, Formatter};
 use syslog_3;
 #[cfg(all(not(windows), feature = "syslog-4"))]
 use {Syslog4Rfc3164Logger, Syslog4Rfc5424Logger};
-#[cfg(all(not(windows), feature = "re-open-03"))]
-use reopen03;
+#[cfg(all(not(windows), feature = "reopen-03"))]
+use reopen;
 
 /// The base dispatch logger.
 ///
@@ -462,7 +462,7 @@ impl Dispatch {
                         line_sep: line_sep,
                     }))
                 }
-                #[cfg(all(not(windows), feature = "re-open-03"))]
+                #[cfg(all(not(windows), feature = "reopen-03"))]
                 OutputInner::Reopen { stream, line_sep } => {
                     max_child_level = log::LevelFilter::Trace;
                     Some(log_impl::Output::Reopen(log_impl::Reopen {
@@ -663,10 +663,10 @@ enum OutputInner {
         stream: Box<Write + Send>,
         line_sep: Cow<'static, str>,
     },
-    /// Writes all messages to the reopen03::Reopen file with `line_sep` separator.
-    #[cfg(all(not(windows), feature = "re-open-03"))]
+    /// Writes all messages to the reopen::Reopen file with `line_sep` separator.
+    #[cfg(all(not(windows), feature = "reopen-03"))]
     Reopen {
-        stream: reopen03::Reopen<fs::File>,
+        stream: reopen::Reopen<fs::File>,
         line_sep: Cow<'static, str>,
     },
     /// Writes all messages to mpst::Sender with `line_sep` separator.
@@ -813,11 +813,11 @@ impl From<Box<Write + Send>> for Output {
     }
 }
 
-#[cfg(all(not(windows), feature = "re-open-03"))]
-impl From<reopen03::Reopen<fs::File>> for Output {
+#[cfg(all(not(windows), feature = "reopen-03"))]
+impl From<reopen::Reopen<fs::File>> for Output {
     /// Creates an output logger which writes all messages to the file contained
     /// in the Reopen struct, using `\n` as the separator.
-    fn from(reopen: reopen03::Reopen<fs::File>) -> Self {
+    fn from(reopen: reopen::Reopen<fs::File>) -> Self {
         Output(OutputInner::Reopen {
             stream: reopen,
             line_sep: "\n".into(),    
@@ -1022,7 +1022,7 @@ impl Output {
     /// ```no_run
     /// use std::fs::OpenOptions;
     /// # fn setup_logger() -> Result<(), fern::InitError> {
-    /// let reopenable = reopen03::Reopen::new(
+    /// let reopenable = reopen::Reopen::new(
     ///     Box::new(|| OpenOptions::new()
     ///         .create(true)
     ///         .write(true)
@@ -1039,8 +1039,8 @@ impl Output {
     /// # fn main() { setup_logger().expect("failed to set up logger"); }
     /// ```
     /// [`Dispatch::chain`]: struct.Dispatch.html#method.chain
-     #[cfg(all(not(windows), feature = "re-open-03"))]
-    pub fn reopen<T: Into<Cow<'static, str>>>(reopen: reopen03::Reopen<fs::File>, line_sep: T) -> Self {
+     #[cfg(all(not(windows), feature = "reopen-03"))]
+    pub fn reopen<T: Into<Cow<'static, str>>>(reopen: reopen::Reopen<fs::File>, line_sep: T) -> Self {
         Output(OutputInner::Reopen {
             stream: reopen,
             line_sep: line_sep.into(),
@@ -1261,7 +1261,7 @@ impl fmt::Debug for OutputInner {
                 .field("stream", &"<unknown writer>")
                 .field("line_sep", line_sep)
                 .finish(),
-            #[cfg(all(not(windows), feature = "re-open-03"))]
+            #[cfg(all(not(windows), feature = "reopen-03"))]
             OutputInner::Reopen { ref line_sep, .. } => f
                 .debug_struct("Output::Reopen")
                 .field("stream", &"<unknown reopen file>")
