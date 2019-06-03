@@ -25,7 +25,7 @@ fn test_basic_logging_reopen_logging() {
             .format(|out, msg, record| out.finish(format_args!("[{}] {}", record.level(), msg)))
             .level(log::LevelFilter::Info)
             .chain(io::stdout())
-            .chain(fern::log_reopen(&log_file).expect("Failed to open log file"))
+            .chain(fern::log_reopen(&log_file, None).expect("Failed to open log file"))
             .into_log();
 
         let l = &*logger;
@@ -86,7 +86,7 @@ fn test_custom_line_separators() {
             // default format is just the message if not specified
             // default log level is 'trace' if not specified (logs all messages)
             // output to the log file with the "\r\n" line separator.
-            .chain(fern::Output::reopen(fern::log_reopen(&log_file).expect("Failed to open log file"), "\r\n"))
+            .chain(fern::Output::reopen(fern::log_reopen(&log_file, None).expect("Failed to open log file"), "\r\n"))
             .into_log();
 
         let l = &*logger;
