@@ -216,6 +216,8 @@
 //! [meta]: meta/index.html
 #[cfg(feature = "colored")]
 extern crate colored;
+#[cfg(all(not(windows), feature = "reopen-03"))]
+extern crate libc;
 extern crate log;
 #[cfg(all(not(windows), feature = "syslog-4"))]
 extern crate syslog as syslog_4;
@@ -314,13 +316,20 @@ pub fn log_file<P: AsRef<Path>>(path: P) -> io::Result<File> {
 /// [`OpenOptions`]: https://doc.rust-lang.org/std/fs/struct.OpenOptions.html
 #[cfg(all(not(windows), feature = "reopen-03"))]
 #[inline]
-pub fn log_reopen(path: &Path) -> io::Result<reopen::Reopen<File>> {
+pub fn log_reopen(path: &Path, signal: Option<libc::c_int>) -> io::Result<reopen::Reopen<File>> {
     let p = path.to_owned();
-    reopen::Reopen::new(Box::new(move || { 
+    let r = reopen::Reopen::new(Box::new(move || { 
         OpenOptions::new()
             .create(true)
             .write(true)
             .append(true)
             .open(&p)
-    }))
+    }))?;
+    
+    if let Some(s) = signal {
+        if let Err(e) = r.handle().register_signal(s) {
+            return Err(e)
+        }
+    }
+    Ok(r)
 }
