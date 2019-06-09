@@ -229,7 +229,7 @@ extern crate reopen;
 
 use std::convert::AsRef;
 use std::fs::{File, OpenOptions};
-use std::path::Path;
+use std::path::{Path, PathBuf};
 use std::{fmt, io};
 
 #[cfg(all(not(windows), feature = "syslog-4"))]
@@ -316,7 +316,7 @@ pub fn log_file<P: AsRef<Path>>(path: P) -> io::Result<File> {
 /// [`OpenOptions`]: https://doc.rust-lang.org/std/fs/struct.OpenOptions.html
 #[cfg(all(not(windows), feature = "reopen-03"))]
 #[inline]
-pub fn log_reopen(path: &Path, signal: Option<libc::c_int>) -> io::Result<reopen::Reopen<File>> {
+pub fn log_reopen(path: &PathBuf, signal: Option<libc::c_int>) -> io::Result<reopen::Reopen<File>> {
     let p = path.to_owned();
     let r = reopen::Reopen::new(Box::new(move || { 
         OpenOptions::new()
