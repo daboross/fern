@@ -229,7 +229,7 @@ extern crate reopen;
 
 use std::convert::AsRef;
 use std::fs::{File, OpenOptions};
-use std::path::{Path, PathBuf};
+use std::path::Path;
 use std::{fmt, io};
 
 #[cfg(all(not(windows), feature = "syslog-4"))]
@@ -319,11 +319,7 @@ pub fn log_file<P: AsRef<Path>>(path: P) -> io::Result<File> {
 pub fn log_reopen(path: &Path, signal: Option<libc::c_int>) -> io::Result<reopen::Reopen<File>> {
     let p = path.to_owned();
     let r = reopen::Reopen::new(Box::new(move || { 
-        OpenOptions::new()
-            .create(true)
-            .write(true)
-            .append(true)
-            .open(&p)
+        log_file(&p)
     }))?;
     
     if let Some(s) = signal {
