@@ -5,7 +5,6 @@ extern crate tempdir;
 
 use std::io::prelude::*;
 use std::{fs, io};
-
 use log::Level::*;
 
 mod support;
