@@ -1,9 +1,8 @@
-extern crate fern;
-#[macro_use]
-extern crate log;
 #[cfg(not(windows))]
 // This is necessary because `fern` depends on both version 3 and 4.
-extern crate syslog3 as syslog;
+use syslog3 as syslog;
+
+use log::{debug, info, warn};
 
 #[cfg(not(windows))]
 fn setup_logging() -> Result<(), fern::InitError> {

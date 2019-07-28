@@ -1,5 +1,3 @@
-extern crate chrono;
-
 use std::borrow::Cow;
 use std::cell::RefCell;
 use std::fs::OpenOptions;
@@ -12,12 +10,12 @@ use std::collections::HashMap;
 
 use log::{self, Log};
 
-use {Filter, Formatter};
+use crate::{Filter, Formatter};
 
 #[cfg(all(not(windows), feature = "syslog-3"))]
-use syslog_3;
+use crate::syslog_3;
 #[cfg(all(not(windows), feature = "syslog-4"))]
-use {syslog_4, Syslog4Rfc3164Logger, Syslog4Rfc5424Logger};
+use crate::{syslog_4, Syslog4Rfc3164Logger, Syslog4Rfc5424Logger};
 #[cfg(all(not(windows), feature = "reopen-03"))]
 use reopen;
 

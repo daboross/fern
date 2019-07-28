@@ -1,7 +1,4 @@
 //! Tests for the raw write logging functionality.
-extern crate fern;
-extern crate log;
-
 use std::io;
 use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::Arc;

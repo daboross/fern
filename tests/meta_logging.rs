@@ -4,9 +4,6 @@
 //! These tests *will* deadlock if the feature is not enabled, so they're
 //! disabled by default.
 #![cfg(feature = "meta-logging-in-format")]
-extern crate fern;
-extern crate log;
-extern crate tempdir;
 
 mod support;
 

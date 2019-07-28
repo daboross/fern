@@ -1,8 +1,4 @@
 //! Tests!
-extern crate fern;
-extern crate log;
-extern crate tempdir;
-
 use log::Level::*;
 
 mod support;

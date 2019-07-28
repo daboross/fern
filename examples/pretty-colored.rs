@@ -6,11 +6,7 @@
 //!   line is white
 //! - when the log level is debug, the whole line is white
 //! - when the log level is trace, the whole line is gray ("bright black")
-
-extern crate chrono;
-extern crate fern;
-#[macro_use]
-extern crate log;
+use log::{debug, error, info, trace, warn};
 
 use fern::colors::{Color, ColoredLevelConfig};
 

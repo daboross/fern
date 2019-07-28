@@ -1,6 +1,4 @@
 //! Support module for tests
-extern crate log;
-
 use std::fmt;
 
 /// Utility to manually enter a log message into a logger. All extra metadata

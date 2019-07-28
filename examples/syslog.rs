@@ -1,8 +1,4 @@
-extern crate fern;
-#[macro_use]
-extern crate log;
-#[cfg(not(windows))]
-extern crate syslog;
+use log::{debug, info, warn};
 
 #[cfg(not(windows))]
 fn setup_logging() -> Result<(), Box<std::error::Error>> {

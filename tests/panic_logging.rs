@@ -1,7 +1,4 @@
 //! Test the functionality of panicking on error+ log messages.
-extern crate fern;
-extern crate log;
-
 use log::Level::*;
 
 mod support;

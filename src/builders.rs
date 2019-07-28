@@ -10,13 +10,13 @@ use std::collections::HashMap;
 
 use log::{self, Log};
 
-use log_impl::DateBasedLogFileState;
-use {log_impl, Filter, FormatCallback, Formatter};
+use crate::log_impl::DateBasedLogFileState;
+use crate::{log_impl, Filter, FormatCallback, Formatter};
 
 #[cfg(all(not(windows), feature = "syslog-3"))]
-use syslog_3;
+use crate::syslog_3;
 #[cfg(all(not(windows), feature = "syslog-4"))]
-use {Syslog4Rfc3164Logger, Syslog4Rfc5424Logger};
+use crate::{Syslog4Rfc3164Logger, Syslog4Rfc5424Logger};
 #[cfg(all(not(windows), feature = "reopen-03"))]
 use reopen;
 
@@ -35,10 +35,6 @@ use reopen;
 ///
 /// ```no_run
 /// # // no_run because this creates log files.
-/// #[macro_use]
-/// extern crate log;
-/// extern crate fern;
-///
 /// use std::{fs, io};
 ///
 /// # fn setup_logger() -> Result<(), fern::InitError> {
@@ -214,9 +210,6 @@ impl Dispatch {
     /// Example usage:
     ///
     /// ```
-    /// # extern crate log;
-    /// # extern crate fern;
-    /// #
     /// # fn main() {
     /// fern::Dispatch::new()
     ///     .level(log::LevelFilter::Info)
@@ -249,9 +242,6 @@ impl Dispatch {
     /// excluded:
     ///
     /// ```
-    /// # extern crate log;
-    /// # extern crate fern;
-    /// #
     /// # fn main() {
     /// fern::Dispatch::new()
     ///     .level(log::LevelFilter::Trace)
@@ -266,9 +256,6 @@ impl Dispatch {
     /// rest of the program at info level:
     ///
     /// ```
-    /// # extern crate log;
-    /// # extern crate fern;
-    /// #
     /// fn setup_logging<T, I>(verbose_modules: T) -> Result<(), fern::InitError>
     /// where
     ///     I: AsRef<str>,
@@ -330,9 +317,6 @@ impl Dispatch {
     /// This sends error level messages to stderr and others to stdout.
     ///
     /// ```
-    /// # extern crate log;
-    /// # extern crate fern;
-    /// #
     /// # fn main() {
     /// fern::Dispatch::new()
     ///     .level(log::LevelFilter::Info)
@@ -373,9 +357,6 @@ impl Dispatch {
     /// program only opens "file.log" once.
     ///
     /// ```no_run
-    /// # extern crate log;
-    /// # extern crate fern;
-    /// #
     /// # fn setup_logger() -> Result<(), fern::InitError> {
     ///
     /// let file_out = fern::Dispatch::new()
@@ -602,9 +583,6 @@ impl Dispatch {
     /// Example usage:
     ///
     /// ```
-    /// # extern crate log;
-    /// # extern crate fern;
-    /// #
     /// # fn main() {
     /// let (min_level, log) = fern::Dispatch::new()
     ///     .level(log::LevelFilter::Info)
@@ -719,8 +697,6 @@ enum OutputInner {
 /// message is sent.
 ///
 /// ```
-/// # extern crate fern;
-/// # extern crate log;
 /// fern::Dispatch::new()
 ///     // format, etc.
 ///     .chain(std::io::stdout())
@@ -741,8 +717,6 @@ enum OutputInner {
 /// messages.
 ///
 /// ```no_run
-/// # extern crate fern;
-/// # extern crate log;
 /// fn setup_panic_logging() {
 ///     fern::Dispatch::new()
 ///         .level(log::LevelFilter::Warn)

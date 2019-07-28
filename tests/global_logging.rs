@@ -1,8 +1,5 @@
 //! Tests!
-extern crate fern;
-#[macro_use]
-extern crate log;
-
+use log::{debug, error, info, trace, warn};
 use std::sync::{Arc, Mutex};
 
 /// Custom logger built to verify our exact test case.

@@ -4,6 +4,7 @@ name = "fern"
 version = "0.5.9"
 authors = ["David Ross <daboross@daboross.net>"]
 description = "Simple, efficient logging"
+edition = "2018"
 
 documentation = "https://docs.rs/fern/"
 repository = "https://github.com/daboross/fern"

@@ -12,9 +12,6 @@ syslog = "4"
 To use `syslog`, simply create the log you want, and pass it into `Dispatch::chain`:
 
 ```no_run
-extern crate fern;
-extern crate syslog;
-
 # fn setup_logging() -> Result<(), Box<std::error::Error>> {
 let formatter = syslog::Formatter3164 {
     facility: syslog::Facility::LOG_USER,
@@ -51,11 +48,7 @@ syslog = "3"
 The setup is very similar, except with less configuration to start the syslog logger:
 
 ```rust
-extern crate fern;
-# /*
-extern crate syslog;
-# */ extern crate syslog3 as syslog;
-
+# use syslog3 as syslog;
 # fn setup_logging() -> Result<(), Box<std::error::Error>> {
 fern::Dispatch::new()
     .chain(syslog::unix(syslog::Facility::LOG_USER)?)
@@ -77,10 +70,6 @@ However, you probably will want to format messages you also send to stdout! Fort
 configuration is easy with fern:
 
 ```no_run
-# extern crate fern;
-# extern crate log;
-# extern crate syslog;
-#
 # fn setup_logging() -> Result<(), Box<std::error::Error>> {
 let syslog_formatter = syslog::Formatter3164 {
     facility: syslog::Facility::LOG_USER,
@@ -125,10 +114,6 @@ One last pattern you might want to know: creating a log target which must be exp
 in order to work.
 
 ```no_run
-# extern crate fern;
-# extern crate log;
-# extern crate syslog;
-#
 # fn setup_logging() -> Result<(), Box<std::error::Error>> {
 # let formatter = syslog::Formatter3164 {
 #     facility: syslog::Facility::LOG_USER,
@@ -152,8 +137,7 @@ With this configuration, only warning messages will get through by default. If w
 send info or debug messages, we can do so explicitly:
 
 ```no_run
-# #[macro_use]
-# extern crate log;
+# use log::{debug, info, warn};
 # fn main() {
 debug!("this won't get through");
 // especially useful if this is from library you depend on.

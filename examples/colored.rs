@@ -1,9 +1,5 @@
-extern crate chrono;
-extern crate fern;
-#[macro_use]
-extern crate log;
-
 use fern::colors::{Color, ColoredLevelConfig};
+use log::{debug, error, warn};
 
 fn main() {
     let colors = ColoredLevelConfig::new().debug(Color::Magenta);

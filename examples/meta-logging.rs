@@ -2,9 +2,7 @@
 //!
 //! The example will hang if the feature is disabled, and will produce cohesive
 //! logs if it's enabled.
-extern crate fern;
-#[macro_use]
-extern crate log;
+use log::{debug, info};
 
 use std::fmt;
 
