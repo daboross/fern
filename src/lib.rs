@@ -232,11 +232,11 @@ pub mod meta;
 ///
 /// As of fern `0.5`, the passed `fmt::Arguments` will always be the same as
 /// the given `log::Record`'s `.args()`.
-pub type Formatter = Fn(FormatCallback, &fmt::Arguments, &log::Record) + Sync + Send + 'static;
+pub type Formatter = dyn Fn(FormatCallback, &fmt::Arguments, &log::Record) + Sync + Send + 'static;
 
 /// A type alias for a log filter. Returning true means the record should
 /// succeed - false means it should fail.
-pub type Filter = Fn(&log::Metadata) -> bool + Send + Sync + 'static;
+pub type Filter = dyn Fn(&log::Metadata) -> bool + Send + Sync + 'static;
 
 pub use crate::builders::DateBasedLogFile;
 

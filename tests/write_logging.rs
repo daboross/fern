@@ -46,7 +46,7 @@ fn test_raw_write_logging() {
         .chain(Box::new(TestWriter {
             buf: Vec::new(),
             flag: flag.clone(),
-        }) as Box<io::Write + Send>)
+        }) as Box<dyn io::Write + Send>)
         .into_log();
 
     let l = &*logger;

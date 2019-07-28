@@ -12,7 +12,7 @@ syslog = "4"
 To use `syslog`, simply create the log you want, and pass it into `Dispatch::chain`:
 
 ```no_run
-# fn setup_logging() -> Result<(), Box<std::error::Error>> {
+# fn setup_logging() -> Result<(), Box<dyn std::error::Error>> {
 let formatter = syslog::Formatter3164 {
     facility: syslog::Facility::LOG_USER,
     hostname: None,
@@ -49,7 +49,7 @@ The setup is very similar, except with less configuration to start the syslog lo
 
 ```rust
 # use syslog3 as syslog;
-# fn setup_logging() -> Result<(), Box<std::error::Error>> {
+# fn setup_logging() -> Result<(), Box<dyn std::error::Error>> {
 fern::Dispatch::new()
     .chain(syslog::unix(syslog::Facility::LOG_USER)?)
     .apply()?;
@@ -70,7 +70,7 @@ However, you probably will want to format messages you also send to stdout! Fort
 configuration is easy with fern:
 
 ```no_run
-# fn setup_logging() -> Result<(), Box<std::error::Error>> {
+# fn setup_logging() -> Result<(), Box<dyn std::error::Error>> {
 let syslog_formatter = syslog::Formatter3164 {
     facility: syslog::Facility::LOG_USER,
     hostname: None,
@@ -114,7 +114,7 @@ One last pattern you might want to know: creating a log target which must be exp
 in order to work.
 
 ```no_run
-# fn setup_logging() -> Result<(), Box<std::error::Error>> {
+# fn setup_logging() -> Result<(), Box<dyn std::error::Error>> {
 # let formatter = syslog::Formatter3164 {
 #     facility: syslog::Facility::LOG_USER,
 #     hostname: None,

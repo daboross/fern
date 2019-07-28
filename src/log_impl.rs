@@ -67,8 +67,8 @@ pub enum Output {
     Syslog4Rfc5424(Syslog4Rfc5424),
     Dispatch(Dispatch),
     SharedDispatch(Arc<Dispatch>),
-    OtherBoxed(Box<Log>),
-    OtherStatic(&'static Log),
+    OtherBoxed(Box<dyn Log>),
+    OtherStatic(&'static dyn Log),
     Panic(Panic),
     Writer(Writer),
     DateBasedFileLog(DateBasedLogFile),
@@ -97,7 +97,7 @@ pub struct Sender {
 }
 
 pub struct Writer {
-    pub stream: Mutex<Box<Write + Send>>,
+    pub stream: Mutex<Box<dyn Write + Send>>,
     pub line_sep: Cow<'static, str>,
 }
 
@@ -121,7 +121,9 @@ pub struct Syslog4Rfc3164 {
 pub struct Syslog4Rfc5424 {
     pub inner: Mutex<Syslog4Rfc5424Logger>,
     pub transform: Box<
-        Fn(&log::Record) -> (i32, HashMap<String, HashMap<String, String>>, String) + Sync + Send,
+        dyn Fn(&log::Record) -> (i32, HashMap<String, HashMap<String, String>>, String)
+            + Sync
+            + Send,
     >,
 }
 

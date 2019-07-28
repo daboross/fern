@@ -1,7 +1,7 @@
 use log::{debug, info, warn};
 
 #[cfg(not(windows))]
-fn setup_logging() -> Result<(), Box<std::error::Error>> {
+fn setup_logging() -> Result<(), Box<dyn std::error::Error>> {
     let syslog_fmt = syslog::Formatter3164 {
         facility: syslog::Facility::LOG_USER,
         hostname: None,
