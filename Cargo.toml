@@ -27,14 +27,14 @@ colored = { version = "1.5", optional = true }
 chrono = "0.4"
 
 [target."cfg(not(windows))".dependencies]
-syslog3 = { version = "3", optional = true }
-syslog = { version = "4", optional = true }
+syslog3 = { version = "3", package = "syslog", optional = true }
+syslog4 = { version = "4", package = "syslog", optional = true }
 reopen = { version = "^0.3", optional = true }
 libc = { version = "0.2.58", optional = true }
 
 [features]
 syslog-3 = ["syslog3"]
-syslog-4 = ["syslog"]
+syslog-4 = ["syslog4"]
 reopen-03 = ["reopen", "libc"]
 meta-logging-in-format = []
 

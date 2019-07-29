@@ -1,3 +1,6 @@
+#[cfg(not(windows))]
+use syslog4 as syslog;
+
 use log::{debug, info, warn};
 
 #[cfg(not(windows))]

@@ -200,7 +200,7 @@
 //! [syslog]: syslog/index.html
 //! [meta]: meta/index.html
 #[cfg(all(not(windows), feature = "syslog-4"))]
-use ::syslog as syslog_4;
+use syslog4 as syslog_4;
 #[cfg(all(not(windows), feature = "syslog-3"))]
 use syslog3 as syslog_3;
 
