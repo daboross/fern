@@ -4,7 +4,7 @@ fn setup_logging() -> Result<(), Box<dyn std::error::Error>> {
     fern::Dispatch::new()
         // by default only accept warning messages so as not to spam
         .level(log::LevelFilter::Debug)
-        .chain(fern::DateBasedLogFile::date_based("program.log"))
+        .chain(fern::DateBasedLogFile::new("program.log", "%Y-%m-%d"))
         .apply()?;
 
     Ok(())

@@ -1315,43 +1315,6 @@ impl DateBasedLogFile {
             file_suffix_pattern: file_suffix_pattern.into(),
         }
     }
-    // TODO: before publishing, these three methods should be reviewed for possible
-    // removal or altering.       I know of no particular reason to favor
-    // ddmmyyyy or mmddyyyy or yyyymmdd for date formatting,       and since
-    // what is "normal" is culturally relative, I'm inclined to not include them.
-
-    /// Convenience method for opening a log file which will have a date based
-    /// suffix in the format of "ddmmyyyy".
-    ///
-    /// The log file will rotate after each day.
-    pub fn date_based<T>(file_name_prefix: T) -> DateBasedLogFile
-    where
-        T: Into<Cow<'static, str>>,
-    {
-        DateBasedLogFile::new(file_name_prefix, "%d%m%Y")
-    }
-
-    /// Convenience method for opening a log file which will have a date-time
-    /// based suffix in the format of "ddmmyyyyHH".
-    ///
-    /// The log file will rotate after each hour.
-    pub fn hour_based<T>(file_name_prefix: T) -> DateBasedLogFile
-    where
-        T: Into<Cow<'static, str>>,
-    {
-        DateBasedLogFile::new(file_name_prefix, "%d%m%Y%H")
-    }
-
-    /// Convenience method for opening a log file which will have a date-time
-    /// based suffix in the format of "ddmmyyyyHHMM".
-    ///
-    /// The log file will rotate after each minute.
-    pub fn minute_based<T>(file_name_prefix: T) -> DateBasedLogFile
-    where
-        T: Into<Cow<'static, str>>,
-    {
-        DateBasedLogFile::new(file_name_prefix, "%d%m%Y%H%M")
-    }
 }
 
 impl From<DateBasedLogFile> for Output {
