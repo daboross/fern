@@ -199,17 +199,22 @@
 //! [colors]: colors/index.html
 //! [syslog]: syslog/index.html
 //! [meta]: meta/index.html
-use std::convert::AsRef;
-use std::fs::{File, OpenOptions};
-use std::path::Path;
-use std::{fmt, io};
+use std::{
+    convert::AsRef,
+    fmt,
+    fs::{File, OpenOptions},
+    io,
+    path::Path,
+};
 
 #[cfg(all(not(windows), feature = "syslog-4"))]
 use std::collections::HashMap;
 
-pub use crate::builders::{Dispatch, Output, Panic};
-pub use crate::errors::InitError;
-pub use crate::log_impl::FormatCallback;
+pub use crate::{
+    builders::{Dispatch, Output, Panic},
+    errors::InitError,
+    log_impl::FormatCallback,
+};
 
 mod builders;
 mod errors;
@@ -289,13 +294,11 @@ pub fn log_file<P: AsRef<Path>>(path: P) -> io::Result<File> {
 #[inline]
 pub fn log_reopen(path: &Path, signal: Option<libc::c_int>) -> io::Result<reopen::Reopen<File>> {
     let p = path.to_owned();
-    let r = reopen::Reopen::new(Box::new(move || { 
-        log_file(&p)
-    }))?;
-    
+    let r = reopen::Reopen::new(Box::new(move || log_file(&p)))?;
+
     if let Some(s) = signal {
         if let Err(e) = r.handle().register_signal(s) {
-            return Err(e)
+            return Err(e);
         }
     }
     Ok(r)

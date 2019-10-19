@@ -2,9 +2,9 @@
 //!
 //! The example will hang if the feature is disabled, and will produce cohesive
 //! logs if it's enabled.
-use log::{debug, info};
-
 use std::fmt;
+
+use log::{debug, info};
 
 fn main() {
     fern::Dispatch::new()

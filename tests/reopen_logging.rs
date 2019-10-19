@@ -1,8 +1,7 @@
 //! Tests!
 #![cfg(all(not(windows), feature = "reopen-03"))]
+use std::{fs, io, io::prelude::*};
 
-use std::io::prelude::*;
-use std::{fs, io};
 use log::Level::*;
 
 mod support;
@@ -81,7 +80,10 @@ fn test_custom_line_separators() {
             // default format is just the message if not specified
             // default log level is 'trace' if not specified (logs all messages)
             // output to the log file with the "\r\n" line separator.
-            .chain(fern::Output::reopen(fern::log_reopen(&log_file, None).expect("Failed to open log file"), "\r\n"))
+            .chain(fern::Output::reopen(
+                fern::log_reopen(&log_file, None).expect("Failed to open log file"),
+                "\r\n",
+            ))
             .into_log();
 
         let l = &*logger;
@@ -107,4 +109,3 @@ fn test_custom_line_separators() {
         .close()
         .expect("Failed to clean up temporary directory");
 }
-

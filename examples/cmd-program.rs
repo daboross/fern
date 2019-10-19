@@ -1,5 +1,6 @@
-use log::{debug, info, trace, warn};
 use std::io;
+
+use log::{debug, info, trace, warn};
 
 fn setup_logging(verbosity: u64) -> Result<(), fern::InitError> {
     let mut base_config = fern::Dispatch::new();

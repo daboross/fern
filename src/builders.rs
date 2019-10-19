@@ -1,17 +1,16 @@
-
-use std::borrow::Cow;
-use std::io::Write;
-use std::sync::mpsc::Sender;
-use std::sync::{Arc, Mutex};
-use std::{cmp, fmt, fs, io};
+use std::{
+    borrow::Cow,
+    cmp, fmt, fs, io,
+    io::Write,
+    sync::{mpsc::Sender, Arc, Mutex},
+};
 
 #[cfg(all(not(windows), feature = "syslog-4"))]
 use std::collections::HashMap;
 
 use log::Log;
 
-use crate::log_impl::DateBasedLogFileState;
-use crate::{log_impl, Filter, FormatCallback, Formatter};
+use crate::{log_impl, log_impl::DateBasedLogFileState, Filter, FormatCallback, Formatter};
 
 #[cfg(all(not(windows), feature = "syslog-4"))]
 use crate::{Syslog4Rfc3164Logger, Syslog4Rfc5424Logger};
@@ -61,12 +60,14 @@ use crate::{Syslog4Rfc3164Logger, Syslog4Rfc5424Logger};
 ///             // `log_file(x)` equates to
 ///             // `OpenOptions::new().write(true).append(true).create(true).open(x)`
 ///             .chain(fern::log_file("persistent-log.log")?)
-///             .chain(fs::OpenOptions::new()
-///                 .write(true)
-///                 .create(true)
-///                 .truncate(true)
-///                 .create(true)
-///                 .open("/tmp/temp.log")?),
+///             .chain(
+///                 fs::OpenOptions::new()
+///                     .write(true)
+///                     .create(true)
+///                     .truncate(true)
+///                     .create(true)
+///                     .open("/tmp/temp.log")?,
+///             ),
 ///     )
 ///     .chain(
 ///         fern::Dispatch::new()
@@ -181,8 +182,7 @@ impl Dispatch {
     /// Example usage:
     ///
     /// ```
-    /// fern::Dispatch::new()
-    ///     .chain(fern::Dispatch::new().chain(std::io::stdout()))
+    /// fern::Dispatch::new().chain(fern::Dispatch::new().chain(std::io::stdout()))
     ///     # .into_log();
     /// ```
     #[inline]
@@ -207,8 +207,7 @@ impl Dispatch {
     ///
     /// ```
     /// # fn main() {
-    /// fern::Dispatch::new()
-    ///     .level(log::LevelFilter::Info)
+    /// fern::Dispatch::new().level(log::LevelFilter::Info)
     ///     # .into_log();
     /// # }
     /// ```
@@ -257,8 +256,7 @@ impl Dispatch {
     ///     I: AsRef<str>,
     ///     T: IntoIterator<Item = I>,
     /// {
-    ///     let mut config = fern::Dispatch::new()
-    ///         .level(log::LevelFilter::Info);
+    ///     let mut config = fern::Dispatch::new().level(log::LevelFilter::Info);
     ///
     ///     for module_name in verbose_modules {
     ///         config = config.level_for(
@@ -637,7 +635,8 @@ enum OutputInner {
         stream: Box<dyn Write + Send>,
         line_sep: Cow<'static, str>,
     },
-    /// Writes all messages to the reopen::Reopen file with `line_sep` separator.
+    /// Writes all messages to the reopen::Reopen file with `line_sep`
+    /// separator.
     #[cfg(all(not(windows), feature = "reopen-03"))]
     Reopen {
         stream: reopen::Reopen<fs::File>,
@@ -699,7 +698,7 @@ enum OutputInner {
 ///     .chain(
 ///         fern::Dispatch::new()
 ///             .level(log::LevelFilter::Error)
-///             .chain(fern::Panic)
+///             .chain(fern::Panic),
 ///     )
 ///     # /*
 ///     .apply()?;
@@ -790,7 +789,7 @@ impl From<reopen::Reopen<fs::File>> for Output {
     fn from(reopen: reopen::Reopen<fs::File>) -> Self {
         Output(OutputInner::Reopen {
             stream: reopen,
-            line_sep: "\n".into(),    
+            line_sep: "\n".into(),
         })
     }
 }
@@ -898,8 +897,7 @@ impl Output {
     ///
     /// ```no_run
     /// # fn setup_logger() -> Result<(), fern::InitError> {
-    /// fern::Dispatch::new()
-    ///     .chain(std::fs::File::create("log")?)
+    /// fern::Dispatch::new().chain(std::fs::File::create("log")?)
     ///     # .into_log();
     /// # Ok(())
     /// # }
@@ -909,8 +907,7 @@ impl Output {
     ///
     /// ```no_run
     /// # fn setup_logger() -> Result<(), fern::InitError> {
-    /// fern::Dispatch::new()
-    ///     .chain(fern::log_file("log")?)
+    /// fern::Dispatch::new().chain(fern::log_file("log")?)
     ///     # .into_log();
     /// # Ok(())
     /// # }
@@ -922,8 +919,7 @@ impl Output {
     ///
     /// ```no_run
     /// # fn setup_logger() -> Result<(), fern::InitError> {
-    /// fern::Dispatch::new()
-    ///     .chain(fern::Output::file(fern::log_file("log")?, "\r\n"))
+    /// fern::Dispatch::new().chain(fern::Output::file(fern::log_file("log")?, "\r\n"))
     ///     # .into_log();
     /// # Ok(())
     /// # }
@@ -967,8 +963,7 @@ impl Output {
     /// # fn setup_logger() -> Result<(), fern::InitError> {
     /// let writer = Box::new(std::io::Cursor::new(Vec::<u8>::new()));
     ///
-    /// fern::Dispatch::new()
-    ///     .chain(fern::Output::writer(writer, "\r\n"))
+    /// fern::Dispatch::new().chain(fern::Output::writer(writer, "\r\n"))
     ///     # .into_log();
     /// #     Ok(())
     /// # }
@@ -992,16 +987,16 @@ impl Output {
     /// ```no_run
     /// use std::fs::OpenOptions;
     /// # fn setup_logger() -> Result<(), fern::InitError> {
-    /// let reopenable = reopen::Reopen::new(
-    ///     Box::new(|| OpenOptions::new()
+    /// let reopenable = reopen::Reopen::new(Box::new(|| {
+    ///     OpenOptions::new()
     ///         .create(true)
     ///         .write(true)
     ///         .append(true)
     ///         .open("/tmp/output.log")
-    ///     )).unwrap();
+    /// }))
+    /// .unwrap();
     ///
-    /// fern::Dispatch::new()
-    ///     .chain(fern::Output::reopen(reopenable, "\n"))
+    /// fern::Dispatch::new().chain(fern::Output::reopen(reopenable, "\n"))
     ///     # .into_log();
     /// #     Ok(())
     /// # }
@@ -1009,8 +1004,11 @@ impl Output {
     /// # fn main() { setup_logger().expect("failed to set up logger"); }
     /// ```
     /// [`Dispatch::chain`]: struct.Dispatch.html#method.chain
-     #[cfg(all(not(windows), feature = "reopen-03"))]
-    pub fn reopen<T: Into<Cow<'static, str>>>(reopen: reopen::Reopen<fs::File>, line_sep: T) -> Self {
+    #[cfg(all(not(windows), feature = "reopen-03"))]
+    pub fn reopen<T: Into<Cow<'static, str>>>(
+        reopen: reopen::Reopen<fs::File>,
+        line_sep: T,
+    ) -> Self {
         Output(OutputInner::Reopen {
             stream: reopen,
             line_sep: line_sep.into(),
@@ -1023,8 +1021,7 @@ impl Output {
     /// instance can be passed into `Dispatch::chain()` directly.
     ///
     /// ```
-    /// fern::Dispatch::new()
-    ///     .chain(std::io::stdout())
+    /// fern::Dispatch::new().chain(std::io::stdout())
     ///     # .into_log();
     /// ```
     ///
@@ -1050,16 +1047,14 @@ impl Output {
     /// instance can be passed into `Dispatch::chain()` directly.
     ///
     /// ```
-    /// fern::Dispatch::new()
-    ///     .chain(std::io::stderr())
+    /// fern::Dispatch::new().chain(std::io::stderr())
     ///     # .into_log();
     /// ```
     ///
     /// Example usage:
     ///
     /// ```
-    /// fern::Dispatch::new()
-    ///     .chain(fern::Output::stderr("\n\n\n"))
+    /// fern::Dispatch::new().chain(fern::Output::stderr("\n\n\n"))
     ///     # .into_log();
     /// ```
     pub fn stderr<T: Into<Cow<'static, str>>>(line_sep: T) -> Self {
@@ -1082,8 +1077,7 @@ impl Output {
     /// use std::sync::mpsc::channel;
     ///
     /// let (tx, rx) = channel();
-    /// fern::Dispatch::new()
-    ///     .chain(tx)
+    /// fern::Dispatch::new().chain(tx)
     ///     # .into_log();
     /// ```
     pub fn sender<T: Into<Cow<'static, str>>>(sender: Sender<String>, line_sep: T) -> Self {
@@ -1121,18 +1115,18 @@ impl Output {
         })
     }
 
-    /// Returns a logger which simply calls the given function with each message.
+    /// Returns a logger which simply calls the given function with each
+    /// message.
     ///
     /// The function will be called inline in the thread the log occurs on.
     ///
     /// Example usage:
     ///
     /// ```
-    /// fern::Dispatch::new()
-    ///     .chain(fern::Output::call(|record| {
-    ///         // this is mundane, but you can do anything here.
-    ///         println!("{}", record.args());
-    ///     }))
+    /// fern::Dispatch::new().chain(fern::Output::call(|record| {
+    ///     // this is mundane, but you can do anything here.
+    ///     println!("{}", record.args());
+    /// }))
     ///     # .into_log();
     /// ```
     pub fn call<F>(func: F) -> Self
@@ -1294,20 +1288,21 @@ impl fmt::Debug for Output {
     }
 }
 
-#[derive(Debug)]
 /// This is used to generate log file suffixed based on date, hour, and minute.
 ///
 /// The log file will be rotated automatically when the date changes.
+#[derive(Debug)]
 pub struct DateBasedLogFile {
     file_name: Cow<'static, str>,
     file_suffix_pattern: Cow<'static, str>,
 }
 
 impl DateBasedLogFile {
-    /// Create new instance of the DateBasedLogFile based on a given file_name and file_suffix_pattern.
+    /// Create new instance of the DateBasedLogFile based on a given file_name
+    /// and file_suffix_pattern.
     ///
-    /// `file_suffix_pattern` will be interpreted as an `strftime` format. See [`chrono::format::strftime`]
-    /// for more information.
+    /// `file_suffix_pattern` will be interpreted as an `strftime` format. See
+    /// [`chrono::format::strftime`] for more information.
     ///
     /// [`chrono::format::strftime`]: https://docs.rs/chrono/0.4.6/chrono/format/strftime/index.html
     pub fn new<T, U>(file_name: T, file_suffix_pattern: U) -> DateBasedLogFile
@@ -1320,12 +1315,13 @@ impl DateBasedLogFile {
             file_suffix_pattern: file_suffix_pattern.into(),
         }
     }
-    // TODO: before publishing, these three methods should be reviewed for possible removal or altering.
-    //       I know of no particular reason to favor ddmmyyyy or mmddyyyy or yyyymmdd for date formatting,
-    //       and since what is "normal" is culturally relative, I'm inclined to not include them.
+    // TODO: before publishing, these three methods should be reviewed for possible
+    // removal or altering.       I know of no particular reason to favor
+    // ddmmyyyy or mmddyyyy or yyyymmdd for date formatting,       and since
+    // what is "normal" is culturally relative, I'm inclined to not include them.
 
-    /// Convenience method for opening a log file which will have a date based suffix
-    /// in the format of "ddmmyyyy".
+    /// Convenience method for opening a log file which will have a date based
+    /// suffix in the format of "ddmmyyyy".
     ///
     /// The log file will rotate after each day.
     pub fn date_based<T>(file_name_prefix: T) -> DateBasedLogFile
@@ -1335,8 +1331,8 @@ impl DateBasedLogFile {
         DateBasedLogFile::new(file_name_prefix, "%d%m%Y")
     }
 
-    /// Convenience method for opening a log file which will have a date-time based suffix
-    /// in the format of "ddmmyyyyHH".
+    /// Convenience method for opening a log file which will have a date-time
+    /// based suffix in the format of "ddmmyyyyHH".
     ///
     /// The log file will rotate after each hour.
     pub fn hour_based<T>(file_name_prefix: T) -> DateBasedLogFile
@@ -1346,8 +1342,8 @@ impl DateBasedLogFile {
         DateBasedLogFile::new(file_name_prefix, "%d%m%Y%H")
     }
 
-    /// Convenience method for opening a log file which will have a date-time based suffix
-    /// in the format of "ddmmyyyyHHMM".
+    /// Convenience method for opening a log file which will have a date-time
+    /// based suffix in the format of "ddmmyyyyHHMM".
     ///
     /// The log file will rotate after each minute.
     pub fn minute_based<T>(file_name_prefix: T) -> DateBasedLogFile
@@ -1360,8 +1356,8 @@ impl DateBasedLogFile {
 
 impl From<DateBasedLogFile> for Output {
     /// Creates an output logger which writes all messages to the file with
-    /// `\n` as the separator. The filename will be specified by DateBasedFileLog,
-    /// and will rotate whenever time dictates it change.
+    /// `\n` as the separator. The filename will be specified by
+    /// DateBasedFileLog, and will rotate whenever time dictates it change.
     fn from(file: DateBasedLogFile) -> Self {
         Output(OutputInner::DateBasedFile {
             file_logger_info: file,

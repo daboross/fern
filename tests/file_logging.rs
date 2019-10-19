@@ -1,6 +1,5 @@
 //! Tests!
-use std::io::prelude::*;
-use std::{fs, io};
+use std::{fs, io, io::prelude::*};
 
 use log::Level::*;
 
@@ -80,7 +79,10 @@ fn test_custom_line_separators() {
             // default format is just the message if not specified
             // default log level is 'trace' if not specified (logs all messages)
             // output to the log file with the "\r\n" line separator.
-            .chain(fern::Output::file(fern::log_file(&log_file).expect("Failed to open log file"), "\r\n"))
+            .chain(fern::Output::file(
+                fern::log_file(&log_file).expect("Failed to open log file"),
+                "\r\n",
+            ))
             .into_log();
 
         let l = &*logger;

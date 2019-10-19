@@ -1,12 +1,12 @@
-use std::borrow::Cow;
-use std::cell::RefCell;
-use std::fs::OpenOptions;
-use std::io::{self, BufWriter, Write};
-use std::sync::mpsc;
-use std::sync::{Arc, Mutex};
-use std::{fmt, fs};
-
-use std::collections::HashMap;
+use std::{
+    borrow::Cow,
+    cell::RefCell,
+    collections::HashMap,
+    fmt, fs,
+    fs::OpenOptions,
+    io::{self, BufWriter, Write},
+    sync::{mpsc, Arc, Mutex},
+};
 
 use log::{self, Log};
 
@@ -265,7 +265,7 @@ impl Log for Output {
             Output::Writer(ref s) => s.enabled(metadata),
             Output::DateBasedFileLog(ref s) => s.enabled(metadata),
             #[cfg(all(not(windows), feature = "reopen-03"))]
-            Output::Reopen(ref s) => s.enabled (metadata),
+            Output::Reopen(ref s) => s.enabled(metadata),
         }
     }
 
@@ -386,7 +386,8 @@ impl Dispatch {
             && self.filters.iter().all(|f| f(metadata))
     }
 
-    /// Check whether a log with the given metadata would eventually end up outputting something.
+    /// Check whether a log with the given metadata would eventually end up
+    /// outputting something.
     ///
     /// This is recursive, and checks children.
     fn deep_enabled(&self, metadata: &log::Metadata) -> bool {
@@ -900,15 +901,10 @@ mod test {
     #[test]
     fn test_level_config_all_chars() {
         let config = LevelConfiguration::Minimal(
-            vec![
-                ("♲", Trace),
-                ("☸", Debug),
-                ("♲::☸", Info),
-                ("♲::\t", Debug),
-            ]
-            .into_iter()
-            .map(|(k, v)| (k.into(), v))
-            .collect(),
+            vec![("♲", Trace), ("☸", Debug), ("♲::☸", Info), ("♲::\t", Debug)]
+                .into_iter()
+                .map(|(k, v)| (k.into(), v))
+                .collect(),
         );
 
         assert_eq!(config.find_module("♲"), Some(Trace));

@@ -1,7 +1,11 @@
 //! Tests for the raw write logging functionality.
-use std::io;
-use std::sync::atomic::{AtomicBool, Ordering};
-use std::sync::Arc;
+use std::{
+    io,
+    sync::{
+        atomic::{AtomicBool, Ordering},
+        Arc,
+    },
+};
 
 use log::Level::*;
 

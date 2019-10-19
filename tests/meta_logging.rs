@@ -4,14 +4,11 @@
 //! These tests *will* deadlock if the feature is not enabled, so they're
 //! disabled by default.
 #![cfg(feature = "meta-logging-in-format")]
+use std::{fmt, fs, io, io::prelude::*};
+
+use log::{Level::*, Log};
 
 mod support;
-
-use std::io::prelude::*;
-use std::{fmt, fs, io};
-
-use log::Level::*;
-use log::Log;
 
 use support::manual_log;
 

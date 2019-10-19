@@ -6,9 +6,8 @@
 //!   line is white
 //! - when the log level is debug, the whole line is white
 //! - when the log level is trace, the whole line is gray ("bright black")
-use log::{debug, error, info, trace, warn};
-
 use fern::colors::{Color, ColoredLevelConfig};
+use log::{debug, error, info, trace, warn};
 
 fn main() {
     set_up_logging();
@@ -60,7 +59,10 @@ fn set_up_logging() {
         .format(move |out, message, record| {
             out.finish(format_args!(
                 "{color_line}[{date}][{target}][{level}{color_line}] {message}\x1B[0m",
-                color_line = format_args!("\x1B[{}m", colors_line.get_color(&record.level()).to_fg_str()),
+                color_line = format_args!(
+                    "\x1B[{}m",
+                    colors_line.get_color(&record.level()).to_fg_str()
+                ),
                 date = chrono::Local::now().format("%Y-%m-%d %H:%M:%S"),
                 target = record.target(),
                 level = colors_level.color(record.level()),
@@ -77,7 +79,8 @@ fn set_up_logging() {
         .level_for("pretty_colored", log::LevelFilter::Trace)
         // output to stdout
         .chain(std::io::stdout())
-        .apply().unwrap();
+        .apply()
+        .unwrap();
 
     debug!("finished setting up logging! yay!");
 }

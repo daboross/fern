@@ -1,6 +1,7 @@
 //! Tests!
-use log::{debug, error, info, trace, warn};
 use std::sync::{Arc, Mutex};
+
+use log::{debug, error, info, trace, warn};
 
 /// Custom logger built to verify our exact test case.
 struct LogVerify {
@@ -66,9 +67,7 @@ fn test_global_logger() {
 
     // Create a basic logger configuration
     fern::Dispatch::new()
-        .format(|out, msg, record| {
-            out.finish(format_args!("[{}] {}", record.level(), msg))
-        })
+        .format(|out, msg, record| out.finish(format_args!("[{}] {}", record.level(), msg)))
         // Only log messages Info and above
         .level(log::LevelFilter::Info)
         // Output to our verification logger for verification

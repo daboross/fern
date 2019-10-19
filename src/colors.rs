@@ -278,8 +278,7 @@ impl ColoredLogLevel for Level {
 
 #[cfg(test)]
 mod test {
-    use colored::Color::*;
-    use colored::Colorize;
+    use colored::{Color::*, Colorize};
 
     use super::WithFgColor;
 
