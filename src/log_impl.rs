@@ -12,10 +12,8 @@ use log::{self, Log};
 
 use crate::{Filter, Formatter};
 
-#[cfg(all(not(windows), feature = "syslog-3"))]
-use crate::syslog_3;
 #[cfg(all(not(windows), feature = "syslog-4"))]
-use crate::{syslog_4, Syslog4Rfc3164Logger, Syslog4Rfc5424Logger};
+use crate::{Syslog4Rfc3164Logger, Syslog4Rfc5424Logger};
 #[cfg(all(not(windows), feature = "reopen-03"))]
 use reopen;
 
@@ -109,7 +107,7 @@ pub struct Reopen {
 
 #[cfg(all(not(windows), feature = "syslog-3"))]
 pub struct Syslog3 {
-    pub inner: syslog_3::Logger,
+    pub inner: syslog3::Logger,
 }
 
 #[cfg(all(not(windows), feature = "syslog-4"))]
@@ -733,7 +731,7 @@ enum LogError {
     Io(io::Error),
     Send(mpsc::SendError<String>),
     #[cfg(all(not(windows), feature = "syslog-4"))]
-    Syslog4(syslog_4::Error),
+    Syslog4(syslog4::Error),
     CannotOpenFile,
 }
 
@@ -762,8 +760,8 @@ impl From<mpsc::SendError<String>> for LogError {
 }
 
 #[cfg(all(not(windows), feature = "syslog-4"))]
-impl From<syslog_4::Error> for LogError {
-    fn from(error: syslog_4::Error) -> Self {
+impl From<syslog4::Error> for LogError {
+    fn from(error: syslog4::Error) -> Self {
         LogError::Syslog4(error)
     }
 }

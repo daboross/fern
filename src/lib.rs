@@ -199,12 +199,6 @@
 //! [colors]: colors/index.html
 //! [syslog]: syslog/index.html
 //! [meta]: meta/index.html
-#[cfg(all(not(windows), feature = "syslog-4"))]
-use syslog4 as syslog_4;
-#[cfg(all(not(windows), feature = "syslog-3"))]
-use syslog3 as syslog_3;
-
-
 use std::convert::AsRef;
 use std::fs::{File, OpenOptions};
 use std::path::Path;
@@ -241,14 +235,13 @@ pub type Filter = dyn Fn(&log::Metadata) -> bool + Send + Sync + 'static;
 pub use crate::builders::DateBasedLogFile;
 
 #[cfg(all(not(windows), feature = "syslog-4"))]
-type Syslog4Rfc3164Logger =
-    syslog_4::Logger<syslog_4::LoggerBackend, String, syslog_4::Formatter3164>;
+type Syslog4Rfc3164Logger = syslog4::Logger<syslog4::LoggerBackend, String, syslog4::Formatter3164>;
 
 #[cfg(all(not(windows), feature = "syslog-4"))]
-type Syslog4Rfc5424Logger = syslog_4::Logger<
-    syslog_4::LoggerBackend,
+type Syslog4Rfc5424Logger = syslog4::Logger<
+    syslog4::LoggerBackend,
     (i32, HashMap<String, HashMap<String, String>>, String),
-    syslog_4::Formatter5424,
+    syslog4::Formatter5424,
 >;
 
 /// Convenience method for opening a log file with common options.

@@ -8,17 +8,13 @@ use std::{cmp, fmt, fs, io};
 #[cfg(all(not(windows), feature = "syslog-4"))]
 use std::collections::HashMap;
 
-use log::{self, Log};
+use log::Log;
 
 use crate::log_impl::DateBasedLogFileState;
 use crate::{log_impl, Filter, FormatCallback, Formatter};
 
-#[cfg(all(not(windows), feature = "syslog-3"))]
-use crate::syslog_3;
 #[cfg(all(not(windows), feature = "syslog-4"))]
 use crate::{Syslog4Rfc3164Logger, Syslog4Rfc5424Logger};
-#[cfg(all(not(windows), feature = "reopen-03"))]
-use reopen;
 
 /// The base dispatch logger.
 ///
@@ -662,7 +658,7 @@ enum OutputInner {
     OtherStatic(&'static dyn Log),
     /// Passes all messages to the syslog.
     #[cfg(all(not(windows), feature = "syslog-3"))]
-    Syslog3(syslog_3::Logger),
+    Syslog3(syslog3::Logger),
     /// Passes all messages to the syslog.
     #[cfg(all(not(windows), feature = "syslog-4"))]
     Syslog4Rfc3164(Syslog4Rfc3164Logger),
@@ -835,7 +831,7 @@ impl From<Sender<String>> for Output {
 }
 
 #[cfg(all(not(windows), feature = "syslog-3"))]
-impl From<syslog_3::Logger> for Output {
+impl From<syslog3::Logger> for Output {
     /// Creates an output logger which writes all messages to the given syslog
     /// output.
     ///
@@ -843,13 +839,13 @@ impl From<syslog_3::Logger> for Output {
     /// informational, warn => warning, and error => error.
     ///
     /// This requires the `"syslog-3"` feature.
-    fn from(log: syslog_3::Logger) -> Self {
+    fn from(log: syslog3::Logger) -> Self {
         Output(OutputInner::Syslog3(log))
     }
 }
 
 #[cfg(all(not(windows), feature = "syslog-3"))]
-impl From<Box<syslog_3::Logger>> for Output {
+impl From<Box<syslog3::Logger>> for Output {
     /// Creates an output logger which writes all messages to the given syslog
     /// output.
     ///
@@ -862,7 +858,7 @@ impl From<Box<syslog_3::Logger>> for Output {
     /// identical to that created by passing a raw `syslog::Logger`.
     ///
     /// This requires the `"syslog-3"` feature.
-    fn from(log: Box<syslog_3::Logger>) -> Self {
+    fn from(log: Box<syslog3::Logger>) -> Self {
         Output(OutputInner::Syslog3(*log))
     }
 }
