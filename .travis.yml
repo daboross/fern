@@ -2,6 +2,7 @@ language: rust
 sudo: false
 cache: cargo
 rust:
+- 1.32.0
 - stable
 - beta
 - nightly
@@ -10,9 +11,6 @@ os:
 - osx
 matrix:
   include:
-  - os: linux
-    rust: 1.16.0
-    script: cargo build --verbose
   - os: linux
     rust: stable
     sudo: true
