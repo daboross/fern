@@ -1,5 +1,3 @@
-extern crate chrono;
-
 use std::borrow::Cow;
 use std::cell::RefCell;
 use std::fs::OpenOptions;
@@ -12,12 +10,12 @@ use std::collections::HashMap;
 
 use log::{self, Log};
 
-use {Filter, Formatter};
+use crate::{Filter, Formatter};
 
 #[cfg(all(not(windows), feature = "syslog-3"))]
-use syslog_3;
+use crate::syslog_3;
 #[cfg(all(not(windows), feature = "syslog-4"))]
-use {syslog_4, Syslog4Rfc3164Logger, Syslog4Rfc5424Logger};
+use crate::{syslog_4, Syslog4Rfc3164Logger, Syslog4Rfc5424Logger};
 #[cfg(all(not(windows), feature = "reopen-03"))]
 use reopen;
 
@@ -69,8 +67,8 @@ pub enum Output {
     Syslog4Rfc5424(Syslog4Rfc5424),
     Dispatch(Dispatch),
     SharedDispatch(Arc<Dispatch>),
-    OtherBoxed(Box<Log>),
-    OtherStatic(&'static Log),
+    OtherBoxed(Box<dyn Log>),
+    OtherStatic(&'static dyn Log),
     Panic(Panic),
     Writer(Writer),
     DateBasedFileLog(DateBasedLogFile),
@@ -99,7 +97,7 @@ pub struct Sender {
 }
 
 pub struct Writer {
-    pub stream: Mutex<Box<Write + Send>>,
+    pub stream: Mutex<Box<dyn Write + Send>>,
     pub line_sep: Cow<'static, str>,
 }
 
@@ -123,7 +121,9 @@ pub struct Syslog4Rfc3164 {
 pub struct Syslog4Rfc5424 {
     pub inner: Mutex<Syslog4Rfc5424Logger>,
     pub transform: Box<
-        Fn(&log::Record) -> (i32, HashMap<String, HashMap<String, String>>, String) + Sync + Send,
+        dyn Fn(&log::Record) -> (i32, HashMap<String, HashMap<String, String>>, String)
+            + Sync
+            + Send,
     >,
 }
 

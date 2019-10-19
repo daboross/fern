@@ -1,7 +1,5 @@
 //! See https://github.com/daboross/fern/issues/38
-extern crate fern;
-#[macro_use]
-extern crate log;
+use log::log_enabled;
 
 #[test]
 fn ensure_enabled_is_a_deep_check() {

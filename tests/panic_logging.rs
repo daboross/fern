@@ -1,7 +1,4 @@
 //! Test the functionality of panicking on error+ log messages.
-extern crate fern;
-extern crate log;
-
 use log::Level::*;
 
 mod support;
@@ -18,7 +15,7 @@ fn test_panic_panics() {
     manual_log(l, Info, "special panic message here");
 }
 
-fn warn_and_higher_panics_config() -> Box<log::Log> {
+fn warn_and_higher_panics_config() -> Box<dyn log::Log> {
     let (_max_level, logger) = fern::Dispatch::new()
         .chain(
             fern::Dispatch::new()

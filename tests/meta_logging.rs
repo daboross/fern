@@ -4,9 +4,6 @@
 //! These tests *will* deadlock if the feature is not enabled, so they're
 //! disabled by default.
 #![cfg(feature = "meta-logging-in-format")]
-extern crate fern;
-extern crate log;
-extern crate tempdir;
 
 mod support;
 
@@ -21,7 +18,7 @@ use support::manual_log;
 // in order to actually trigger the situation that deadlocks, we need a custom
 // Display implementation which performs logging:
 struct VerboseDisplayThing<'a> {
-    log_copy: &'a Log,
+    log_copy: &'a dyn Log,
     msg: &'a str,
 }
 

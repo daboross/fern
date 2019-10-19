@@ -1,8 +1,5 @@
 //! Tests!
-extern crate fern;
-#[macro_use]
-extern crate log;
-
+use log::{debug, error, info, trace, warn};
 use std::sync::{Arc, Mutex};
 
 /// Custom logger built to verify our exact test case.
@@ -48,7 +45,7 @@ impl LogVerifyWrapper {
         LogVerifyWrapper(Arc::new(Mutex::new(LogVerify::new())))
     }
 
-    fn cloned_boxed_logger(&self) -> Box<log::Log> {
+    fn cloned_boxed_logger(&self) -> Box<dyn log::Log> {
         Box::new(self.clone())
     }
 }

@@ -10,13 +10,13 @@ use std::collections::HashMap;
 
 use log::{self, Log};
 
-use log_impl::DateBasedLogFileState;
-use {log_impl, Filter, FormatCallback, Formatter};
+use crate::log_impl::DateBasedLogFileState;
+use crate::{log_impl, Filter, FormatCallback, Formatter};
 
 #[cfg(all(not(windows), feature = "syslog-3"))]
-use syslog_3;
+use crate::syslog_3;
 #[cfg(all(not(windows), feature = "syslog-4"))]
-use {Syslog4Rfc3164Logger, Syslog4Rfc5424Logger};
+use crate::{Syslog4Rfc3164Logger, Syslog4Rfc5424Logger};
 #[cfg(all(not(windows), feature = "reopen-03"))]
 use reopen;
 
@@ -35,10 +35,6 @@ use reopen;
 ///
 /// ```no_run
 /// # // no_run because this creates log files.
-/// #[macro_use]
-/// extern crate log;
-/// extern crate fern;
-///
 /// use std::{fs, io};
 ///
 /// # fn setup_logger() -> Result<(), fern::InitError> {
@@ -214,9 +210,6 @@ impl Dispatch {
     /// Example usage:
     ///
     /// ```
-    /// # extern crate log;
-    /// # extern crate fern;
-    /// #
     /// # fn main() {
     /// fern::Dispatch::new()
     ///     .level(log::LevelFilter::Info)
@@ -249,9 +242,6 @@ impl Dispatch {
     /// excluded:
     ///
     /// ```
-    /// # extern crate log;
-    /// # extern crate fern;
-    /// #
     /// # fn main() {
     /// fern::Dispatch::new()
     ///     .level(log::LevelFilter::Trace)
@@ -266,9 +256,6 @@ impl Dispatch {
     /// rest of the program at info level:
     ///
     /// ```
-    /// # extern crate log;
-    /// # extern crate fern;
-    /// #
     /// fn setup_logging<T, I>(verbose_modules: T) -> Result<(), fern::InitError>
     /// where
     ///     I: AsRef<str>,
@@ -330,9 +317,6 @@ impl Dispatch {
     /// This sends error level messages to stderr and others to stdout.
     ///
     /// ```
-    /// # extern crate log;
-    /// # extern crate fern;
-    /// #
     /// # fn main() {
     /// fern::Dispatch::new()
     ///     .level(log::LevelFilter::Info)
@@ -373,9 +357,6 @@ impl Dispatch {
     /// program only opens "file.log" once.
     ///
     /// ```no_run
-    /// # extern crate log;
-    /// # extern crate fern;
-    /// #
     /// # fn setup_logger() -> Result<(), fern::InitError> {
     ///
     /// let file_out = fern::Dispatch::new()
@@ -602,9 +583,6 @@ impl Dispatch {
     /// Example usage:
     ///
     /// ```
-    /// # extern crate log;
-    /// # extern crate fern;
-    /// #
     /// # fn main() {
     /// let (min_level, log) = fern::Dispatch::new()
     ///     .level(log::LevelFilter::Info)
@@ -614,7 +592,7 @@ impl Dispatch {
     /// assert_eq!(min_level, log::LevelFilter::Info);
     /// # }
     /// ```
-    pub fn into_log(self) -> (log::LevelFilter, Box<log::Log>) {
+    pub fn into_log(self) -> (log::LevelFilter, Box<dyn log::Log>) {
         let (level, logger) = self.into_dispatch();
         if level == log::LevelFilter::Off {
             (level, Box::new(log_impl::Null))
@@ -660,7 +638,7 @@ enum OutputInner {
     },
     /// Writes all messages to the writer with `line_sep` separator.
     Writer {
-        stream: Box<Write + Send>,
+        stream: Box<dyn Write + Send>,
         line_sep: Cow<'static, str>,
     },
     /// Writes all messages to the reopen::Reopen file with `line_sep` separator.
@@ -679,9 +657,9 @@ enum OutputInner {
     /// Passes all messages to other dispatch that's shared.
     SharedDispatch(SharedDispatch),
     /// Passes all messages to other logger.
-    OtherBoxed(Box<Log>),
+    OtherBoxed(Box<dyn Log>),
     /// Passes all messages to other logger.
-    OtherStatic(&'static Log),
+    OtherStatic(&'static dyn Log),
     /// Passes all messages to the syslog.
     #[cfg(all(not(windows), feature = "syslog-3"))]
     Syslog3(syslog_3::Logger),
@@ -693,7 +671,7 @@ enum OutputInner {
     Syslog4Rfc5424 {
         logger: Syslog4Rfc5424Logger,
         transform: Box<
-            Fn(&log::Record) -> (i32, HashMap<String, HashMap<String, String>>, String)
+            dyn Fn(&log::Record) -> (i32, HashMap<String, HashMap<String, String>>, String)
                 + Sync
                 + Send,
         >,
@@ -719,8 +697,6 @@ enum OutputInner {
 /// message is sent.
 ///
 /// ```
-/// # extern crate fern;
-/// # extern crate log;
 /// fern::Dispatch::new()
 ///     // format, etc.
 ///     .chain(std::io::stdout())
@@ -741,8 +717,6 @@ enum OutputInner {
 /// messages.
 ///
 /// ```no_run
-/// # extern crate fern;
-/// # extern crate log;
 /// fn setup_panic_logging() {
 ///     fern::Dispatch::new()
 ///         .level(log::LevelFilter::Warn)
@@ -771,16 +745,16 @@ impl From<SharedDispatch> for Output {
     }
 }
 
-impl From<Box<Log>> for Output {
+impl From<Box<dyn Log>> for Output {
     /// Creates an output logger forwarding all messages to the custom logger.
-    fn from(log: Box<Log>) -> Self {
+    fn from(log: Box<dyn Log>) -> Self {
         Output(OutputInner::OtherBoxed(log))
     }
 }
 
-impl From<&'static Log> for Output {
+impl From<&'static dyn Log> for Output {
     /// Creates an output logger forwarding all messages to the custom logger.
-    fn from(log: &'static Log) -> Self {
+    fn from(log: &'static dyn Log) -> Self {
         Output(OutputInner::OtherStatic(log))
     }
 }
@@ -798,14 +772,14 @@ impl From<fs::File> for Output {
     }
 }
 
-impl From<Box<Write + Send>> for Output {
+impl From<Box<dyn Write + Send>> for Output {
     /// Creates an output logger which writes all messages to the writer with
     /// `\n` as the separator.
     ///
     /// This does no buffering and it is up to the writer to do buffering as
     /// needed (eg. wrap it in `BufWriter`). However, flush is called after
     /// each log record.
-    fn from(writer: Box<Write + Send>) -> Self {
+    fn from(writer: Box<dyn Write + Send>) -> Self {
         Output(OutputInner::Writer {
             stream: writer,
             line_sep: "\n".into(),
@@ -1007,7 +981,7 @@ impl Output {
     /// ```
     ///
     /// [`Dispatch::chain`]: struct.Dispatch.html#method.chain
-    pub fn writer<T: Into<Cow<'static, str>>>(writer: Box<Write + Send>, line_sep: T) -> Self {
+    pub fn writer<T: Into<Cow<'static, str>>>(writer: Box<dyn Write + Send>, line_sep: T) -> Self {
         Output(OutputInner::Writer {
             stream: writer,
             line_sep: line_sep.into(),
@@ -1183,7 +1157,7 @@ impl Output {
             fn flush(&self) {}
         }
 
-        Self::from(Box::new(CallShim(func)) as Box<log::Log>)
+        Self::from(Box::new(CallShim(func)) as Box<dyn log::Log>)
     }
 }
 

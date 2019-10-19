@@ -51,7 +51,7 @@ impl error::Error for InitError {
         }
     }
 
-    fn cause(&self) -> Option<&error::Error> {
+    fn cause(&self) -> Option<&dyn error::Error> {
         match *self {
             InitError::Io(ref e) => Some(e),
             InitError::SetLoggerError(ref e) => Some(e),

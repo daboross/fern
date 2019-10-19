@@ -5,8 +5,7 @@ calls to the global logger from within their `Display` or `Debug` implementation
 Here's an example of such a structure:
 
 ```
-# #[macro_use]
-# extern crate log;
+# use log::debug;
 # use std::fmt;
 #
 struct Thing<'a>(&'a str);

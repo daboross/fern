@@ -1,8 +1,4 @@
 //! Tests!
-extern crate fern;
-extern crate log;
-extern crate tempdir;
-
 use std::io::prelude::*;
 use std::{fs, io};
 

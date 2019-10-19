@@ -12,15 +12,6 @@
 //! fern = "0.5"
 //! ```
 //!
-//! Then declare both in `main.rs` or `lib.rs`:
-//!
-//! ```
-//! #[macro_use]
-//! extern crate log;
-//! extern crate fern;
-//! # fn main() {}
-//! ```
-//!
 //! # Example setup
 //!
 //! With fern, all logger configuration is done via builder-like methods on
@@ -30,11 +21,7 @@
 //! and above to both stdout and an output.log file:
 //!
 //! ```no_run
-//! extern crate fern;
-//! #[macro_use]
-//! extern crate log;
-//!
-//! extern crate chrono;
+//! use log::{debug, error, info, trace, warn};
 //!
 //! fn setup_logger() -> Result<(), fern::InitError> {
 //!     fern::Dispatch::new()
@@ -151,9 +138,7 @@
 //! crate and all libraries you depend on.
 //!
 //! ```rust
-//! # #[macro_use]
-//! # extern crate log;
-//! # extern crate fern;
+//! # use log::{debug, error, info, trace, warn};
 //!
 //! # fn setup_logger() -> Result<(), fern::InitError> {
 //! fern::Dispatch::new()
@@ -214,17 +199,10 @@
 //! [colors]: colors/index.html
 //! [syslog]: syslog/index.html
 //! [meta]: meta/index.html
-#[cfg(feature = "colored")]
-extern crate colored;
-#[cfg(all(not(windows), feature = "reopen-03"))]
-extern crate libc;
-extern crate log;
 #[cfg(all(not(windows), feature = "syslog-4"))]
-extern crate syslog as syslog_4;
+use syslog4 as syslog_4;
 #[cfg(all(not(windows), feature = "syslog-3"))]
-extern crate syslog3 as syslog_3;
-#[cfg(all(not(windows), feature = "reopen-03"))]
-extern crate reopen;
+use syslog3 as syslog_3;
 
 
 use std::convert::AsRef;
@@ -235,9 +213,9 @@ use std::{fmt, io};
 #[cfg(all(not(windows), feature = "syslog-4"))]
 use std::collections::HashMap;
 
-pub use builders::{Dispatch, Output, Panic};
-pub use errors::InitError;
-pub use log_impl::FormatCallback;
+pub use crate::builders::{Dispatch, Output, Panic};
+pub use crate::errors::InitError;
+pub use crate::log_impl::FormatCallback;
 
 mod builders;
 mod errors;
@@ -254,13 +232,13 @@ pub mod meta;
 ///
 /// As of fern `0.5`, the passed `fmt::Arguments` will always be the same as
 /// the given `log::Record`'s `.args()`.
-pub type Formatter = Fn(FormatCallback, &fmt::Arguments, &log::Record) + Sync + Send + 'static;
+pub type Formatter = dyn Fn(FormatCallback, &fmt::Arguments, &log::Record) + Sync + Send + 'static;
 
 /// A type alias for a log filter. Returning true means the record should
 /// succeed - false means it should fail.
-pub type Filter = Fn(&log::Metadata) -> bool + Send + Sync + 'static;
+pub type Filter = dyn Fn(&log::Metadata) -> bool + Send + Sync + 'static;
 
-pub use builders::DateBasedLogFile;
+pub use crate::builders::DateBasedLogFile;
 
 #[cfg(all(not(windows), feature = "syslog-4"))]
 type Syslog4Rfc3164Logger =

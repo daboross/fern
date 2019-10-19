@@ -1,9 +1,4 @@
-extern crate chrono;
-extern crate clap;
-extern crate fern;
-#[macro_use]
-extern crate log;
-
+use log::{debug, info, trace, warn};
 use std::io;
 
 fn setup_logging(verbosity: u64) -> Result<(), fern::InitError> {

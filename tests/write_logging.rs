@@ -1,7 +1,4 @@
 //! Tests for the raw write logging functionality.
-extern crate fern;
-extern crate log;
-
 use std::io;
 use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::Arc;
@@ -49,7 +46,7 @@ fn test_raw_write_logging() {
         .chain(Box::new(TestWriter {
             buf: Vec::new(),
             flag: flag.clone(),
-        }) as Box<io::Write + Send>)
+        }) as Box<dyn io::Write + Send>)
         .into_log();
 
     let l = &*logger;
