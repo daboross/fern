@@ -39,7 +39,6 @@ meta-logging-in-format = []
 
 [dev-dependencies]
 tempdir = "0.3"
-chrono = "0.4"
 clap = "2.22"
 
 [[example]]
