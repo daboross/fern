@@ -1,5 +1,0 @@
-- remove RefCell for CustomFileLogger?
-- add prefix to match suffix?
-- make DateBasedLogConfig a builder?
-- re-add date format methods with specific impls - like iso8601_prefix?
-- do one last pass over the whole thing
