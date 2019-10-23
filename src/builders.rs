@@ -1405,8 +1405,7 @@ impl DateBased {
     ///
     /// ```
     /// // program.log.2310201923
-    /// let log =
-    ///     fern::Dispatch::new().chain(fern::DateBased::new("my-program.log.", "%d%m%Y%H").utc_time());
+    /// let log = fern::DateBased::new("my-program.log.", "%d%m%Y%H").utc_time();
     /// ```
     pub fn utc_time(mut self) -> Self {
         self.utc_time = true;
@@ -1424,11 +1423,9 @@ impl DateBased {
     ///
     /// ```
     /// // program.log.2310201923
-    /// let log = fern::Dispatch::new().chain(
-    ///     fern::DateBased::new("my-program.log.", "%d%m%Y%H")
-    ///         .utc_time()
-    ///         .local_time(),
-    /// );
+    /// let log = fern::DateBased::new("my-program.log.", "%d%m%Y%H")
+    ///     .utc_time()
+    ///     .local_time();
     /// ```
     pub fn local_time(mut self) -> Self {
         self.utc_time = false;
