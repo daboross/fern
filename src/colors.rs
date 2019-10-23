@@ -148,7 +148,7 @@ pub struct ColoredLevelConfig {
     pub trace: Color,
 }
 
-impl ColoredLevelConfig {    
+impl ColoredLevelConfig {
     /// Creates a new ColoredLevelConfig with the default colors.
     ///
     /// This matches the behavior of [`ColoredLevelConfig::default`].
