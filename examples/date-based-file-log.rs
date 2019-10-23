@@ -2,9 +2,8 @@ use log::{debug, info, warn};
 
 fn setup_logging() -> Result<(), Box<dyn std::error::Error>> {
     fern::Dispatch::new()
-        // by default only accept warning messages so as not to spam
         .level(log::LevelFilter::Debug)
-        .chain(fern::DateBasedLogFile::new("program.log", "%Y-%m-%d"))
+        .chain(fern::DateBasedLogFile::new("program.log.", "%Y-%m-%d"))
         .apply()?;
 
     Ok(())
@@ -13,7 +12,6 @@ fn setup_logging() -> Result<(), Box<dyn std::error::Error>> {
 fn main() {
     setup_logging().expect("failed to initialize logging.");
 
-    // None of this will be shown in the syslog:
     for i in 0..5 {
         info!("executing section: {}", i);
 
@@ -25,10 +23,6 @@ fn main() {
 
         info!("section {} completed!", i);
     }
-
-    // these two *will* show.
-
-    info!(target: "explicit-syslog", "hello to the syslog! this is rust.");
 
     warn!("AHHH something's on fire.");
 }
