@@ -1,6 +1,5 @@
 use std::{
     borrow::Cow,
-    cell::RefCell,
     collections::HashMap,
     fmt, fs,
     fs::OpenOptions,
@@ -140,9 +139,9 @@ pub struct DateBasedLogFile {
 
 #[derive(Debug)]
 pub struct DateBasedLogFileState {
-    curr_file_suffix: RefCell<String>,
-    is_writeable: RefCell<bool>,
-    file_stream: RefCell<BufWriter<fs::File>>,
+    curr_file_suffix: String,
+    is_writeable: bool,
+    file_stream: BufWriter<fs::File>,
 }
 
 impl DateBasedLogFileState {
@@ -152,9 +151,9 @@ impl DateBasedLogFileState {
         file_stream: BufWriter<fs::File>,
     ) -> DateBasedLogFileState {
         DateBasedLogFileState {
-            curr_file_suffix: RefCell::new(curr_file_suffix.to_string()),
-            is_writeable: RefCell::new(is_writeable),
-            file_stream: RefCell::new(file_stream),
+            curr_file_suffix: curr_file_suffix.to_string(),
+            is_writeable,
+            file_stream,
         }
     }
 }
@@ -625,12 +624,12 @@ impl Log for DateBasedLogFile {
 
     fn log(&self, record: &log::Record) {
         fallback_on_error(record, |record| {
-            let log_file_state = self
+            let mut log_file_state = self
                 .log_file_state
                 .lock()
                 .unwrap_or_else(|e| e.into_inner());
 
-            if *log_file_state.is_writeable.borrow() {
+            if log_file_state.is_writeable {
                 if cfg!(feature = "meta-logging-in-format") {
                     // Formatting first prevents deadlocks on file-logging,
                     // when the process of formatting itself is logged.
@@ -638,13 +637,13 @@ impl Log for DateBasedLogFile {
                     // formatting trait itself is logging.
                     let msg = format!("{}{}", record.args(), self.line_sep);
 
-                    let mut writer = log_file_state.file_stream.borrow_mut();
+                    let writer = &mut log_file_state.file_stream;
 
                     write!(writer, "{}", msg)?;
 
                     writer.flush()?;
                 } else {
-                    let mut writer = log_file_state.file_stream.borrow_mut();
+                    let writer = &mut log_file_state.file_stream;
 
                     write!(writer, "{}{}", record.args(), self.line_sep)?;
 
@@ -653,9 +652,9 @@ impl Log for DateBasedLogFile {
 
                 //now check if log needs to be rotated
                 let new_file_suffix = DateBasedLogFile::get_suffix(&self.file_suffix);
-                let mut curr_file_suffix = log_file_state.curr_file_suffix.borrow_mut();
+                let curr_file_suffix = &mut log_file_state.curr_file_suffix;
 
-                if !curr_file_suffix.eq(&new_file_suffix) {
+                if curr_file_suffix != &new_file_suffix {
                     *curr_file_suffix = new_file_suffix;
 
                     let file_name_full =
@@ -663,11 +662,9 @@ impl Log for DateBasedLogFile {
                     let file_open_result = DateBasedLogFile::open_log_file(&file_name_full);
 
                     if let Ok(l_file) = file_open_result {
-                        let mut file_stream = log_file_state.file_stream.borrow_mut();
-                        *file_stream = BufWriter::new(l_file);
+                        log_file_state.file_stream = BufWriter::new(l_file);
                     } else {
-                        let mut is_writeable = log_file_state.is_writeable.borrow_mut();
-                        *is_writeable = false;
+                        log_file_state.is_writeable = false;
                     }
                 }
 
@@ -679,13 +676,13 @@ impl Log for DateBasedLogFile {
     }
 
     fn flush(&self) {
-        let log_file_state = self
+        let mut log_file_state = self
             .log_file_state
             .lock()
             .unwrap_or_else(|e| e.into_inner());
 
-        if *log_file_state.is_writeable.borrow() {
-            let _ = log_file_state.file_stream.borrow_mut().flush();
+        if log_file_state.is_writeable {
+            let _ = log_file_state.file_stream.flush();
         }
     }
 }
