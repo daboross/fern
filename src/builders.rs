@@ -11,7 +11,7 @@ use std::collections::HashMap;
 
 use log::Log;
 
-use crate::{log_impl, log_impl::DateBasedLogFileState, Filter, FormatCallback, Formatter};
+use crate::{log_impl, log_impl::DateBasedState, Filter, FormatCallback, Formatter};
 
 #[cfg(all(not(windows), feature = "syslog-4"))]
 use crate::{Syslog4Rfc3164Logger, Syslog4Rfc5424Logger};
@@ -507,10 +507,10 @@ impl Dispatch {
                     max_child_level = log::LevelFilter::Trace;
                     Some(log_impl::Output::OtherStatic(child_log))
                 }
-                OutputInner::DateBasedLogFile { config } => {
+                OutputInner::DateBased { config } => {
                     max_child_level = log::LevelFilter::Trace;
 
-                    let config = log_impl::DateBasedLogFileConfig::new(
+                    let config = log_impl::DateBasedConfig::new(
                         config.line_sep,
                         config.file_prefix,
                         config.file_suffix,
@@ -526,15 +526,10 @@ impl Dispatch {
                     // ignore errors - we'll just retry later.
                     let initial_file = config.open_current_log_file(&computed_suffix).ok();
 
-                    Some(log_impl::Output::DateBasedLogFile(
-                        log_impl::DateBasedLogFile {
-                            config,
-                            state: Mutex::new(DateBasedLogFileState::new(
-                                computed_suffix,
-                                initial_file,
-                            )),
-                        },
-                    ))
+                    Some(log_impl::Output::DateBased(log_impl::DateBased {
+                        config,
+                        state: Mutex::new(DateBasedState::new(computed_suffix, initial_file)),
+                    }))
                 }
             })
             .collect();
@@ -671,7 +666,7 @@ enum OutputInner {
     /// Panics with messages text for all messages.
     Panic,
     /// File logger with custom date and timestamp suffix in file name.
-    DateBasedLogFile { config: DateBasedLogFile },
+    DateBased { config: DateBased },
 }
 
 /// Logger which will panic whenever anything is logged. The panic
@@ -1264,8 +1259,8 @@ impl fmt::Debug for OutputInner {
                 .field(&"<boxed logger>")
                 .finish(),
             OutputInner::Panic => f.debug_tuple("Output::Panic").finish(),
-            OutputInner::DateBasedLogFile { ref config } => f
-                .debug_struct("Output::DateBasedLogFile")
+            OutputInner::DateBased { ref config } => f
+                .debug_struct("Output::DateBased")
                 .field("config", config)
                 .finish(),
         }
@@ -1282,14 +1277,14 @@ impl fmt::Debug for Output {
 ///
 /// The log file will be rotated automatically when the date changes.
 #[derive(Debug)]
-pub struct DateBasedLogFile {
+pub struct DateBased {
     file_prefix: PathBuf,
     file_suffix: Cow<'static, str>,
     line_sep: Cow<'static, str>,
     utc_time: bool,
 }
 
-impl DateBasedLogFile {
+impl DateBased {
     /// Create new date-based file logger with the given file prefix and
     /// strftime-based suffix pattern.
     ///
@@ -1305,14 +1300,14 @@ impl DateBasedLogFile {
     /// suffix to create the final file.
     ///
     /// Note that no separator will be placed in between `file_name` and
-    /// `file_suffix_pattern`. So if you call `DateBasedLogFile::new("hello",
+    /// `file_suffix_pattern`. So if you call `DateBased::new("hello",
     /// "%Y")`, the result will be a filepath `hello2019`.
     ///
     /// By default, this will use local time. For UTC time instead, use the
-    /// [`.utc_time()`][DateBasedLogFile::utc_time] method after creating.
+    /// [`.utc_time()`][DateBased::utc_time] method after creating.
     ///
     /// By default, this will use `\n` as a line separator. For a custom
-    /// separator, use the [`.line_sep`][DateBasedLogFile::line_sep] method
+    /// separator, use the [`.line_sep`][DateBased::line_sep] method
     /// after creating.
     ///
     /// # Examples
@@ -1321,50 +1316,50 @@ impl DateBasedLogFile {
     ///
     /// ```
     /// # logs/2019-10-23-my-program.log
-    /// let log = fern::DateBasedLogFile::new("logs/", "%Y-%m-%d-my-program.log");
+    /// let log = fern::DateBased::new("logs/", "%Y-%m-%d-my-program.log");
     ///
     /// # program.log.23102019
-    /// let log = fern::DateBasedLogFile::new("my-program.log", "%d%m%Y");
+    /// let log = fern::DateBased::new("my-program.log.", "%d%m%Y");
     /// ```
     ///
     /// Containing the hour:
     ///
     /// ```
     /// # logs/2019-10-23 13 my-program.log
-    /// let log = fern::DateBasedLogFile::new("logs/", "%Y-%m-%d %H my-program.log");
+    /// let log = fern::DateBased::new("logs/", "%Y-%m-%d %H my-program.log");
     ///
     /// # program.log.2310201913
-    /// let log = fern::DateBasedLogFile::new("my-program.log", "%d%m%Y%H");
+    /// let log = fern::DateBased::new("my-program.log.", "%d%m%Y%H");
     /// ```
     ///
     /// Containing the minute:
     ///
     /// ```
     /// # logs/2019-10-23 13 my-program.log
-    /// let log = fern::DateBasedLogFile::new("logs/", "%Y-%m-%d %H my-program.log");
+    /// let log = fern::DateBased::new("logs/", "%Y-%m-%d %H my-program.log");
     ///
     /// # program.log.2310201913
-    /// let log = fern::DateBasedLogFile::new("my-program.log", "%d%m%Y%H");
+    /// let log = fern::DateBased::new("my-program.log.", "%d%m%Y%H");
     /// ```
     ///
     /// UNIX time, or seconds since 00:00 Jan 1st 1970:
     ///
     /// ```
     /// # logs/1571822854-my-program.log
-    /// let log = fern::DateBasedLogFile::new("logs/", "%s-my-program.log");
+    /// let log = fern::DateBased::new("logs/", "%s-my-program.log");
     ///
     /// # program.log.1571822854
-    /// let log = fern::DateBasedLogFile::new("my-program.log", "%s");
+    /// let log = fern::DateBased::new("my-program.log.", "%s");
     /// ```
     ///
     /// Hourly, using UTC time:
     ///
     /// ```
     /// # logs/2019-10-23 23 my-program.log
-    /// let log = fern::DateBasedLogFile::new("logs/", "%Y-%m-%d %H my-program.log").utc_time();
+    /// let log = fern::DateBased::new("logs/", "%Y-%m-%d %H my-program.log").utc_time();
     ///
     /// # program.log.2310201923
-    /// let log = fern::DateBasedLogFile::new("my-program.log", "%d%m%Y%H").utc_time();
+    /// let log = fern::DateBased::new("my-program.log.", "%d%m%Y%H").utc_time();
     /// ```
     ///
     /// [`chrono::format::strftime`]: https://docs.rs/chrono/0.4.6/chrono/format/strftime/index.html
@@ -1373,7 +1368,7 @@ impl DateBasedLogFile {
         T: AsRef<Path>,
         U: Into<Cow<'static, str>>,
     {
-        DateBasedLogFile {
+        DateBased {
             utc_time: false,
             file_prefix: file_prefix.as_ref().to_owned(),
             file_suffix: file_suffix.into(),
@@ -1381,7 +1376,7 @@ impl DateBasedLogFile {
         }
     }
 
-    /// Changes the line separator this [DateBasedLogFile] will use.
+    /// Changes the line separator this logger will use.
     ///
     /// The default line separator is `\n`.
     ///
@@ -1390,7 +1385,7 @@ impl DateBasedLogFile {
     /// Using a windows line separator:
     ///
     /// ```
-    /// let log = fern::DateBasedLogFile::new("logs", "%s.log").line_sep("\r\n");
+    /// let log = fern::DateBased::new("logs", "%s.log").line_sep("\r\n");
     /// ```
     pub fn line_sep<T>(mut self, line_sep: T) -> Self
     where
@@ -1410,8 +1405,8 @@ impl DateBasedLogFile {
     ///
     /// ```
     /// # program.log.2310201923
-    /// let log = fern::Dispatch::new()
-    ///     .chain(fern::DateBasedLogFile::new("my-program.log", "%d%m%Y%H").utc_time());
+    /// let log =
+    ///     fern::Dispatch::new().chain(fern::DateBased::new("my-program.log.", "%d%m%Y%H").utc_time());
     /// ```
     pub fn utc_time(mut self) -> Self {
         self.utc_time = true;
@@ -1430,7 +1425,7 @@ impl DateBasedLogFile {
     /// ```
     /// # program.log.2310201923
     /// let log = fern::Dispatch::new().chain(
-    ///     fern::DateBasedLogFile::new("my-program.log", "%d%m%Y%H")
+    ///     fern::DateBased::new("my-program.log.", "%d%m%Y%H")
     ///         .utc_time()
     ///         .local_time(),
     /// );
@@ -1441,11 +1436,10 @@ impl DateBasedLogFile {
     }
 }
 
-impl From<DateBasedLogFile> for Output {
-    /// Creates an output logger which writes all messages to the file with
-    /// `\n` as the separator. The filename will be specified by
-    /// DateBasedLogFile, and will rotate whenever time dictates it change.
-    fn from(config: DateBasedLogFile) -> Self {
-        Output(OutputInner::DateBasedLogFile { config })
+impl From<DateBased> for Output {
+    /// Create an output logger which defers to the given date-based logger. Use
+    /// configuration methods on [DateBased] to set line separator and filename.
+    fn from(config: DateBased) -> Self {
+        Output(OutputInner::DateBased { config })
     }
 }

@@ -237,7 +237,7 @@ pub type Formatter = dyn Fn(FormatCallback, &fmt::Arguments, &log::Record) + Syn
 /// succeed - false means it should fail.
 pub type Filter = dyn Fn(&log::Metadata) -> bool + Send + Sync + 'static;
 
-pub use crate::builders::DateBasedLogFile;
+pub use crate::builders::DateBased;
 
 #[cfg(all(not(windows), feature = "syslog-4"))]
 type Syslog4Rfc3164Logger = syslog4::Logger<syslog4::LoggerBackend, String, syslog4::Formatter3164>;

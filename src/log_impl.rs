@@ -70,7 +70,7 @@ pub enum Output {
     OtherStatic(&'static dyn Log),
     Panic(Panic),
     Writer(Writer),
-    DateBasedLogFile(DateBasedLogFile),
+    DateBased(DateBased),
     #[cfg(all(not(windows), feature = "reopen-03"))]
     Reopen(Reopen),
 }
@@ -132,9 +132,9 @@ pub struct Null;
 
 /// File logger with a dynamic time-based name.
 #[derive(Debug)]
-pub struct DateBasedLogFile {
-    pub config: DateBasedLogFileConfig,
-    pub state: Mutex<DateBasedLogFileState>,
+pub struct DateBased {
+    pub config: DateBasedConfig,
+    pub state: Mutex<DateBasedState>,
 }
 
 #[derive(Debug)]
@@ -144,7 +144,7 @@ pub enum ConfiguredTimezone {
 }
 
 #[derive(Debug)]
-pub struct DateBasedLogFileConfig {
+pub struct DateBasedConfig {
     pub line_sep: Cow<'static, str>,
     /// This is a Path not an str so it can hold invalid UTF8 paths correctly.
     pub file_prefix: PathBuf,
@@ -153,14 +153,14 @@ pub struct DateBasedLogFileConfig {
 }
 
 #[derive(Debug)]
-pub struct DateBasedLogFileState {
+pub struct DateBasedState {
     pub current_suffix: String,
     pub file_stream: Option<BufWriter<fs::File>>,
 }
 
-impl DateBasedLogFileState {
+impl DateBasedState {
     pub fn new(current_suffix: String, file_stream: Option<fs::File>) -> Self {
-        DateBasedLogFileState {
+        DateBasedState {
             current_suffix,
             file_stream: file_stream.map(BufWriter::new),
         }
@@ -175,14 +175,14 @@ impl DateBasedLogFileState {
     }
 }
 
-impl DateBasedLogFileConfig {
+impl DateBasedConfig {
     pub fn new(
         line_sep: Cow<'static, str>,
         file_prefix: PathBuf,
         file_suffix: Cow<'static, str>,
         timezone: ConfiguredTimezone,
     ) -> Self {
-        DateBasedLogFileConfig {
+        DateBasedConfig {
             line_sep,
             file_prefix,
             file_suffix,
@@ -301,7 +301,7 @@ impl Log for Output {
             Output::Syslog4Rfc5424(ref s) => s.enabled(metadata),
             Output::Panic(ref s) => s.enabled(metadata),
             Output::Writer(ref s) => s.enabled(metadata),
-            Output::DateBasedLogFile(ref s) => s.enabled(metadata),
+            Output::DateBased(ref s) => s.enabled(metadata),
             #[cfg(all(not(windows), feature = "reopen-03"))]
             Output::Reopen(ref s) => s.enabled(metadata),
         }
@@ -325,7 +325,7 @@ impl Log for Output {
             Output::Syslog4Rfc5424(ref s) => s.log(record),
             Output::Panic(ref s) => s.log(record),
             Output::Writer(ref s) => s.log(record),
-            Output::DateBasedLogFile(ref s) => s.log(record),
+            Output::DateBased(ref s) => s.log(record),
             #[cfg(all(not(windows), feature = "reopen-03"))]
             Output::Reopen(ref s) => s.log(record),
         }
@@ -349,7 +349,7 @@ impl Log for Output {
             Output::Syslog4Rfc5424(ref s) => s.flush(),
             Output::Panic(ref s) => s.flush(),
             Output::Writer(ref s) => s.flush(),
-            Output::DateBasedLogFile(ref s) => s.flush(),
+            Output::DateBased(ref s) => s.flush(),
             #[cfg(all(not(windows), feature = "reopen-03"))]
             Output::Reopen(ref s) => s.flush(),
         }
@@ -656,7 +656,7 @@ impl Log for Panic {
     fn flush(&self) {}
 }
 
-impl Log for DateBasedLogFile {
+impl Log for DateBased {
     fn enabled(&self, _: &log::Metadata) -> bool {
         true
     }
