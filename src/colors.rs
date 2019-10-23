@@ -148,7 +148,7 @@ pub struct ColoredLevelConfig {
     pub trace: Color,
 }
 
-impl ColoredLevelConfig {
+impl ColoredLevelConfig {    
     /// Creates a new ColoredLevelConfig with the default colors.
     ///
     /// This matches the behavior of [`ColoredLevelConfig::default`].
@@ -156,6 +156,10 @@ impl ColoredLevelConfig {
     /// [`ColoredLevelConfig::default`]: #method.default
     #[inline]
     pub fn new() -> Self {
+        #[cfg(windows)]
+        {
+            let _ = colored::control::set_virtual_terminal(true);
+        }
         Self::default()
     }
 
