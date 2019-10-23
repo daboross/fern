@@ -672,17 +672,22 @@ impl Log for DateBasedLogFile {
         fallback_on_error(record, |record| {
             let mut state = self.state.lock().unwrap_or_else(|e| e.into_inner());
 
-            let just_reopened = match state.file_stream {
-                Some(_) => false,
-                None => {
-                    let suffix = self.config.compute_current_suffix();
-                    let file = self.config.open_current_log_file(&suffix)?;
-                    state.replace_file(suffix, Some(file));
-                    true
+            // check if log needs to be rotated
+            let new_suffix = self.config.compute_current_suffix();
+            if state.file_stream.is_none() || state.current_suffix != new_suffix {
+                let file_open_result = self.config.open_current_log_file(&new_suffix);
+                match file_open_result {
+                    Ok(file) => {
+                        state.replace_file(new_suffix, Some(file));
+                    }
+                    Err(e) => {
+                        state.replace_file(new_suffix, None);
+                        return Err(e.into());
+                    }
                 }
-            };
+            }
 
-            // just initialized writer above or returned.
+            // either just initialized writer above, or already errored out.
             let writer = state.file_stream.as_mut().unwrap();
 
             #[cfg(feature = "meta-logging-in-format")]
@@ -691,24 +696,6 @@ impl Log for DateBasedLogFile {
             write!(writer, "{}{}", record.args(), self.config.line_sep)?;
 
             writer.flush()?;
-
-            if !just_reopened {
-                // now check if log needs to be rotated
-                let new_suffix = self.config.compute_current_suffix();
-                if state.current_suffix != new_suffix {
-                    let file_open_result = self.config.open_current_log_file(&new_suffix);
-
-                    match file_open_result {
-                        Ok(file) => {
-                            state.replace_file(new_suffix, Some(file));
-                        }
-                        Err(e) => {
-                            state.replace_file(new_suffix, None);
-                            return Err(e.into());
-                        }
-                    }
-                }
-            }
 
             Ok(())
         });
