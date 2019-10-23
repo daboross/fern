@@ -388,7 +388,7 @@ impl Dispatch {
 
         SharedDispatch {
             inner: Arc::new(dispatch),
-            min_level: min_level,
+            min_level,
         }
     }
 
@@ -413,29 +413,29 @@ impl Dispatch {
                 OutputInner::Stdout { stream, line_sep } => {
                     max_child_level = log::LevelFilter::Trace;
                     Some(log_impl::Output::Stdout(log_impl::Stdout {
-                        stream: stream,
-                        line_sep: line_sep,
+                        stream,
+                        line_sep,
                     }))
                 }
                 OutputInner::Stderr { stream, line_sep } => {
                     max_child_level = log::LevelFilter::Trace;
                     Some(log_impl::Output::Stderr(log_impl::Stderr {
-                        stream: stream,
-                        line_sep: line_sep,
+                        stream,
+                        line_sep,
                     }))
                 }
                 OutputInner::File { stream, line_sep } => {
                     max_child_level = log::LevelFilter::Trace;
                     Some(log_impl::Output::File(log_impl::File {
                         stream: Mutex::new(io::BufWriter::new(stream)),
-                        line_sep: line_sep,
+                        line_sep,
                     }))
                 }
                 OutputInner::Writer { stream, line_sep } => {
                     max_child_level = log::LevelFilter::Trace;
                     Some(log_impl::Output::Writer(log_impl::Writer {
                         stream: Mutex::new(stream),
-                        line_sep: line_sep,
+                        line_sep,
                     }))
                 }
                 #[cfg(all(not(windows), feature = "reopen-03"))]
@@ -443,14 +443,14 @@ impl Dispatch {
                     max_child_level = log::LevelFilter::Trace;
                     Some(log_impl::Output::Reopen(log_impl::Reopen {
                         stream: Mutex::new(stream),
-                        line_sep: line_sep,
+                        line_sep,
                     }))
                 }
                 OutputInner::Sender { stream, line_sep } => {
                     max_child_level = log::LevelFilter::Trace;
                     Some(log_impl::Output::Sender(log_impl::Sender {
                         stream: Mutex::new(stream),
-                        line_sep: line_sep,
+                        line_sep,
                     }))
                 }
                 #[cfg(all(not(windows), feature = "syslog-3"))]
@@ -788,7 +788,7 @@ impl From<io::Stdout> for Output {
     /// given handle and `\n` as the separator.
     fn from(stream: io::Stdout) -> Self {
         Output(OutputInner::Stdout {
-            stream: stream,
+            stream,
             line_sep: "\n".into(),
         })
     }
@@ -799,7 +799,7 @@ impl From<io::Stderr> for Output {
     /// given handle and `\n` as the separator.
     fn from(stream: io::Stderr) -> Self {
         Output(OutputInner::Stderr {
-            stream: stream,
+            stream,
             line_sep: "\n".into(),
         })
     }
@@ -812,7 +812,7 @@ impl From<Sender<String>> for Output {
     /// All messages sent to the mpsc channel are suffixed with '\n'.
     fn from(stream: Sender<String>) -> Self {
         Output(OutputInner::Sender {
-            stream: stream,
+            stream,
             line_sep: "\n".into(),
         })
     }
