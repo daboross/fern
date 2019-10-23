@@ -2,6 +2,19 @@ Unreleased
 ==========
 
 
+0.5.9 (2019-10-23)
+==================
+
+- Add a rotating date-based file logger (thanks [@tanujitghosh]!)
+- Add a file logger which supports reopening files on SIGHUP via the
+  [reopen] crate (thanks [@itkovian]!)
+- Ensure Windows console colors are enabled whenever a ColoredLevelConfig
+  is created on Windows (thanks [@Songtronix]!)
+- Change minimum rust version from 1.16 to 1.32, as it had already
+  been effectively changed by a patch update in one of our
+  dependencies (cfg-if)
+- Update crate to Rust 2018 edition (thanks [@tymcauley]!)
+
 0.5.8 (2019-03-25)
 ==================
 
@@ -373,6 +386,8 @@ was added.
 
 First release, version 0.1.0.
 
+
+[reopen]: https://github.com/vorner/reopen
 [@gareins]: https://github.com/gareins
 [@gingerDevilish]: https://github.com/gingerDevilish
 [@nihiluis]: https://github.com/nihiluis
@@ -381,3 +396,7 @@ First release, version 0.1.0.
 [@digitalatigid]: https://github.com/digitalatigid
 [@ExpHP]: https://github.com/ExpHP
 [@17dec]: https://github.com/17dec
+[@tanujitghosh]: https://github.com/tanujitghosh
+[@itkovian]: https://github.com/itkovian
+[@tymcauley]: https://github.com/tymcauley
+[@Songtronix]: https://github.com/Songtronix
