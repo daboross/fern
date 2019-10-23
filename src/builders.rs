@@ -506,7 +506,7 @@ impl Dispatch {
                     max_child_level = log::LevelFilter::Trace;
                     Some(log_impl::Output::OtherStatic(child_log))
                 }
-                OutputInner::DateBasedFile {
+                OutputInner::DateBasedLogFile {
                     file_logger_info,
                     line_sep,
                 } => {
@@ -523,7 +523,7 @@ impl Dispatch {
                         log_impl::DateBasedLogFile::open_log_file(&file_name_full);
 
                     if let Ok(file) = file_open_result {
-                        Some(log_impl::Output::DateBasedFileLog(
+                        Some(log_impl::Output::DateBasedLogFile(
                             log_impl::DateBasedLogFile {
                                 line_sep: line_sep,
                                 file_suffix: file_logger_info.file_suffix_pattern,
@@ -674,7 +674,7 @@ enum OutputInner {
     /// Panics with messages text for all messages.
     Panic,
     /// File logger with custom date and timestamp suffix in file name.
-    DateBasedFile {
+    DateBasedLogFile {
         file_logger_info: DateBasedLogFile,
         line_sep: Cow<'static, str>,
     },
@@ -1270,11 +1270,11 @@ impl fmt::Debug for OutputInner {
                 .field(&"<boxed logger>")
                 .finish(),
             OutputInner::Panic => f.debug_tuple("Output::Panic").finish(),
-            OutputInner::DateBasedFile {
+            OutputInner::DateBasedLogFile {
                 ref file_logger_info,
                 ref line_sep,
             } => f
-                .debug_struct("Output::DateBasedFile")
+                .debug_struct("Output::DateBasedLogFile")
                 .field("file_logger_info", file_logger_info)
                 .field("line_sep", line_sep)
                 .finish(),
@@ -1320,9 +1320,9 @@ impl DateBasedLogFile {
 impl From<DateBasedLogFile> for Output {
     /// Creates an output logger which writes all messages to the file with
     /// `\n` as the separator. The filename will be specified by
-    /// DateBasedFileLog, and will rotate whenever time dictates it change.
+    /// DateBasedLogFile, and will rotate whenever time dictates it change.
     fn from(file: DateBasedLogFile) -> Self {
-        Output(OutputInner::DateBasedFile {
+        Output(OutputInner::DateBasedLogFile {
             file_logger_info: file,
             line_sep: "\n".into(),
         })

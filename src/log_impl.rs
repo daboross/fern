@@ -69,7 +69,7 @@ pub enum Output {
     OtherStatic(&'static dyn Log),
     Panic(Panic),
     Writer(Writer),
-    DateBasedFileLog(DateBasedLogFile),
+    DateBasedLogFile(DateBasedLogFile),
     #[cfg(all(not(windows), feature = "reopen-03"))]
     Reopen(Reopen),
 }
@@ -129,7 +129,7 @@ pub struct Panic;
 
 pub struct Null;
 
-//Custom file logger which we will be able to manipulate the name
+/// File logger with a dynamic time-based name.
 #[derive(Debug)]
 pub struct DateBasedLogFile {
     pub line_sep: Cow<'static, str>,
@@ -263,7 +263,7 @@ impl Log for Output {
             Output::Syslog4Rfc5424(ref s) => s.enabled(metadata),
             Output::Panic(ref s) => s.enabled(metadata),
             Output::Writer(ref s) => s.enabled(metadata),
-            Output::DateBasedFileLog(ref s) => s.enabled(metadata),
+            Output::DateBasedLogFile(ref s) => s.enabled(metadata),
             #[cfg(all(not(windows), feature = "reopen-03"))]
             Output::Reopen(ref s) => s.enabled(metadata),
         }
@@ -287,7 +287,7 @@ impl Log for Output {
             Output::Syslog4Rfc5424(ref s) => s.log(record),
             Output::Panic(ref s) => s.log(record),
             Output::Writer(ref s) => s.log(record),
-            Output::DateBasedFileLog(ref s) => s.log(record),
+            Output::DateBasedLogFile(ref s) => s.log(record),
             #[cfg(all(not(windows), feature = "reopen-03"))]
             Output::Reopen(ref s) => s.log(record),
         }
@@ -311,7 +311,7 @@ impl Log for Output {
             Output::Syslog4Rfc5424(ref s) => s.flush(),
             Output::Panic(ref s) => s.flush(),
             Output::Writer(ref s) => s.flush(),
-            Output::DateBasedFileLog(ref s) => s.flush(),
+            Output::DateBasedLogFile(ref s) => s.flush(),
             #[cfg(all(not(windows), feature = "reopen-03"))]
             Output::Reopen(ref s) => s.flush(),
         }
