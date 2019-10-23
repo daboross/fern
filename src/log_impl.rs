@@ -662,14 +662,14 @@ impl Log for DateBased {
     }
 
     fn log(&self, record: &log::Record) {
-        // Formatting first prevents deadlocks on file-logging,
-        // when the process of formatting itself is logged.
-        // note: this is only ever needed if some Debug, Display, or other
-        // formatting trait itself is logging.
-        #[cfg(feature = "meta-logging-in-format")]
-        let msg = format!("{}{}", record.args(), self.config.line_sep);
-
         fallback_on_error(record, |record| {
+            // Formatting first prevents deadlocks on file-logging,
+            // when the process of formatting itself is logged.
+            // note: this is only ever needed if some Debug, Display, or other
+            // formatting trait itself is logging.
+            #[cfg(feature = "meta-logging-in-format")]
+            let msg = format!("{}{}", record.args(), self.config.line_sep);
+
             let mut state = self.state.lock().unwrap_or_else(|e| e.into_inner());
 
             // check if log needs to be rotated

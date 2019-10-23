@@ -1315,50 +1315,50 @@ impl DateBased {
     /// Containing the date (year, month and day):
     ///
     /// ```
-    /// # logs/2019-10-23-my-program.log
+    /// // logs/2019-10-23-my-program.log
     /// let log = fern::DateBased::new("logs/", "%Y-%m-%d-my-program.log");
     ///
-    /// # program.log.23102019
+    /// // program.log.23102019
     /// let log = fern::DateBased::new("my-program.log.", "%d%m%Y");
     /// ```
     ///
     /// Containing the hour:
     ///
     /// ```
-    /// # logs/2019-10-23 13 my-program.log
+    /// // logs/2019-10-23 13 my-program.log
     /// let log = fern::DateBased::new("logs/", "%Y-%m-%d %H my-program.log");
     ///
-    /// # program.log.2310201913
+    /// // program.log.2310201913
     /// let log = fern::DateBased::new("my-program.log.", "%d%m%Y%H");
     /// ```
     ///
     /// Containing the minute:
     ///
     /// ```
-    /// # logs/2019-10-23 13 my-program.log
+    /// // logs/2019-10-23 13 my-program.log
     /// let log = fern::DateBased::new("logs/", "%Y-%m-%d %H my-program.log");
     ///
-    /// # program.log.2310201913
+    /// // program.log.2310201913
     /// let log = fern::DateBased::new("my-program.log.", "%d%m%Y%H");
     /// ```
     ///
     /// UNIX time, or seconds since 00:00 Jan 1st 1970:
     ///
     /// ```
-    /// # logs/1571822854-my-program.log
+    /// // logs/1571822854-my-program.log
     /// let log = fern::DateBased::new("logs/", "%s-my-program.log");
     ///
-    /// # program.log.1571822854
+    /// // program.log.1571822854
     /// let log = fern::DateBased::new("my-program.log.", "%s");
     /// ```
     ///
     /// Hourly, using UTC time:
     ///
     /// ```
-    /// # logs/2019-10-23 23 my-program.log
+    /// // logs/2019-10-23 23 my-program.log
     /// let log = fern::DateBased::new("logs/", "%Y-%m-%d %H my-program.log").utc_time();
     ///
-    /// # program.log.2310201923
+    /// // program.log.2310201923
     /// let log = fern::DateBased::new("my-program.log.", "%d%m%Y%H").utc_time();
     /// ```
     ///
@@ -1404,7 +1404,7 @@ impl DateBased {
     /// This will use UTC time to determine the date:
     ///
     /// ```
-    /// # program.log.2310201923
+    /// // program.log.2310201923
     /// let log =
     ///     fern::Dispatch::new().chain(fern::DateBased::new("my-program.log.", "%d%m%Y%H").utc_time());
     /// ```
@@ -1423,7 +1423,7 @@ impl DateBased {
     /// former.
     ///
     /// ```
-    /// # program.log.2310201923
+    /// // program.log.2310201923
     /// let log = fern::Dispatch::new().chain(
     ///     fern::DateBased::new("my-program.log.", "%d%m%Y%H")
     ///         .utc_time()
