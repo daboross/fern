@@ -38,7 +38,7 @@ fern::Dispatch::new()
     .apply()?;
 
 // and log using log crate macros!
-info!("helllo, world!");
+info!("hello, world!");
 ```
 
 Examples of all features at the [api docs][fern-docs]. See fern in use with this [example command line program][fern-example].
