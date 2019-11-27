@@ -237,6 +237,7 @@ pub type Formatter = dyn Fn(FormatCallback, &fmt::Arguments, &log::Record) + Syn
 /// succeed - false means it should fail.
 pub type Filter = dyn Fn(&log::Metadata) -> bool + Send + Sync + 'static;
 
+#[cfg(feature = "date-based")]
 pub use crate::builders::DateBased;
 
 #[cfg(all(not(windows), feature = "syslog-4"))]
