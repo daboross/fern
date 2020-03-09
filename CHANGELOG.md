@@ -2,6 +2,12 @@ Unreleased
 ==========
 
 
+0.6.0 (2020-03-09)
+==================
+
+- Move date-based file logger under its own feature (thanks [@dekellum]!)
+
+
 0.5.9 (2019-10-23)
 ==================
 
@@ -400,3 +406,4 @@ First release, version 0.1.0.
 [@itkovian]: https://github.com/itkovian
 [@tymcauley]: https://github.com/tymcauley
 [@Songtronix]: https://github.com/Songtronix
+[@dekellum]: https://github.com/dekellum
