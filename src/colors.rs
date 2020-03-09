@@ -288,6 +288,10 @@ mod test {
 
     #[test]
     fn fg_color_matches_colored_behavior() {
+        #[cfg(windows)]
+        {
+            let _ = colored::control::set_virtual_terminal(true);
+        }
         for &color in &[
             Black,
             Red,
@@ -321,6 +325,10 @@ mod test {
 
     #[test]
     fn fg_color_respects_formatting_flags() {
+        #[cfg(windows)]
+        {
+            let _ = colored::control::set_virtual_terminal(true);
+        }
         let s = format!(
             "{:^8}",
             WithFgColor {
