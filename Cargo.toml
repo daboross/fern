@@ -24,7 +24,7 @@ coveralls = { repository = "daboross/fern" }
 [dependencies]
 log = { version = "0.4", features = ["std"] }
 colored = { version = "1.5", optional = true }
-chrono = "0.4"
+chrono = { version = "0.4", optional = true }
 
 [target."cfg(not(windows))".dependencies]
 syslog3 = { version = "3", package = "syslog", optional = true }
@@ -37,16 +37,19 @@ syslog-3 = ["syslog3"]
 syslog-4 = ["syslog4"]
 reopen-03 = ["reopen", "libc"]
 meta-logging-in-format = []
+date-based = ["chrono"]
 
 [dev-dependencies]
 tempdir = "0.3"
 clap = "2.22"
+chrono = "0.4"
 
 [[example]]
 name = "cmd-program"
 
 [[example]]
 name = "date-based-file-log"
+required-features = ["date-based"]
 
 [[example]]
 name = "colored"

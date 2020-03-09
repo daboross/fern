@@ -39,6 +39,6 @@ script:
 - cargo run --example pretty-colored --features colored
 - cargo run --example syslog --features syslog-4
 - cargo run --example syslog3 --features syslog-3
-- cargo run --example date-based-file-log
+- cargo run --example date-based-file-log --features date-based
   # we don't exactly have a good test suite for DateBased right now, so let's at least do this:
-- cargo run --example date-based-file-log --features meta-logging-in-format
+- cargo run --example date-based-file-log --features date-based,meta-logging-in-format

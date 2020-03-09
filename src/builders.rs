@@ -2,16 +2,21 @@ use std::{
     borrow::Cow,
     cmp, fmt, fs, io,
     io::Write,
-    path::{Path, PathBuf},
     sync::{mpsc::Sender, Arc, Mutex},
 };
+
+#[cfg(feature = "date-based")]
+use std::path::{Path, PathBuf};
 
 #[cfg(all(not(windows), feature = "syslog-4"))]
 use std::collections::HashMap;
 
 use log::Log;
 
-use crate::{log_impl, log_impl::DateBasedState, Filter, FormatCallback, Formatter};
+use crate::{log_impl, Filter, FormatCallback, Formatter};
+
+#[cfg(feature = "date-based")]
+use crate::log_impl::DateBasedState;
 
 #[cfg(all(not(windows), feature = "syslog-4"))]
 use crate::{Syslog4Rfc3164Logger, Syslog4Rfc5424Logger};
@@ -507,6 +512,7 @@ impl Dispatch {
                     max_child_level = log::LevelFilter::Trace;
                     Some(log_impl::Output::OtherStatic(child_log))
                 }
+                #[cfg(feature = "date-based")]
                 OutputInner::DateBased { config } => {
                     max_child_level = log::LevelFilter::Trace;
 
@@ -666,6 +672,7 @@ enum OutputInner {
     /// Panics with messages text for all messages.
     Panic,
     /// File logger with custom date and timestamp suffix in file name.
+    #[cfg(feature = "date-based")]
     DateBased { config: DateBased },
 }
 
@@ -1259,6 +1266,7 @@ impl fmt::Debug for OutputInner {
                 .field(&"<boxed logger>")
                 .finish(),
             OutputInner::Panic => f.debug_tuple("Output::Panic").finish(),
+            #[cfg(feature = "date-based")]
             OutputInner::DateBased { ref config } => f
                 .debug_struct("Output::DateBased")
                 .field("config", config)
@@ -1277,6 +1285,7 @@ impl fmt::Debug for Output {
 ///
 /// The log file will be rotated automatically when the date changes.
 #[derive(Debug)]
+#[cfg(feature = "date-based")]
 pub struct DateBased {
     file_prefix: PathBuf,
     file_suffix: Cow<'static, str>,
@@ -1284,6 +1293,7 @@ pub struct DateBased {
     utc_time: bool,
 }
 
+#[cfg(feature = "date-based")]
 impl DateBased {
     /// Create new date-based file logger with the given file prefix and
     /// strftime-based suffix pattern.
@@ -1433,6 +1443,7 @@ impl DateBased {
     }
 }
 
+#[cfg(feature = "date-based")]
 impl From<DateBased> for Output {
     /// Create an output logger which defers to the given date-based logger. Use
     /// configuration methods on [DateBased] to set line separator and filename.

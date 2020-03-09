@@ -51,6 +51,7 @@ test_script:
 - cargo test --verbose --features=syslog-3
 - cargo test --verbose --features=syslog-4
 - cargo test --verbose --features=meta-logging-in-format
+- cargo test --verbose --features=date-based
 - cargo test --verbose --all-features
 - cargo run --example cmd-program
 - cargo run --example cmd-program -- --verbose
