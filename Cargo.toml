@@ -20,7 +20,7 @@ include = ["Cargo.toml", "src/**/*", "tests/**/*", "examples/**/*", "LICENSE", "
 travis-ci = { repository = "daboross/fern" }
 appveyor = { repository = "daboross/fern" }
 coveralls = { repository = "daboross/fern" }
-is-it-maintained-issue-resolution-time = { repository = "daboross/fern" }
+is-it-maintained-issue-resolution = { repository = "daboross/fern" }
 maintenance = { status = "passively-maintained" }
 
 [dependencies]
