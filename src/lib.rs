@@ -291,6 +291,9 @@ pub fn log_file<P: AsRef<Path>>(path: P) -> io::Result<File> {
 /// See [`OpenOptions`] for more information.
 ///
 /// [`OpenOptions`]: https://doc.rust-lang.org/std/fs/struct.OpenOptions.html
+///
+/// This function is not available on Windows, and it requires the `reopen-03`
+/// feature to be enabled.
 #[cfg(all(not(windows), feature = "reopen-03"))]
 #[inline]
 pub fn log_reopen(path: &Path, signal: Option<libc::c_int>) -> io::Result<reopen::Reopen<File>> {
