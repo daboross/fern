@@ -1,6 +1,8 @@
 Unreleased
 ==========
 
+- Document reopen feature requiring a feature flag (thanks [@Palladinium]!)
+
 
 0.6.0 (2020-03-09)
 ==================
@@ -407,3 +409,4 @@ First release, version 0.1.0.
 [@tymcauley]: https://github.com/tymcauley
 [@Songtronix]: https://github.com/Songtronix
 [@dekellum]: https://github.com/dekellum
+[@Palladinium]: https://github.com/Palladinium
