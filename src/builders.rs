@@ -980,6 +980,9 @@ impl Output {
     /// If the default separator of `\n` is acceptable, a `Reopen`
     /// instance can be passed into [`Dispatch::chain`] directly.
     ///
+    /// This function is not available on Windows, and it requires the `reopen-03`
+    /// feature to be enabled.
+    ///
     /// ```no_run
     /// use std::fs::OpenOptions;
     /// # fn setup_logger() -> Result<(), fern::InitError> {
