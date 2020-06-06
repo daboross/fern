@@ -51,7 +51,7 @@ fn set_up_logging() {
         .trace(Color::BrightBlack);
 
     // configure colors for the name of the level.
-    // since almost all of them are the some as the color for the whole line, we
+    // since almost all of them are the same as the color for the whole line, we
     // just clone `colors_line` and overwrite our changes
     let colors_level = colors_line.clone().info(Color::Green);
     // here we set up our fern Dispatch
