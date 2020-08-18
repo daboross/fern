@@ -207,9 +207,6 @@ use std::{
     path::Path,
 };
 
-#[cfg(all(not(windows), feature = "syslog-4"))]
-use std::collections::HashMap;
-
 pub use crate::{
     builders::{Dispatch, Output, Panic},
     errors::InitError,
@@ -222,7 +219,7 @@ mod log_impl;
 
 #[cfg(feature = "colored")]
 pub mod colors;
-#[cfg(all(not(windows), feature = "syslog-3", feature = "syslog-4"))]
+#[cfg(all(not(windows), feature = "syslog-3", feature = "syslog-5"))]
 pub mod syslog;
 
 pub mod meta;
@@ -240,15 +237,11 @@ pub type Filter = dyn Fn(&log::Metadata) -> bool + Send + Sync + 'static;
 #[cfg(feature = "date-based")]
 pub use crate::builders::DateBased;
 
-#[cfg(all(not(windows), feature = "syslog-4"))]
-type Syslog4Rfc3164Logger = syslog4::Logger<syslog4::LoggerBackend, String, syslog4::Formatter3164>;
+#[cfg(all(not(windows), feature = "syslog-5"))]
+type Syslog5Rfc3164Logger = syslog5::Logger<syslog5::LoggerBackend, syslog5::Formatter3164>;
 
-#[cfg(all(not(windows), feature = "syslog-4"))]
-type Syslog4Rfc5424Logger = syslog4::Logger<
-    syslog4::LoggerBackend,
-    (i32, HashMap<String, HashMap<String, String>>, String),
-    syslog4::Formatter5424,
->;
+#[cfg(all(not(windows), feature = "syslog-5"))]
+type Syslog5Rfc5424Logger = syslog5::Logger<syslog5::LoggerBackend, syslog5::Formatter5424>;
 
 /// Convenience method for opening a log file with common options.
 ///

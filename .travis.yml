@@ -29,7 +29,7 @@ script:
 - cargo test --verbose
 - cargo test --verbose --features=colored
 - cargo test --verbose --features=syslog-3
-- cargo test --verbose --features=syslog-4
+- cargo test --verbose --features=syslog-5
 - cargo test --verbose --features=reopen-03
 - cargo test --verbose --features=meta-logging-in-format
 - cargo test --verbose --all-features
@@ -37,7 +37,7 @@ script:
 - cargo run --example cmd-program -- --verbose
 - cargo run --example colored --features colored
 - cargo run --example pretty-colored --features colored
-- cargo run --example syslog --features syslog-4
+- cargo run --example syslog --features syslog-5
 - cargo run --example syslog3 --features syslog-3
 - cargo run --example date-based-file-log --features date-based
   # we don't exactly have a good test suite for DateBased right now, so let's at least do this:

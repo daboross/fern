@@ -49,7 +49,7 @@ test_script:
 - cargo test --verbose
 - cargo test --verbose --features=colored
 - cargo test --verbose --features=syslog-3
-- cargo test --verbose --features=syslog-4
+- cargo test --verbose --features=syslog-5
 - cargo test --verbose --features=meta-logging-in-format
 - cargo test --verbose --features=date-based
 - cargo test --verbose --all-features
