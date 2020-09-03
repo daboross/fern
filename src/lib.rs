@@ -296,9 +296,9 @@ pub fn log_file<P: AsRef<Path>>(path: P) -> io::Result<File> {
 /// feature to be enabled.
 #[cfg(all(not(windows), feature = "reopen-03"))]
 #[inline]
-pub fn log_reopen(path: &Path, signal: Option<libc::c_int>) -> io::Result<reopen::Reopen<File>> {
+pub fn log_reopen(path: &Path, signal: Option<libc::c_int>) -> io::Result<reopen03::Reopen<File>> {
     let p = path.to_owned();
-    let r = reopen::Reopen::new(Box::new(move || log_file(&p)))?;
+    let r = reopen03::Reopen::new(Box::new(move || log_file(&p)))?;
 
     if let Some(s) = signal {
         if let Err(e) = r.handle().register_signal(s) {

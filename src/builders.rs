@@ -637,7 +637,7 @@ enum OutputInner {
     /// separator.
     #[cfg(all(not(windows), feature = "reopen-03"))]
     Reopen {
-        stream: reopen::Reopen<fs::File>,
+        stream: reopen03::Reopen<fs::File>,
         line_sep: Cow<'static, str>,
     },
     /// Writes all messages to mpst::Sender with `line_sep` separator.
@@ -779,10 +779,10 @@ impl From<Box<dyn Write + Send>> for Output {
 }
 
 #[cfg(all(not(windows), feature = "reopen-03"))]
-impl From<reopen::Reopen<fs::File>> for Output {
+impl From<reopen03::Reopen<fs::File>> for Output {
     /// Creates an output logger which writes all messages to the file contained
     /// in the Reopen struct, using `\n` as the separator.
-    fn from(reopen: reopen::Reopen<fs::File>) -> Self {
+    fn from(reopen: reopen03::Reopen<fs::File>) -> Self {
         Output(OutputInner::Reopen {
             stream: reopen,
             line_sep: "\n".into(),
@@ -986,7 +986,7 @@ impl Output {
     /// ```no_run
     /// use std::fs::OpenOptions;
     /// # fn setup_logger() -> Result<(), fern::InitError> {
-    /// let reopenable = reopen::Reopen::new(Box::new(|| {
+    /// let reopenable = reopen03::Reopen::new(Box::new(|| {
     ///     OpenOptions::new()
     ///         .create(true)
     ///         .write(true)
@@ -1005,7 +1005,7 @@ impl Output {
     /// [`Dispatch::chain`]: struct.Dispatch.html#method.chain
     #[cfg(all(not(windows), feature = "reopen-03"))]
     pub fn reopen<T: Into<Cow<'static, str>>>(
-        reopen: reopen::Reopen<fs::File>,
+        reopen: reopen03::Reopen<fs::File>,
         line_sep: T,
     ) -> Self {
         Output(OutputInner::Reopen {

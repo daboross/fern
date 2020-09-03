@@ -20,7 +20,7 @@ use crate::{Filter, Formatter};
 #[cfg(all(not(windows), feature = "syslog-4"))]
 use crate::{Syslog4Rfc3164Logger, Syslog4Rfc5424Logger};
 #[cfg(all(not(windows), feature = "reopen-03"))]
-use reopen;
+use reopen03;
 
 pub enum LevelConfiguration {
     JustDefault,
@@ -107,7 +107,7 @@ pub struct Writer {
 
 #[cfg(all(not(windows), feature = "reopen-03"))]
 pub struct Reopen {
-    pub stream: Mutex<reopen::Reopen<fs::File>>,
+    pub stream: Mutex<reopen03::Reopen<fs::File>>,
     pub line_sep: Cow<'static, str>,
 }
 
