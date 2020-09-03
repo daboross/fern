@@ -451,6 +451,14 @@ impl Dispatch {
                         line_sep,
                     }))
                 }
+                #[cfg(feature = "reopen-1")]
+                OutputInner::Reopen1 { stream, line_sep } => {
+                    max_child_level = log::LevelFilter::Trace;
+                    Some(log_impl::Output::Reopen1(log_impl::Reopen1 {
+                        stream: Mutex::new(stream),
+                        line_sep,
+                    }))
+                }
                 OutputInner::Sender { stream, line_sep } => {
                     max_child_level = log::LevelFilter::Trace;
                     Some(log_impl::Output::Sender(log_impl::Sender {
@@ -640,6 +648,13 @@ enum OutputInner {
         stream: reopen03::Reopen<fs::File>,
         line_sep: Cow<'static, str>,
     },
+    /// Writes all messages to the reopen::Reopen file with `line_sep`
+    /// separator.
+    #[cfg(feature = "reopen-1")]
+    Reopen1 {
+        stream: reopen1::Reopen<fs::File>,
+        line_sep: Cow<'static, str>,
+    },
     /// Writes all messages to mpst::Sender with `line_sep` separator.
     Sender {
         stream: Sender<String>,
@@ -784,6 +799,18 @@ impl From<reopen03::Reopen<fs::File>> for Output {
     /// in the Reopen struct, using `\n` as the separator.
     fn from(reopen: reopen03::Reopen<fs::File>) -> Self {
         Output(OutputInner::Reopen {
+            stream: reopen,
+            line_sep: "\n".into(),
+        })
+    }
+}
+
+#[cfg(feature = "reopen-1")]
+impl From<reopen1::Reopen<fs::File>> for Output {
+    /// Creates an output logger which writes all messages to the file contained
+    /// in the Reopen struct, using `\n` as the separator.
+    fn from(reopen: reopen1::Reopen<fs::File>) -> Self {
+        Output(OutputInner::Reopen1 {
             stream: reopen,
             line_sep: "\n".into(),
         })
@@ -1014,6 +1041,45 @@ impl Output {
         })
     }
 
+    /// Returns a reopenable logger, i.e., handling SIGHUP.
+    ///
+    /// If the default separator of `\n` is acceptable, a `Reopen`
+    /// instance can be passed into [`Dispatch::chain`] directly.
+    ///
+    /// This function is not available on Windows, and it requires the `reopen-03`
+    /// feature to be enabled.
+    ///
+    /// ```no_run
+    /// use std::fs::OpenOptions;
+    /// # fn setup_logger() -> Result<(), fern::InitError> {
+    /// let reopenable = reopen1::Reopen::new(Box::new(|| {
+    ///     OpenOptions::new()
+    ///         .create(true)
+    ///         .write(true)
+    ///         .append(true)
+    ///         .open("/tmp/output.log")
+    /// }))
+    /// .unwrap();
+    ///
+    /// fern::Dispatch::new().chain(fern::Output::reopen1(reopenable, "\n"))
+    ///     # .into_log();
+    /// #     Ok(())
+    /// # }
+    /// #
+    /// # fn main() { setup_logger().expect("failed to set up logger"); }
+    /// ```
+    /// [`Dispatch::chain`]: struct.Dispatch.html#method.chain
+    #[cfg(feature = "reopen-1")]
+    pub fn reopen1<T: Into<Cow<'static, str>>>(
+        reopen: reopen1::Reopen<fs::File>,
+        line_sep: T,
+    ) -> Self {
+        Output(OutputInner::Reopen1 {
+            stream: reopen,
+            line_sep: line_sep.into(),
+        })
+    }
+
     /// Returns an stdout logger using a custom separator.
     ///
     /// If the default separator of `\n` is acceptable, an `io::Stdout`
@@ -1228,6 +1294,15 @@ impl fmt::Debug for OutputInner {
             OutputInner::Reopen { ref line_sep, .. } => f
                 .debug_struct("Output::Reopen")
                 .field("stream", &"<unknown reopen file>")
+                .field("line_sep", line_sep)
+                .finish(),
+            #[cfg(feature = "reopen-1")]
+            OutputInner::Reopen1 {
+                ref line_sep,
+                ref stream,
+            } => f
+                .debug_struct("Output::Reopen1")
+                .field("stream", stream)
                 .field("line_sep", line_sep)
                 .finish(),
             OutputInner::Sender {
