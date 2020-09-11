@@ -43,7 +43,12 @@ fn set_up_logging() {
     // configure colors for the whole line
     let colors_line = ColoredLevelConfig::new()
         .error(Color::Red)
-        .warn(Color::Yellow)
+        // custom color (orange)
+        .warn(Color::TrueColor {
+            r: 255,
+            g: 165,
+            b: 0,
+        })
         // we actually don't need to specify the color for debug and info, they are white by default
         .info(Color::White)
         .debug(Color::White)
