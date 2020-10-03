@@ -17,6 +17,8 @@ use log::{self, Log};
 
 use crate::{Filter, Formatter};
 
+#[cfg(all(not(windows), feature = "syslog-4"))]
+use crate::{Syslog4Rfc3164Logger, Syslog4Rfc5424Logger};
 #[cfg(all(not(windows), feature = "syslog-5"))]
 use crate::{Syslog5Rfc3164Logger, Syslog5Rfc5424Logger};
 #[cfg(all(not(windows), feature = "reopen-03"))]
@@ -64,6 +66,10 @@ pub enum Output {
     Sender(Sender),
     #[cfg(all(not(windows), feature = "syslog-3"))]
     Syslog3(Syslog3),
+    #[cfg(all(not(windows), feature = "syslog-4"))]
+    Syslog4Rfc3164(Syslog4Rfc3164),
+    #[cfg(all(not(windows), feature = "syslog-4"))]
+    Syslog4Rfc5424(Syslog4Rfc5424),
     #[cfg(all(not(windows), feature = "syslog-5"))]
     Syslog5Rfc3164(Syslog5Rfc3164),
     #[cfg(all(not(windows), feature = "syslog-5"))]
@@ -114,6 +120,21 @@ pub struct Reopen {
 #[cfg(all(not(windows), feature = "syslog-3"))]
 pub struct Syslog3 {
     pub inner: syslog3::Logger,
+}
+
+#[cfg(all(not(windows), feature = "syslog-4"))]
+pub struct Syslog4Rfc3164 {
+    pub inner: Mutex<Syslog4Rfc3164Logger>,
+}
+
+#[cfg(all(not(windows), feature = "syslog-4"))]
+pub struct Syslog4Rfc5424 {
+    pub inner: Mutex<Syslog4Rfc5424Logger>,
+    pub transform: Box<
+        dyn Fn(&log::Record) -> (i32, HashMap<String, HashMap<String, String>>, String)
+            + Sync
+            + Send,
+    >,
 }
 
 #[cfg(all(not(windows), feature = "syslog-5"))]
@@ -306,6 +327,10 @@ impl Log for Output {
             Output::OtherStatic(ref s) => s.enabled(metadata),
             #[cfg(all(not(windows), feature = "syslog-3"))]
             Output::Syslog3(ref s) => s.enabled(metadata),
+            #[cfg(all(not(windows), feature = "syslog-4"))]
+            Output::Syslog4Rfc3164(ref s) => s.enabled(metadata),
+            #[cfg(all(not(windows), feature = "syslog-4"))]
+            Output::Syslog4Rfc5424(ref s) => s.enabled(metadata),
             #[cfg(all(not(windows), feature = "syslog-5"))]
             Output::Syslog5Rfc3164(ref s) => s.enabled(metadata),
             #[cfg(all(not(windows), feature = "syslog-5"))]
@@ -331,6 +356,10 @@ impl Log for Output {
             Output::OtherStatic(ref s) => s.log(record),
             #[cfg(all(not(windows), feature = "syslog-3"))]
             Output::Syslog3(ref s) => s.log(record),
+            #[cfg(all(not(windows), feature = "syslog-4"))]
+            Output::Syslog4Rfc3164(ref s) => s.log(record),
+            #[cfg(all(not(windows), feature = "syslog-4"))]
+            Output::Syslog4Rfc5424(ref s) => s.log(record),
             #[cfg(all(not(windows), feature = "syslog-5"))]
             Output::Syslog5Rfc3164(ref s) => s.log(record),
             #[cfg(all(not(windows), feature = "syslog-5"))]
@@ -356,6 +385,10 @@ impl Log for Output {
             Output::OtherStatic(ref s) => s.flush(),
             #[cfg(all(not(windows), feature = "syslog-3"))]
             Output::Syslog3(ref s) => s.flush(),
+            #[cfg(all(not(windows), feature = "syslog-4"))]
+            Output::Syslog4Rfc3164(ref s) => s.flush(),
+            #[cfg(all(not(windows), feature = "syslog-4"))]
+            Output::Syslog4Rfc5424(ref s) => s.flush(),
             #[cfg(all(not(windows), feature = "syslog-5"))]
             Output::Syslog5Rfc3164(ref s) => s.flush(),
             #[cfg(all(not(windows), feature = "syslog-5"))]
@@ -592,7 +625,7 @@ impl Log for Sender {
     fn flush(&self) {}
 }
 
-#[cfg(any(feature = "syslog-3", feature = "syslog-5"))]
+#[cfg(any(feature = "syslog-3", feature = "syslog-4", feature = "syslog-5"))]
 macro_rules! send_syslog {
     ($logger:expr, $level:expr, $message:expr) => {
         use log::Level;
@@ -615,6 +648,42 @@ impl Log for Syslog3 {
         fallback_on_error(record, |record| {
             let message = record.args();
             send_syslog!(self.inner, record.level(), message);
+
+            Ok(())
+        });
+    }
+    fn flush(&self) {}
+}
+
+#[cfg(all(not(windows), feature = "syslog-4"))]
+impl Log for Syslog4Rfc3164 {
+    fn enabled(&self, _: &log::Metadata) -> bool {
+        true
+    }
+
+    fn log(&self, record: &log::Record) {
+        fallback_on_error(record, |record| {
+            let message = record.args().to_string();
+            let mut log = self.inner.lock().unwrap_or_else(|e| e.into_inner());
+            send_syslog!(log, record.level(), message);
+
+            Ok(())
+        });
+    }
+    fn flush(&self) {}
+}
+
+#[cfg(all(not(windows), feature = "syslog-4"))]
+impl Log for Syslog4Rfc5424 {
+    fn enabled(&self, _: &log::Metadata) -> bool {
+        true
+    }
+
+    fn log(&self, record: &log::Record) {
+        fallback_on_error(record, |record| {
+            let transformed = (self.transform)(record);
+            let mut log = self.inner.lock().unwrap_or_else(|e| e.into_inner());
+            send_syslog!(log, record.level(), transformed);
 
             Ok(())
         });
@@ -766,6 +835,8 @@ fn backup_logging(record: &log::Record, error: &LogError) {
 enum LogError {
     Io(io::Error),
     Send(mpsc::SendError<String>),
+    #[cfg(all(not(windows), feature = "syslog-4"))]
+    Syslog4(syslog4::Error),
     #[cfg(all(not(windows), feature = "syslog-5"))]
     Syslog5(syslog5::Error),
 }
@@ -775,6 +846,8 @@ impl fmt::Display for LogError {
         match *self {
             LogError::Io(ref e) => write!(f, "{}", e),
             LogError::Send(ref e) => write!(f, "{}", e),
+            #[cfg(all(not(windows), feature = "syslog-4"))]
+            LogError::Syslog4(ref e) => write!(f, "{}", e),
             #[cfg(all(not(windows), feature = "syslog-5"))]
             LogError::Syslog5(ref e) => write!(f, "{}", e),
         }
@@ -790,6 +863,13 @@ impl From<io::Error> for LogError {
 impl From<mpsc::SendError<String>> for LogError {
     fn from(error: mpsc::SendError<String>) -> Self {
         LogError::Send(error)
+    }
+}
+
+#[cfg(all(not(windows), feature = "syslog-4"))]
+impl From<syslog4::Error> for LogError {
+    fn from(error: syslog4::Error) -> Self {
+        LogError::Syslog4(error)
     }
 }
 

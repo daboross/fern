@@ -29,7 +29,6 @@ fern::Dispatch::new()
 # fn main() { setup_logging().ok(); }
 ```
 
-
 ---
 
 ## Alternate syslog versions
@@ -55,8 +54,8 @@ fern::Dispatch::new()
 # fn main() { setup_logging().ok(); }
 ```
 
-The rest of this document applies to both syslog 3 and syslog 4, but the examples will be using
-syslog 4 as it is the latest version.
+The rest of this document applies to both syslog 3 and syslog 5, but the examples will be using
+syslog 5 as it is the latest version.
 
 ---
 
