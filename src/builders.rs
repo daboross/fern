@@ -414,31 +414,31 @@ impl Dispatch {
 
         let output = children
             .into_iter()
-            .flat_map(|child| match child {
+            .filter_map(|child| match child {
                 OutputInner::Stdout { stream, line_sep } => {
                     max_child_level = log::LevelFilter::Trace;
-                    Some(log_impl::Output::Stdout(log_impl::Stdout {
+                    Some(Box::new(log_impl::Stdout {
                         stream,
                         line_sep,
-                    }))
+                    }) as Box<dyn Log>)
                 }
                 OutputInner::Stderr { stream, line_sep } => {
                     max_child_level = log::LevelFilter::Trace;
-                    Some(log_impl::Output::Stderr(log_impl::Stderr {
+                    Some(Box::new(log_impl::Stderr {
                         stream,
                         line_sep,
                     }))
                 }
                 OutputInner::File { stream, line_sep } => {
                     max_child_level = log::LevelFilter::Trace;
-                    Some(log_impl::Output::File(log_impl::File {
+                    Some(Box::new(log_impl::File {
                         stream: Mutex::new(io::BufWriter::new(stream)),
                         line_sep,
                     }))
                 }
                 OutputInner::Writer { stream, line_sep } => {
                     max_child_level = log::LevelFilter::Trace;
-                    Some(log_impl::Output::Writer(log_impl::Writer {
+                    Some(Box::new(log_impl::Writer {
                         stream: Mutex::new(stream),
                         line_sep,
                     }))
@@ -446,14 +446,14 @@ impl Dispatch {
                 #[cfg(all(not(windows), feature = "reopen-03"))]
                 OutputInner::Reopen { stream, line_sep } => {
                     max_child_level = log::LevelFilter::Trace;
-                    Some(log_impl::Output::Reopen(log_impl::Reopen {
+                    Some(Box::new(log_impl::Reopen {
                         stream: Mutex::new(stream),
                         line_sep,
                     }))
                 }
                 OutputInner::Sender { stream, line_sep } => {
                     max_child_level = log::LevelFilter::Trace;
-                    Some(log_impl::Output::Sender(log_impl::Sender {
+                    Some(Box::new(log_impl::Sender {
                         stream: Mutex::new(stream),
                         line_sep,
                     }))
@@ -461,32 +461,32 @@ impl Dispatch {
                 #[cfg(all(not(windows), feature = "syslog-3"))]
                 OutputInner::Syslog3(log) => {
                     max_child_level = log::LevelFilter::Trace;
-                    Some(log_impl::Output::Syslog3(log_impl::Syslog3 { inner: log }))
+                    Some(Box::new(log_impl::Syslog3 { inner: log }))
                 }
                 #[cfg(all(not(windows), feature = "syslog-4"))]
                 OutputInner::Syslog4Rfc3164(logger) => {
                     max_child_level = log::LevelFilter::Trace;
-                    Some(log_impl::Output::Syslog4Rfc3164(log_impl::Syslog4Rfc3164 {
+                    Some(Box::new(log_impl::Syslog4Rfc3164 {
                         inner: Mutex::new(logger),
                     }))
                 }
                 #[cfg(all(not(windows), feature = "syslog-4"))]
                 OutputInner::Syslog4Rfc5424 { logger, transform } => {
                     max_child_level = log::LevelFilter::Trace;
-                    Some(log_impl::Output::Syslog4Rfc5424(log_impl::Syslog4Rfc5424 {
+                    Some(Box::new(log_impl::Syslog4Rfc5424 {
                         inner: Mutex::new(logger),
                         transform,
                     }))
                 }
                 OutputInner::Panic => {
                     max_child_level = log::LevelFilter::Trace;
-                    Some(log_impl::Output::Panic(log_impl::Panic))
+                    Some(Box::new(log_impl::Panic))
                 }
                 OutputInner::Dispatch(child_dispatch) => {
                     let (child_level, child) = child_dispatch.into_dispatch();
                     if child_level > log::LevelFilter::Off {
                         max_child_level = cmp::max(max_child_level, child_level);
-                        Some(log_impl::Output::Dispatch(child))
+                        Some(Box::new(child))
                     } else {
                         None
                     }
@@ -499,18 +499,18 @@ impl Dispatch {
 
                     if child_level > log::LevelFilter::Off {
                         max_child_level = cmp::max(max_child_level, child_level);
-                        Some(log_impl::Output::SharedDispatch(child))
+                        Some(Box::new(log_impl::LogWrapper::<_, log_impl::Dispatch>(child, Default::default())))
                     } else {
                         None
                     }
                 }
                 OutputInner::OtherBoxed(child_log) => {
                     max_child_level = log::LevelFilter::Trace;
-                    Some(log_impl::Output::OtherBoxed(child_log))
+                    Some(Box::new(child_log))
                 }
                 OutputInner::OtherStatic(child_log) => {
                     max_child_level = log::LevelFilter::Trace;
-                    Some(log_impl::Output::OtherStatic(child_log))
+                    Some(Box::new(log_impl::LogRef(child_log)))
                 }
                 #[cfg(feature = "date-based")]
                 OutputInner::DateBased { config } => {
@@ -532,7 +532,7 @@ impl Dispatch {
                     // ignore errors - we'll just retry later.
                     let initial_file = config.open_current_log_file(&computed_suffix).ok();
 
-                    Some(log_impl::Output::DateBased(log_impl::DateBased {
+                    Some(Box::new(log_impl::DateBased {
                         config,
                         state: Mutex::new(DateBasedState::new(computed_suffix, initial_file)),
                     }))

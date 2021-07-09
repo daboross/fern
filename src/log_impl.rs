@@ -1,9 +1,10 @@
+use std::borrow::Borrow;
 use std::{
     borrow::Cow,
     collections::HashMap,
     fmt, fs,
     io::{self, BufWriter, Write},
-    sync::{mpsc, Arc, Mutex},
+    sync::{mpsc, Mutex},
 };
 
 #[cfg(feature = "date-based")]
@@ -29,7 +30,7 @@ pub enum LevelConfiguration {
 }
 
 pub struct Dispatch {
-    pub output: Vec<Output>,
+    pub output: Vec<Box<dyn Log>>,
     pub default_level: log::LevelFilter,
     pub levels: LevelConfiguration,
     pub format: Option<Box<Formatter>>,
@@ -56,29 +57,6 @@ pub struct Dispatch {
 pub struct FormatCallback<'a>(InnerFormatCallback<'a>);
 
 struct InnerFormatCallback<'a>(&'a mut bool, &'a Dispatch, &'a log::Record<'a>);
-
-pub enum Output {
-    Stdout(Stdout),
-    Stderr(Stderr),
-    File(File),
-    Sender(Sender),
-    #[cfg(all(not(windows), feature = "syslog-3"))]
-    Syslog3(Syslog3),
-    #[cfg(all(not(windows), feature = "syslog-4"))]
-    Syslog4Rfc3164(Syslog4Rfc3164),
-    #[cfg(all(not(windows), feature = "syslog-4"))]
-    Syslog4Rfc5424(Syslog4Rfc5424),
-    Dispatch(Dispatch),
-    SharedDispatch(Arc<Dispatch>),
-    OtherBoxed(Box<dyn Log>),
-    OtherStatic(&'static dyn Log),
-    Panic(Panic),
-    Writer(Writer),
-    #[cfg(feature = "date-based")]
-    DateBased(DateBased),
-    #[cfg(all(not(windows), feature = "reopen-03"))]
-    Reopen(Reopen),
-}
 
 pub struct Stdout {
     pub stream: io::Stdout,
@@ -129,6 +107,42 @@ pub struct Syslog4Rfc5424 {
             + Sync
             + Send,
     >,
+}
+
+// TODO this causes an unnecessary double indirect call.
+// See https://github.com/rust-lang/log/issues/458
+pub struct LogRef(pub &'static dyn Log);
+
+impl Log for LogRef {
+    fn enabled(&self, meta: &log::Metadata<'_>) -> bool {
+        self.0.enabled(meta)
+    }
+    fn log(&self, record: &log::Record<'_>) {
+        self.0.log(record)
+    }
+    fn flush(&self) {
+        self.0.flush()
+    }
+}
+
+// TODO this causes an unnecessary double indirect call.
+// See https://github.com/rust-lang/log/issues/458
+pub struct LogWrapper<T: Borrow<R>, R: Log>(pub T, pub std::marker::PhantomData<R>);
+
+impl<R, T> Log for LogWrapper<T, R>
+where
+    T: Borrow<R> + Send + Sync,
+    R: Log,
+{
+    fn enabled(&self, meta: &log::Metadata<'_>) -> bool {
+        self.0.borrow().enabled(meta)
+    }
+    fn log(&self, record: &log::Record<'_>) {
+        self.0.borrow().log(record)
+    }
+    fn flush(&self) {
+        self.0.borrow().flush()
+    }
 }
 
 pub struct Panic;
@@ -289,83 +303,6 @@ impl LevelConfiguration {
                 .find(|&&(ref test_module, _)| test_module == module)
                 .map(|&(_, level)| level),
             LevelConfiguration::Many(ref levels) => levels.get(module).cloned(),
-        }
-    }
-}
-
-impl Log for Output {
-    fn enabled(&self, metadata: &log::Metadata) -> bool {
-        match *self {
-            Output::Stdout(ref s) => s.enabled(metadata),
-            Output::Stderr(ref s) => s.enabled(metadata),
-            Output::File(ref s) => s.enabled(metadata),
-            Output::Sender(ref s) => s.enabled(metadata),
-            Output::Dispatch(ref s) => s.enabled(metadata),
-            Output::SharedDispatch(ref s) => s.enabled(metadata),
-            Output::OtherBoxed(ref s) => s.enabled(metadata),
-            Output::OtherStatic(ref s) => s.enabled(metadata),
-            #[cfg(all(not(windows), feature = "syslog-3"))]
-            Output::Syslog3(ref s) => s.enabled(metadata),
-            #[cfg(all(not(windows), feature = "syslog-4"))]
-            Output::Syslog4Rfc3164(ref s) => s.enabled(metadata),
-            #[cfg(all(not(windows), feature = "syslog-4"))]
-            Output::Syslog4Rfc5424(ref s) => s.enabled(metadata),
-            Output::Panic(ref s) => s.enabled(metadata),
-            Output::Writer(ref s) => s.enabled(metadata),
-            #[cfg(feature = "date-based")]
-            Output::DateBased(ref s) => s.enabled(metadata),
-            #[cfg(all(not(windows), feature = "reopen-03"))]
-            Output::Reopen(ref s) => s.enabled(metadata),
-        }
-    }
-
-    fn log(&self, record: &log::Record) {
-        match *self {
-            Output::Stdout(ref s) => s.log(record),
-            Output::Stderr(ref s) => s.log(record),
-            Output::File(ref s) => s.log(record),
-            Output::Sender(ref s) => s.log(record),
-            Output::Dispatch(ref s) => s.log(record),
-            Output::SharedDispatch(ref s) => s.log(record),
-            Output::OtherBoxed(ref s) => s.log(record),
-            Output::OtherStatic(ref s) => s.log(record),
-            #[cfg(all(not(windows), feature = "syslog-3"))]
-            Output::Syslog3(ref s) => s.log(record),
-            #[cfg(all(not(windows), feature = "syslog-4"))]
-            Output::Syslog4Rfc3164(ref s) => s.log(record),
-            #[cfg(all(not(windows), feature = "syslog-4"))]
-            Output::Syslog4Rfc5424(ref s) => s.log(record),
-            Output::Panic(ref s) => s.log(record),
-            Output::Writer(ref s) => s.log(record),
-            #[cfg(feature = "date-based")]
-            Output::DateBased(ref s) => s.log(record),
-            #[cfg(all(not(windows), feature = "reopen-03"))]
-            Output::Reopen(ref s) => s.log(record),
-        }
-    }
-
-    fn flush(&self) {
-        match *self {
-            Output::Stdout(ref s) => s.flush(),
-            Output::Stderr(ref s) => s.flush(),
-            Output::File(ref s) => s.flush(),
-            Output::Sender(ref s) => s.flush(),
-            Output::Dispatch(ref s) => s.flush(),
-            Output::SharedDispatch(ref s) => s.flush(),
-            Output::OtherBoxed(ref s) => s.flush(),
-            Output::OtherStatic(ref s) => s.flush(),
-            #[cfg(all(not(windows), feature = "syslog-3"))]
-            Output::Syslog3(ref s) => s.flush(),
-            #[cfg(all(not(windows), feature = "syslog-4"))]
-            Output::Syslog4Rfc3164(ref s) => s.flush(),
-            #[cfg(all(not(windows), feature = "syslog-4"))]
-            Output::Syslog4Rfc5424(ref s) => s.flush(),
-            Output::Panic(ref s) => s.flush(),
-            Output::Writer(ref s) => s.flush(),
-            #[cfg(feature = "date-based")]
-            Output::DateBased(ref s) => s.flush(),
-            #[cfg(all(not(windows), feature = "reopen-03"))]
-            Output::Reopen(ref s) => s.flush(),
         }
     }
 }
