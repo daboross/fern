@@ -1,4 +1,4 @@
-#![deny(missing_docs)]
+// #![deny(missing_docs)] // TODO add back in
 #![doc(html_root_url = "https://docs.rs/fern/0.6.0")]
 //! Efficient, configurable logging in Rust.
 //!
@@ -11,6 +11,24 @@
 //! log = "0.4"
 //! fern = "0.5"
 //! ```
+//!
+//! # Basic design
+//!
+//! [`Dispatch`] is a fancy multiplexer to build a tree of sub-loggers:
+//!
+//! ```text
+//! Dispatch
+//! ├── Dispatch
+//! │   └── Logger
+//! ├── Logger
+//! └── Logger
+//! ```
+//!
+//! Each dispatch may control its sub-tree of child loggers by:
+//!
+//! - Formatting the messages
+//! - Setting per module log levels
+//! - Arbitrary message filtering
 //!
 //! # Example setup
 //!
@@ -211,7 +229,7 @@ use std::{
 use std::collections::HashMap;
 
 pub use crate::{
-    builders::{Dispatch, Output, Panic},
+    builders::{Dispatch, Output},
     errors::InitError,
     log_impl::FormatCallback,
 };
@@ -219,6 +237,18 @@ pub use crate::{
 mod builders;
 mod errors;
 mod log_impl;
+
+/// Logger implementations for different output targets
+pub mod logger {
+    pub use crate::log_impl::{Panic, Sender, Stderr, Stdout, Writer};
+    #[cfg(all(not(windows), feature = "reopen-03"))]
+    pub use crate::log_impl::Reopen;
+}
+
+// For backwards compatibilty
+// Also see https://github.com/rust-lang/rust/issues/30827
+#[deprecated(note = "Moved to fern::logger::Panic")]
+pub use crate::log_impl::Panic;
 
 #[cfg(feature = "colored")]
 pub mod colors;

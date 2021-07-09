@@ -98,7 +98,9 @@ use crate::{Syslog4Rfc3164Logger, Syslog4Rfc5424Logger};
 pub struct Dispatch {
     format: Option<Box<Formatter>>,
     children: Vec<OutputInner>,
+    /// The level for all messages without override
     default_level: log::LevelFilter,
+    /// Level overrides for specific modules
     levels: Vec<(Cow<'static, str>, log::LevelFilter)>,
     filters: Vec<Box<Filter>>,
 }
@@ -115,7 +117,20 @@ pub struct Dispatch {
 #[derive(Clone)]
 pub struct SharedDispatch {
     inner: Arc<log_impl::Dispatch>,
-    min_level: log::LevelFilter,
+}
+
+impl Log for SharedDispatch {
+    fn enabled(&self, metadata: &log::Metadata) -> bool {
+        self.inner.enabled(metadata)
+    }
+
+    fn log(&self, record: &log::Record) {
+        self.inner.log(record);
+    }
+
+    fn flush(&self) {
+        self.inner.flush();
+    }
 }
 
 impl Dispatch {
@@ -178,6 +193,9 @@ impl Dispatch {
     /// All log records which pass all filters will be formatted and then sent
     /// to all child loggers in sequence.
     ///
+    /// Children must implement `Into<Output>`. Existing `Log` implementations must
+    /// be boxed. Alternatively, [`Self::chain_logger`] can be used.
+    ///
     /// Note: If the child logger is also a Dispatch, and cannot accept any log
     /// records, it will be dropped. This only happens if the child either
     /// has no children itself, or has a minimum log level of
@@ -194,6 +212,14 @@ impl Dispatch {
     #[inline]
     pub fn chain<T: Into<Output>>(mut self, logger: T) -> Self {
         self.children.push(logger.into().0);
+        self
+    }
+
+    /// Like [`Self::chain`], but [`Log`] implementations only
+    ///
+    /// `.chain(Box::new(logger))` is equivalent to `.chain_logger(logger)`
+    pub fn chain_logger<T: Log + 'static>(mut self, logger: T) -> Self {
+        self.children.push(OutputInner::Logger(Box::new(logger)));
         self
     }
 
@@ -389,11 +415,8 @@ impl Dispatch {
     ///
     /// [`Arc`]: https://doc.rust-lang.org/std/sync/struct.Arc.html
     pub fn into_shared(self) -> SharedDispatch {
-        let (min_level, dispatch) = self.into_dispatch();
-
         SharedDispatch {
-            inner: Arc::new(dispatch),
-            min_level,
+            inner: Arc::new(self.into_dispatch()),
         }
     }
 
@@ -401,7 +424,7 @@ impl Dispatch {
     ///
     /// This could probably be refactored, but having everything in one place
     /// is also nice.
-    fn into_dispatch(self) -> (log::LevelFilter, log_impl::Dispatch) {
+    fn into_dispatch(self) -> log_impl::Dispatch {
         let Dispatch {
             format,
             children,
@@ -415,127 +438,23 @@ impl Dispatch {
         let output = children
             .into_iter()
             .filter_map(|child| match child {
-                OutputInner::Stdout { stream, line_sep } => {
+                OutputInner::Dispatch(child) => {
+                    let child_level = child.max_level;
+                    max_child_level = max_child_level.max(child_level);
+                    (child_level > log::LevelFilter::Off)
+                        .then(|| child)
+                        .map(|child| Box::new(child) as Box<dyn Log>)
+                }
+                OutputInner::DispatchShared(child) => {
+                    let child_level = child.inner.max_level;
+                    max_child_level = max_child_level.max(child_level);
+                    (child_level > log::LevelFilter::Off)
+                        .then(|| child)
+                        .map(|child| Box::new(child) as Box<dyn Log>)
+                }
+                OutputInner::Logger(child) => {
                     max_child_level = log::LevelFilter::Trace;
-                    Some(Box::new(log_impl::Stdout {
-                        stream,
-                        line_sep,
-                    }) as Box<dyn Log>)
-                }
-                OutputInner::Stderr { stream, line_sep } => {
-                    max_child_level = log::LevelFilter::Trace;
-                    Some(Box::new(log_impl::Stderr {
-                        stream,
-                        line_sep,
-                    }))
-                }
-                OutputInner::File { stream, line_sep } => {
-                    max_child_level = log::LevelFilter::Trace;
-                    Some(Box::new(log_impl::File {
-                        stream: Mutex::new(io::BufWriter::new(stream)),
-                        line_sep,
-                    }))
-                }
-                OutputInner::Writer { stream, line_sep } => {
-                    max_child_level = log::LevelFilter::Trace;
-                    Some(Box::new(log_impl::Writer {
-                        stream: Mutex::new(stream),
-                        line_sep,
-                    }))
-                }
-                #[cfg(all(not(windows), feature = "reopen-03"))]
-                OutputInner::Reopen { stream, line_sep } => {
-                    max_child_level = log::LevelFilter::Trace;
-                    Some(Box::new(log_impl::Reopen {
-                        stream: Mutex::new(stream),
-                        line_sep,
-                    }))
-                }
-                OutputInner::Sender { stream, line_sep } => {
-                    max_child_level = log::LevelFilter::Trace;
-                    Some(Box::new(log_impl::Sender {
-                        stream: Mutex::new(stream),
-                        line_sep,
-                    }))
-                }
-                #[cfg(all(not(windows), feature = "syslog-3"))]
-                OutputInner::Syslog3(log) => {
-                    max_child_level = log::LevelFilter::Trace;
-                    Some(Box::new(log_impl::Syslog3 { inner: log }))
-                }
-                #[cfg(all(not(windows), feature = "syslog-4"))]
-                OutputInner::Syslog4Rfc3164(logger) => {
-                    max_child_level = log::LevelFilter::Trace;
-                    Some(Box::new(log_impl::Syslog4Rfc3164 {
-                        inner: Mutex::new(logger),
-                    }))
-                }
-                #[cfg(all(not(windows), feature = "syslog-4"))]
-                OutputInner::Syslog4Rfc5424 { logger, transform } => {
-                    max_child_level = log::LevelFilter::Trace;
-                    Some(Box::new(log_impl::Syslog4Rfc5424 {
-                        inner: Mutex::new(logger),
-                        transform,
-                    }))
-                }
-                OutputInner::Panic => {
-                    max_child_level = log::LevelFilter::Trace;
-                    Some(Box::new(log_impl::Panic))
-                }
-                OutputInner::Dispatch(child_dispatch) => {
-                    let (child_level, child) = child_dispatch.into_dispatch();
-                    if child_level > log::LevelFilter::Off {
-                        max_child_level = cmp::max(max_child_level, child_level);
-                        Some(Box::new(child))
-                    } else {
-                        None
-                    }
-                }
-                OutputInner::SharedDispatch(child_dispatch) => {
-                    let SharedDispatch {
-                        inner: child,
-                        min_level: child_level,
-                    } = child_dispatch;
-
-                    if child_level > log::LevelFilter::Off {
-                        max_child_level = cmp::max(max_child_level, child_level);
-                        Some(Box::new(log_impl::LogWrapper::<_, log_impl::Dispatch>(child, Default::default())))
-                    } else {
-                        None
-                    }
-                }
-                OutputInner::OtherBoxed(child_log) => {
-                    max_child_level = log::LevelFilter::Trace;
-                    Some(Box::new(child_log))
-                }
-                OutputInner::OtherStatic(child_log) => {
-                    max_child_level = log::LevelFilter::Trace;
-                    Some(Box::new(log_impl::LogRef(child_log)))
-                }
-                #[cfg(feature = "date-based")]
-                OutputInner::DateBased { config } => {
-                    max_child_level = log::LevelFilter::Trace;
-
-                    let config = log_impl::DateBasedConfig::new(
-                        config.line_sep,
-                        config.file_prefix,
-                        config.file_suffix,
-                        if config.utc_time {
-                            log_impl::ConfiguredTimezone::Utc
-                        } else {
-                            log_impl::ConfiguredTimezone::Local
-                        },
-                    );
-
-                    let computed_suffix = config.compute_current_suffix();
-
-                    // ignore errors - we'll just retry later.
-                    let initial_file = config.open_current_log_file(&computed_suffix).ok();
-
-                    Some(Box::new(log_impl::DateBased {
-                        config,
-                        state: Mutex::new(DateBasedState::new(computed_suffix, initial_file)),
-                    }))
+                    Some(child)
                 }
             })
             .collect();
@@ -549,15 +468,14 @@ impl Dispatch {
 
         filters.shrink_to_fit();
 
-        let dispatch = log_impl::Dispatch {
-            output: output,
-            default_level: default_level,
+        log_impl::Dispatch {
+            output,
+            default_level,
+            max_level: real_min,
             levels: levels.into(),
-            format: format,
-            filters: filters,
-        };
-
-        (real_min, dispatch)
+            format,
+            filters,
+        }
     }
 
     /// Builds this logger into a `Box<log::Log>` and calculates the minimum
@@ -585,7 +503,8 @@ impl Dispatch {
     /// # }
     /// ```
     pub fn into_log(self) -> (log::LevelFilter, Box<dyn log::Log>) {
-        let (level, logger) = self.into_dispatch();
+        let logger = self.into_dispatch();
+        let level = logger.max_level;
         if level == log::LevelFilter::Off {
             (level, Box::new(log_impl::Null))
         } else {
@@ -613,111 +532,10 @@ impl Dispatch {
 
 /// This enum contains various outputs that you can send messages to.
 enum OutputInner {
-    /// Prints all messages to stdout with `line_sep` separator.
-    Stdout {
-        stream: io::Stdout,
-        line_sep: Cow<'static, str>,
-    },
-    /// Prints all messages to stderr with `line_sep` separator.
-    Stderr {
-        stream: io::Stderr,
-        line_sep: Cow<'static, str>,
-    },
-    /// Writes all messages to file with `line_sep` separator.
-    File {
-        stream: fs::File,
-        line_sep: Cow<'static, str>,
-    },
-    /// Writes all messages to the writer with `line_sep` separator.
-    Writer {
-        stream: Box<dyn Write + Send>,
-        line_sep: Cow<'static, str>,
-    },
-    /// Writes all messages to the reopen::Reopen file with `line_sep`
-    /// separator.
-    #[cfg(all(not(windows), feature = "reopen-03"))]
-    Reopen {
-        stream: reopen::Reopen<fs::File>,
-        line_sep: Cow<'static, str>,
-    },
-    /// Writes all messages to mpst::Sender with `line_sep` separator.
-    Sender {
-        stream: Sender<String>,
-        line_sep: Cow<'static, str>,
-    },
-    /// Passes all messages to other dispatch.
-    Dispatch(Dispatch),
-    /// Passes all messages to other dispatch that's shared.
-    SharedDispatch(SharedDispatch),
-    /// Passes all messages to other logger.
-    OtherBoxed(Box<dyn Log>),
-    /// Passes all messages to other logger.
-    OtherStatic(&'static dyn Log),
-    /// Passes all messages to the syslog.
-    #[cfg(all(not(windows), feature = "syslog-3"))]
-    Syslog3(syslog3::Logger),
-    /// Passes all messages to the syslog.
-    #[cfg(all(not(windows), feature = "syslog-4"))]
-    Syslog4Rfc3164(Syslog4Rfc3164Logger),
-    /// Sends all messages through the transform then passes to the syslog.
-    #[cfg(all(not(windows), feature = "syslog-4"))]
-    Syslog4Rfc5424 {
-        logger: Syslog4Rfc5424Logger,
-        transform: Box<
-            dyn Fn(&log::Record) -> (i32, HashMap<String, HashMap<String, String>>, String)
-                + Sync
-                + Send,
-        >,
-    },
-    /// Panics with messages text for all messages.
-    Panic,
-    /// File logger with custom date and timestamp suffix in file name.
-    #[cfg(feature = "date-based")]
-    DateBased { config: DateBased },
+    Dispatch(log_impl::Dispatch),
+    DispatchShared(SharedDispatch),
+    Logger(Box<dyn Log>),
 }
-
-/// Logger which will panic whenever anything is logged. The panic
-/// will be exactly the message of the log.
-///
-/// `Panic` is useful primarily as a secondary logger, filtered by warning or
-/// error.
-///
-/// # Examples
-///
-/// This configuration will output all messages to stdout and panic if an Error
-/// message is sent.
-///
-/// ```
-/// fern::Dispatch::new()
-///     // format, etc.
-///     .chain(std::io::stdout())
-///     .chain(
-///         fern::Dispatch::new()
-///             .level(log::LevelFilter::Error)
-///             .chain(fern::Panic),
-///     )
-///     # /*
-///     .apply()?;
-///     # */ .into_log();
-/// ```
-///
-/// This sets up a "panic on warn+" logger, and ignores errors so it can be
-/// called multiple times.
-///
-/// This might be useful in test setup, for example, to disallow warn-level
-/// messages.
-///
-/// ```no_run
-/// fn setup_panic_logging() {
-///     fern::Dispatch::new()
-///         .level(log::LevelFilter::Warn)
-///         .chain(fern::Panic)
-///         .apply()
-///         // ignore errors from setting up logging twice
-///         .ok();
-/// }
-/// ```
-pub struct Panic;
 
 /// Configuration for a logger output.
 pub struct Output(OutputInner);
@@ -725,6 +543,13 @@ pub struct Output(OutputInner);
 impl From<Dispatch> for Output {
     /// Creates an output logger forwarding all messages to the dispatch.
     fn from(log: Dispatch) -> Self {
+        Output(OutputInner::Dispatch(log.into_dispatch()))
+    }
+}
+
+impl From<log_impl::Dispatch> for Output {
+    /// Creates an output logger forwarding all messages to the dispatch.
+    fn from(log: log_impl::Dispatch) -> Self {
         Output(OutputInner::Dispatch(log))
     }
 }
@@ -732,21 +557,36 @@ impl From<Dispatch> for Output {
 impl From<SharedDispatch> for Output {
     /// Creates an output logger forwarding all messages to the dispatch.
     fn from(log: SharedDispatch) -> Self {
-        Output(OutputInner::SharedDispatch(log))
+        Output(OutputInner::DispatchShared(log))
     }
 }
 
 impl From<Box<dyn Log>> for Output {
-    /// Creates an output logger forwarding all messages to the custom logger.
     fn from(log: Box<dyn Log>) -> Self {
-        Output(OutputInner::OtherBoxed(log))
+        Output(OutputInner::Logger(log))
     }
 }
 
 impl From<&'static dyn Log> for Output {
     /// Creates an output logger forwarding all messages to the custom logger.
     fn from(log: &'static dyn Log) -> Self {
-        Output(OutputInner::OtherStatic(log))
+        struct LogRef(&'static dyn Log);
+
+        impl Log for LogRef {
+            fn enabled(&self, metadata: &log::Metadata) -> bool {
+                self.0.enabled(metadata)
+            }
+
+            fn log(&self, record: &log::Record) {
+                self.0.log(record)
+            }
+
+            fn flush(&self) {
+                self.0.flush()
+            }
+        }
+
+        Output(OutputInner::Logger(Box::new(LogRef(log))))
     }
 }
 
@@ -756,10 +596,10 @@ impl From<fs::File> for Output {
     ///
     /// File writes are buffered and flushed once per log record.
     fn from(file: fs::File) -> Self {
-        Output(OutputInner::File {
-            stream: file,
+        Output(OutputInner::Logger(Box::new(log_impl::File {
+            stream: Mutex::new(io::BufWriter::new(file)),
             line_sep: "\n".into(),
-        })
+        })))
     }
 }
 
@@ -771,10 +611,10 @@ impl From<Box<dyn Write + Send>> for Output {
     /// needed (eg. wrap it in `BufWriter`). However, flush is called after
     /// each log record.
     fn from(writer: Box<dyn Write + Send>) -> Self {
-        Output(OutputInner::Writer {
-            stream: writer,
+        Output(OutputInner::Logger(Box::new(log_impl::Writer {
+            stream: Mutex::new(writer),
             line_sep: "\n".into(),
-        })
+        })))
     }
 }
 
@@ -783,10 +623,10 @@ impl From<reopen::Reopen<fs::File>> for Output {
     /// Creates an output logger which writes all messages to the file contained
     /// in the Reopen struct, using `\n` as the separator.
     fn from(reopen: reopen::Reopen<fs::File>) -> Self {
-        Output(OutputInner::Reopen {
-            stream: reopen,
+        Output(OutputInner::Logger(Box::new(log_impl::Reopen {
+            stream: Mutex::new(reopen),
             line_sep: "\n".into(),
-        })
+        })))
     }
 }
 
@@ -794,10 +634,7 @@ impl From<io::Stdout> for Output {
     /// Creates an output logger which writes all messages to stdout with the
     /// given handle and `\n` as the separator.
     fn from(stream: io::Stdout) -> Self {
-        Output(OutputInner::Stdout {
-            stream,
-            line_sep: "\n".into(),
-        })
+        Output(OutputInner::Logger(Box::new(log_impl::Stdout::from(stream))))
     }
 }
 
@@ -805,10 +642,10 @@ impl From<io::Stderr> for Output {
     /// Creates an output logger which writes all messages to stderr with the
     /// given handle and `\n` as the separator.
     fn from(stream: io::Stderr) -> Self {
-        Output(OutputInner::Stderr {
+        Output(OutputInner::Logger(Box::new(log_impl::Stderr {
             stream,
             line_sep: "\n".into(),
-        })
+        })))
     }
 }
 
@@ -818,10 +655,10 @@ impl From<Sender<String>> for Output {
     ///
     /// All messages sent to the mpsc channel are suffixed with '\n'.
     fn from(stream: Sender<String>) -> Self {
-        Output(OutputInner::Sender {
-            stream,
+        Output(OutputInner::Logger(Box::new(log_impl::Sender {
+            stream: Mutex::new(stream),
             line_sep: "\n".into(),
-        })
+        })))
     }
 }
 
@@ -835,7 +672,9 @@ impl From<syslog3::Logger> for Output {
     ///
     /// This requires the `"syslog-3"` feature.
     fn from(log: syslog3::Logger) -> Self {
-        Output(OutputInner::Syslog3(log))
+        Output(OutputInner::Logger(Box::new(log_impl::Syslog3 {
+            inner: log,
+        })))
     }
 }
 
@@ -854,7 +693,9 @@ impl From<Box<syslog3::Logger>> for Output {
     ///
     /// This requires the `"syslog-3"` feature.
     fn from(log: Box<syslog3::Logger>) -> Self {
-        Output(OutputInner::Syslog3(*log))
+        Output(OutputInner::Logger(Box::new(log_impl::Syslog3 {
+            inner: *log,
+        })))
     }
 }
 
@@ -873,15 +714,17 @@ impl From<Syslog4Rfc3164Logger> for Output {
     ///
     /// This requires the `"syslog-4"` feature.
     fn from(log: Syslog4Rfc3164Logger) -> Self {
-        Output(OutputInner::Syslog4Rfc3164(log))
+        Output(OutputInner::Logger(Box::new(log_impl::Syslog4Rfc3164 {
+            inner: Mutex::new(log),
+        })))
     }
 }
 
-impl From<Panic> for Output {
+impl From<crate::logger::Panic> for Output {
     /// Creates an output logger which will panic with message text for all
     /// messages.
-    fn from(_: Panic) -> Self {
-        Output(OutputInner::Panic)
+    fn from(panic: crate::logger::Panic) -> Self {
+        Output(OutputInner::Logger(Box::new(panic)))
     }
 }
 
@@ -927,10 +770,10 @@ impl Output {
     /// [`Dispatch::chain`]: struct.Dispatch.html#method.chain
     /// [`fern::log_file`]: fn.log_file.html
     pub fn file<T: Into<Cow<'static, str>>>(file: fs::File, line_sep: T) -> Self {
-        Output(OutputInner::File {
-            stream: file,
+        Output(OutputInner::Logger(Box::new(log_impl::File {
+            stream: Mutex::new(io::BufWriter::new(file)),
             line_sep: line_sep.into(),
-        })
+        })))
     }
 
     /// Returns a logger using arbitrary write object and custom separator.
@@ -969,10 +812,10 @@ impl Output {
     ///
     /// [`Dispatch::chain`]: struct.Dispatch.html#method.chain
     pub fn writer<T: Into<Cow<'static, str>>>(writer: Box<dyn Write + Send>, line_sep: T) -> Self {
-        Output(OutputInner::Writer {
-            stream: writer,
+        Output(OutputInner::Logger(Box::new(log_impl::Writer {
+            stream: Mutex::new(writer),
             line_sep: line_sep.into(),
-        })
+        })))
     }
 
     /// Returns a reopenable logger, i.e., handling SIGHUP.
@@ -1008,10 +851,10 @@ impl Output {
         reopen: reopen::Reopen<fs::File>,
         line_sep: T,
     ) -> Self {
-        Output(OutputInner::Reopen {
-            stream: reopen,
+        Output(OutputInner::Logger(Box::new(log_impl::Reopen {
+            stream: Mutex::new(reopen),
             line_sep: line_sep.into(),
-        })
+        })))
     }
 
     /// Returns an stdout logger using a custom separator.
@@ -1034,10 +877,10 @@ impl Output {
     ///     # .into_log();
     /// ```
     pub fn stdout<T: Into<Cow<'static, str>>>(line_sep: T) -> Self {
-        Output(OutputInner::Stdout {
+        Output(OutputInner::Logger(Box::new(log_impl::Stdout {
             stream: io::stdout(),
             line_sep: line_sep.into(),
-        })
+        })))
     }
 
     /// Returns an stderr logger using a custom separator.
@@ -1057,10 +900,10 @@ impl Output {
     ///     # .into_log();
     /// ```
     pub fn stderr<T: Into<Cow<'static, str>>>(line_sep: T) -> Self {
-        Output(OutputInner::Stderr {
+        Output(OutputInner::Logger(Box::new(log_impl::Stderr {
             stream: io::stderr(),
             line_sep: line_sep.into(),
-        })
+        })))
     }
 
     /// Returns a mpsc::Sender logger using a custom separator.
@@ -1080,10 +923,10 @@ impl Output {
     ///     # .into_log();
     /// ```
     pub fn sender<T: Into<Cow<'static, str>>>(sender: Sender<String>, line_sep: T) -> Self {
-        Output(OutputInner::Sender {
-            stream: sender,
+        Output(OutputInner::Logger(Box::new(log_impl::Sender {
+            stream: Mutex::new(sender),
             line_sep: line_sep.into(),
-        })
+        })))
     }
 
     /// Returns a logger which logs into an RFC5424 syslog.
@@ -1108,10 +951,10 @@ impl Output {
             + Send
             + 'static,
     {
-        Output(OutputInner::Syslog4Rfc5424 {
-            logger,
+        Output(OutputInner::Logger(Box::new(log_impl::Syslog4Rfc5424 {
+            inner: Mutex::new(logger),
             transform: Box::new(transform),
-        })
+        })))
     }
 
     /// Returns a logger which simply calls the given function with each
@@ -1146,7 +989,9 @@ impl Output {
             fn flush(&self) {}
         }
 
-        Self::from(Box::new(CallShim(func)) as Box<dyn log::Log>)
+        Output(OutputInner::Logger(
+            Box::new(CallShim(func)) as Box<dyn log::Log>
+        ))
     }
 }
 
@@ -1184,7 +1029,7 @@ impl fmt::Debug for Dispatch {
                 "format",
                 &self.format.as_ref().map(|_| "<formatter closure>"),
             )
-            .field("children", &self.children)
+            .field("children_count", &self.children.len())
             .field("default_level", &self.default_level)
             .field("levels", &LevelsDebug(&self.levels))
             .field("filters", &FiltersDebug(&self.filters))
@@ -1192,95 +1037,9 @@ impl fmt::Debug for Dispatch {
     }
 }
 
-impl fmt::Debug for OutputInner {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        match *self {
-            OutputInner::Stdout {
-                ref stream,
-                ref line_sep,
-            } => f
-                .debug_struct("Output::Stdout")
-                .field("stream", stream)
-                .field("line_sep", line_sep)
-                .finish(),
-            OutputInner::Stderr {
-                ref stream,
-                ref line_sep,
-            } => f
-                .debug_struct("Output::Stderr")
-                .field("stream", stream)
-                .field("line_sep", line_sep)
-                .finish(),
-            OutputInner::File {
-                ref stream,
-                ref line_sep,
-            } => f
-                .debug_struct("Output::File")
-                .field("stream", stream)
-                .field("line_sep", line_sep)
-                .finish(),
-            OutputInner::Writer { ref line_sep, .. } => f
-                .debug_struct("Output::Writer")
-                .field("stream", &"<unknown writer>")
-                .field("line_sep", line_sep)
-                .finish(),
-            #[cfg(all(not(windows), feature = "reopen-03"))]
-            OutputInner::Reopen { ref line_sep, .. } => f
-                .debug_struct("Output::Reopen")
-                .field("stream", &"<unknown reopen file>")
-                .field("line_sep", line_sep)
-                .finish(),
-            OutputInner::Sender {
-                ref stream,
-                ref line_sep,
-            } => f
-                .debug_struct("Output::Sender")
-                .field("stream", stream)
-                .field("line_sep", line_sep)
-                .finish(),
-            #[cfg(all(not(windows), feature = "syslog-3"))]
-            OutputInner::Syslog3(_) => f
-                .debug_tuple("Output::Syslog3")
-                .field(&"<unprintable syslog::Logger>")
-                .finish(),
-            #[cfg(all(not(windows), feature = "syslog-4"))]
-            OutputInner::Syslog4Rfc3164 { .. } => f
-                .debug_tuple("Output::Syslog4Rfc3164")
-                .field(&"<unprintable syslog::Logger>")
-                .finish(),
-            #[cfg(all(not(windows), feature = "syslog-4"))]
-            OutputInner::Syslog4Rfc5424 { .. } => f
-                .debug_tuple("Output::Syslog4Rfc5424")
-                .field(&"<unprintable syslog::Logger>")
-                .finish(),
-            OutputInner::Dispatch(ref dispatch) => {
-                f.debug_tuple("Output::Dispatch").field(dispatch).finish()
-            }
-            OutputInner::SharedDispatch(_) => f
-                .debug_tuple("Output::SharedDispatch")
-                .field(&"<built Dispatch logger>")
-                .finish(),
-            OutputInner::OtherBoxed { .. } => f
-                .debug_tuple("Output::OtherBoxed")
-                .field(&"<boxed logger>")
-                .finish(),
-            OutputInner::OtherStatic { .. } => f
-                .debug_tuple("Output::OtherStatic")
-                .field(&"<boxed logger>")
-                .finish(),
-            OutputInner::Panic => f.debug_tuple("Output::Panic").finish(),
-            #[cfg(feature = "date-based")]
-            OutputInner::DateBased { ref config } => f
-                .debug_struct("Output::DateBased")
-                .field("config", config)
-                .finish(),
-        }
-    }
-}
-
 impl fmt::Debug for Output {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        self.0.fmt(f)
+        f.write_str("Output")
     }
 }
 
@@ -1451,6 +1210,23 @@ impl From<DateBased> for Output {
     /// Create an output logger which defers to the given date-based logger. Use
     /// configuration methods on [DateBased] to set line separator and filename.
     fn from(config: DateBased) -> Self {
-        Output(OutputInner::DateBased { config })
+        let config = log_impl::DateBasedConfig::new(
+            config.line_sep,
+            config.file_prefix,
+            config.file_suffix,
+            if config.utc_time {
+                log_impl::ConfiguredTimezone::Utc
+            } else {
+                log_impl::ConfiguredTimezone::Local
+            },
+        );
+        let computed_suffix = config.compute_current_suffix();
+        // ignore errors - we'll just retry later.
+        let initial_file = config.open_current_log_file(&computed_suffix).ok();
+
+        Output(OutputInner::Logger(Box::new(log_impl::DateBased {
+            config,
+            state: Mutex::new(DateBasedState::new(computed_suffix, initial_file)),
+        })))
     }
 }

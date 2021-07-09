@@ -1,4 +1,3 @@
-use std::borrow::Borrow;
 use std::{
     borrow::Cow,
     collections::HashMap,
@@ -31,7 +30,11 @@ pub enum LevelConfiguration {
 
 pub struct Dispatch {
     pub output: Vec<Box<dyn Log>>,
+    /// The level when no level override for a module matches
     pub default_level: log::LevelFilter,
+    /// The actual maximum level computed based on the bounds of all children.
+    /// The global level must be set to at least this value.
+    pub max_level: log::LevelFilter,
     pub levels: LevelConfiguration,
     pub format: Option<Box<Formatter>>,
     pub filters: Vec<Box<Filter>>,
@@ -58,93 +61,108 @@ pub struct FormatCallback<'a>(InnerFormatCallback<'a>);
 
 struct InnerFormatCallback<'a>(&'a mut bool, &'a Dispatch, &'a log::Record<'a>);
 
+/// Prints all messages to stdout with `line_sep` separator.
 pub struct Stdout {
-    pub stream: io::Stdout,
-    pub line_sep: Cow<'static, str>,
+    pub(crate) stream: io::Stdout,
+    pub(crate) line_sep: Cow<'static, str>,
 }
 
+/// Prints all messages to stderr with `line_sep` separator.
 pub struct Stderr {
-    pub stream: io::Stderr,
-    pub line_sep: Cow<'static, str>,
+    pub(crate) stream: io::Stderr,
+    pub(crate) line_sep: Cow<'static, str>,
 }
 
+/// Writes all messages to file with `line_sep` separator.
 pub struct File {
-    pub stream: Mutex<BufWriter<fs::File>>,
-    pub line_sep: Cow<'static, str>,
+    pub(crate) stream: Mutex<BufWriter<fs::File>>,
+    pub(crate) line_sep: Cow<'static, str>,
 }
 
+/// Writes all messages to mpst::Sender with `line_sep` separator.
 pub struct Sender {
-    pub stream: Mutex<mpsc::Sender<String>>,
-    pub line_sep: Cow<'static, str>,
+    pub(crate) stream: Mutex<mpsc::Sender<String>>,
+    pub(crate) line_sep: Cow<'static, str>,
 }
 
+/// Writes all messages to the writer with `line_sep` separator.
 pub struct Writer {
-    pub stream: Mutex<Box<dyn Write + Send>>,
-    pub line_sep: Cow<'static, str>,
+    pub(crate) stream: Mutex<Box<dyn Write + Send>>,
+    pub(crate) line_sep: Cow<'static, str>,
 }
 
+/// Writes all messages to the reopen::Reopen file with `line_sep`
+/// separator.
 #[cfg(all(not(windows), feature = "reopen-03"))]
 pub struct Reopen {
-    pub stream: Mutex<reopen::Reopen<fs::File>>,
-    pub line_sep: Cow<'static, str>,
+    pub(crate) stream: Mutex<reopen::Reopen<fs::File>>,
+    pub(crate) line_sep: Cow<'static, str>,
 }
 
+/// Passes all messages to the syslog.
 #[cfg(all(not(windows), feature = "syslog-3"))]
 pub struct Syslog3 {
-    pub inner: syslog3::Logger,
+    pub(crate) inner: syslog3::Logger,
 }
 
+/// Passes all messages to the syslog.
 #[cfg(all(not(windows), feature = "syslog-4"))]
 pub struct Syslog4Rfc3164 {
-    pub inner: Mutex<Syslog4Rfc3164Logger>,
+    pub(crate) inner: Mutex<Syslog4Rfc3164Logger>,
 }
 
+/// Passes all messages to the syslog.
 #[cfg(all(not(windows), feature = "syslog-4"))]
 pub struct Syslog4Rfc5424 {
-    pub inner: Mutex<Syslog4Rfc5424Logger>,
-    pub transform: Box<
+    pub(crate) inner: Mutex<Syslog4Rfc5424Logger>,
+    pub(crate) transform: Box<
         dyn Fn(&log::Record) -> (i32, HashMap<String, HashMap<String, String>>, String)
             + Sync
             + Send,
     >,
 }
 
-// TODO this causes an unnecessary double indirect call.
-// See https://github.com/rust-lang/log/issues/458
-pub struct LogRef(pub &'static dyn Log);
-
-impl Log for LogRef {
-    fn enabled(&self, meta: &log::Metadata<'_>) -> bool {
-        self.0.enabled(meta)
-    }
-    fn log(&self, record: &log::Record<'_>) {
-        self.0.log(record)
-    }
-    fn flush(&self) {
-        self.0.flush()
-    }
-}
-
-// TODO this causes an unnecessary double indirect call.
-// See https://github.com/rust-lang/log/issues/458
-pub struct LogWrapper<T: Borrow<R>, R: Log>(pub T, pub std::marker::PhantomData<R>);
-
-impl<R, T> Log for LogWrapper<T, R>
-where
-    T: Borrow<R> + Send + Sync,
-    R: Log,
-{
-    fn enabled(&self, meta: &log::Metadata<'_>) -> bool {
-        self.0.borrow().enabled(meta)
-    }
-    fn log(&self, record: &log::Record<'_>) {
-        self.0.borrow().log(record)
-    }
-    fn flush(&self) {
-        self.0.borrow().flush()
-    }
-}
-
+/// Logger which will panic whenever anything is logged. The panic
+/// will be exactly the message of the log.
+///
+/// `Panic` is useful primarily as a secondary logger, filtered by warning or
+/// error.
+///
+/// # Examples
+///
+/// This configuration will output all messages to stdout and panic if an Error
+/// message is sent.
+///
+/// ```
+/// fern::Dispatch::new()
+///     // format, etc.
+///     .chain(std::io::stdout())
+///     .chain(
+///         fern::Dispatch::new()
+///             .level(log::LevelFilter::Error)
+///             .chain(fern::Panic),
+///     )
+///     # /*
+///     .apply()?;
+///     # */ .into_log();
+/// ```
+///
+/// This sets up a "panic on warn+" logger, and ignores errors so it can be
+/// called multiple times.
+///
+/// This might be useful in test setup, for example, to disallow warn-level
+/// messages.
+///
+/// ```no_run
+/// fn setup_panic_logging() {
+///     fern::Dispatch::new()
+///         .level(log::LevelFilter::Warn)
+///         .chain(fern::Panic)
+///         .apply()
+///         // ignore errors from setting up logging twice
+///         .ok();
+/// }
+/// ```
 pub struct Panic;
 
 pub struct Null;
@@ -153,8 +171,8 @@ pub struct Null;
 #[derive(Debug)]
 #[cfg(feature = "date-based")]
 pub struct DateBased {
-    pub config: DateBasedConfig,
-    pub state: Mutex<DateBasedState>,
+    pub(crate) config: DateBasedConfig,
+    pub(crate) state: Mutex<DateBasedState>,
 }
 
 #[derive(Debug)]
@@ -427,7 +445,24 @@ impl<'a> FormatCallback<'a> {
 
 // No need to write this twice (used for Stdout and Stderr structs)
 macro_rules! std_log_impl {
-    ($ident:ident) => {
+    ($ident:ident, $constructor:path) => {
+        impl $ident {
+            pub fn new() -> Self {
+                $constructor().into()
+            }
+
+            pub fn line_sep(mut self, line_sep: Cow<'static, str>) -> Self {
+                self.line_sep = line_sep;
+                self
+            }
+        }
+
+        impl Default for $ident {
+            fn default() -> Self {
+                Self::new()
+            }
+        }
+
         impl Log for $ident {
             fn enabled(&self, _: &log::Metadata) -> bool {
                 true
@@ -455,11 +490,20 @@ macro_rules! std_log_impl {
                 let _ = self.stream.lock().flush();
             }
         }
+
+        impl From<io::$ident> for $ident {
+            fn from(stream: io::$ident) -> Self {
+                Self {
+                    stream,
+                    line_sep: "\n".into(),
+                }
+            }
+        }
     };
 }
 
-std_log_impl!(Stdout);
-std_log_impl!(Stderr);
+std_log_impl!(Stdout, io::stdout);
+std_log_impl!(Stderr, io::stderr);
 
 macro_rules! writer_log_impl {
     ($ident:ident) => {
