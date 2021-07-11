@@ -229,7 +229,7 @@ use std::{
 use std::collections::HashMap;
 
 pub use crate::{
-    builders::{Dispatch, Output},
+    builders::{Dispatch, FormatterBuilder, Output},
     errors::InitError,
     log_impl::FormatCallback,
 };

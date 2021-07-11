@@ -82,8 +82,8 @@ pub struct WithFgColor<T>
 where
     T: fmt::Display,
 {
-    text: T,
-    color: Color,
+    pub(super) text: T,
+    pub(super) color: Option<Color>,
 }
 
 impl<T> fmt::Display for WithFgColor<T>
@@ -91,9 +91,13 @@ where
     T: fmt::Display,
 {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "\x1B[{}m", self.color.to_fg_str())?;
-        fmt::Display::fmt(&self.text, f)?;
-        write!(f, "\x1B[0m")?;
+        if let Some(color) = self.color {
+            write!(f, "\x1B[{}m", color.to_fg_str())?;
+            fmt::Display::fmt(&self.text, f)?;
+            write!(f, "\x1B[0m")?;
+        } else {
+            fmt::Display::fmt(&self.text, f)?;
+        }
         Ok(())
     }
 }
@@ -246,26 +250,17 @@ impl ColoredLevelConfig {
 impl Default for ColoredLevelConfig {
     /// Retrieves the default configuration. This has:
     ///
-    /// - [`Error`] as [`Color::Red`]
-    /// - [`Warn`] as [`Color::Yellow`]
-    /// - [`Info`] as [`Color::White`]
-    /// - [`Debug`] as [`Color::White`]
-    /// - [`Trace`] as [`Color::White`]
-    ///
-    /// [`Error`]: https://docs.rs/log/0.4/log/enum.Level.html#variant.Error
-    /// [`Warn`]: https://docs.rs/log/0.4/log/enum.Level.html#variant.Warn
-    /// [`Info`]: https://docs.rs/log/0.4/log/enum.Level.html#variant.Info
-    /// [`Debug`]: https://docs.rs/log/0.4/log/enum.Level.html#variant.Debug
-    /// [`Trace`]: https://docs.rs/log/0.4/log/enum.Level.html#variant.Trace
-    /// [`Color::White`]: https://docs.rs/colored/1/colored/enum.Color.html#variant.White
-    /// [`Color::Yellow`]: https://docs.rs/colored/1/colored/enum.Color.html#variant.Yellow
-    /// [`Color::Red`]: https://docs.rs/colored/1/colored/enum.Color.html#variant.Red
+    /// - [`Error`](log::Level::Error) as [`Color::Red`]
+    /// - [`Warn`](log::Level::Warn) as [`Color::Yellow`]
+    /// - [`Info`](log::Level::Info) as [`Color::White`]
+    /// - [`Debug`](log::Level::Debug) as [`Color::White`]
+    /// - [`Trace`](log::Level::Trace) as [`Color::White`]
     fn default() -> Self {
         ColoredLevelConfig {
             error: Color::Red,
             warn: Color::Yellow,
-            debug: Color::White,
-            info: Color::White,
+            info: Color::Cyan,
+            debug: Color::BrightMagenta,
             trace: Color::White,
         }
     }
@@ -275,7 +270,7 @@ impl ColoredLogLevel for Level {
     fn colored(&self, color: Color) -> WithFgColor<Level> {
         WithFgColor {
             text: *self,
-            color: color,
+            color: Some(color),
         }
     }
 }
@@ -313,7 +308,7 @@ mod test {
                     "{}",
                     WithFgColor {
                         text: "test",
-                        color: color,
+                        color: Some(color),
                     }
                 )
             );
@@ -327,7 +322,7 @@ mod test {
             "{:^8}",
             WithFgColor {
                 text: "test",
-                color: Yellow,
+                color: Some(Yellow),
             }
         );
         assert!(s.contains("  test  "));
