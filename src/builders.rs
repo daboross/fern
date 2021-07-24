@@ -1235,6 +1235,7 @@ impl From<DateBased> for Output {
 }
 
 /// A generic formatter that easily provides good defaults while being configurable
+#[derive(Clone, Debug)]
 pub struct FormatterBuilder {
     #[cfg(feature = "colored")]
     color_config: Option<ColoredLevelConfig>,
@@ -1248,7 +1249,7 @@ impl Default for FormatterBuilder {
     fn default() -> Self {
         FormatterBuilder {
             #[cfg(feature = "colored")]
-            color_config: Some(Default::default()),
+            color_config: colored::control::SHOULD_COLORIZE.should_colorize().then(Default::default),
             #[cfg(feature = "chrono")]
             chrono: true,
             level: true,

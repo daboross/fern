@@ -127,7 +127,7 @@ where
 /// # */
 /// #   .into_log();
 /// ```
-#[derive(Copy, Clone)]
+#[derive(Copy, Clone, Debug)]
 #[must_use = "builder methods take config by value and thus must be reassigned to variable"]
 pub struct ColoredLevelConfig {
     /// The color to color logs with the [`Error`] level.
@@ -260,8 +260,8 @@ impl Default for ColoredLevelConfig {
             error: Color::Red,
             warn: Color::Yellow,
             info: Color::Cyan,
-            debug: Color::BrightMagenta,
-            trace: Color::White,
+            debug: Color::Magenta,
+            trace: Color::BrightMagenta,
         }
     }
 }
