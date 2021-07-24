@@ -445,7 +445,7 @@ impl<'a> FormatCallback<'a> {
 
 // No need to write this twice (used for Stdout and Stderr structs)
 macro_rules! std_log_impl {
-    ($ident:ident, $constructor:path) => {
+    ($ident:ident, $lock_ident:ident, $constructor:path) => {
         impl $ident {
             pub fn new() -> Self {
                 $constructor().into()
@@ -455,39 +455,15 @@ macro_rules! std_log_impl {
                 self.line_sep = line_sep;
                 self
             }
+
+            fn lock_stream(&self) -> io::$lock_ident {
+                self.stream.lock()
+            }
         }
 
         impl Default for $ident {
             fn default() -> Self {
                 Self::new()
-            }
-        }
-
-        impl Log for $ident {
-            fn enabled(&self, _: &log::Metadata) -> bool {
-                true
-            }
-
-            fn log(&self, record: &log::Record) {
-                fallback_on_error(record, |record| {
-                    if cfg!(feature = "meta-logging-in-format") {
-                        // Formatting first prevents deadlocks when the process of formatting
-                        // itself is logged. note: this is only ever needed if some
-                        // Debug, Display, or other formatting trait itself is
-                        // logging things too.
-                        let msg = format!("{}{}", record.args(), self.line_sep);
-
-                        write!(self.stream.lock(), "{}", msg)?;
-                    } else {
-                        write!(self.stream.lock(), "{}{}", record.args(), self.line_sep)?;
-                    }
-
-                    Ok(())
-                });
-            }
-
-            fn flush(&self) {
-                let _ = self.stream.lock().flush();
             }
         }
 
@@ -502,11 +478,12 @@ macro_rules! std_log_impl {
     };
 }
 
-std_log_impl!(Stdout, io::stdout);
-std_log_impl!(Stderr, io::stderr);
-
 macro_rules! writer_log_impl {
-    ($ident:ident) => {
+    ($ident:ident, $($lock_file:item)?) => {
+        $(impl $ident {
+            $lock_file
+        })?
+
         impl Log for $ident {
             fn enabled(&self, _: &log::Metadata) -> bool {
                 true
@@ -521,13 +498,13 @@ macro_rules! writer_log_impl {
                         // formatting trait itself is logging.
                         let msg = format!("{}{}", record.args(), self.line_sep);
 
-                        let mut writer = self.stream.lock().unwrap_or_else(|e| e.into_inner());
+                        let mut writer = self.lock_stream();//
 
                         write!(writer, "{}", msg)?;
 
                         writer.flush()?;
                     } else {
-                        let mut writer = self.stream.lock().unwrap_or_else(|e| e.into_inner());
+                        let mut writer = self.lock_stream();//.unwrap_or_else(|e| e.into_inner());
 
                         write!(writer, "{}{}", record.args(), self.line_sep)?;
 
@@ -538,21 +515,35 @@ macro_rules! writer_log_impl {
             }
 
             fn flush(&self) {
-                let _ = self
-                    .stream
-                    .lock()
-                    .unwrap_or_else(|e| e.into_inner())
+                let _ = self.lock_stream()
                     .flush();
             }
         }
     };
 }
 
-writer_log_impl!(File);
-writer_log_impl!(Writer);
+std_log_impl!(Stdout, StdoutLock, io::stdout);
+std_log_impl!(Stderr, StderrLock, io::stderr);
+writer_log_impl!(Stdout,);
+writer_log_impl!(Stderr,);
+
+writer_log_impl!(File,
+    fn lock_stream(&self) -> std::sync::MutexGuard<'_, std::io::BufWriter<std::fs::File>> {
+        self.stream.lock().unwrap_or_else(|e| e.into_inner())
+    }
+);
+writer_log_impl!(Writer,
+    fn lock_stream(&self) -> std::sync::MutexGuard<'_, std::boxed::Box<(dyn std::io::Write + std::marker::Send + 'static)>> {
+        self.stream.lock().unwrap_or_else(|e| e.into_inner())
+    }
+);
 
 #[cfg(all(not(windows), feature = "reopen-03"))]
-writer_log_impl!(Reopen);
+writer_log_impl!(Reopen,
+    fn lock_stream(&self) -> std::sync::MutexGuard<'_, reopen::Reopen<std::fs::File>> {
+        self.stream.lock().unwrap_or_else(|e| e.into_inner())
+    }
+);
 
 impl Log for Sender {
     fn enabled(&self, _: &log::Metadata) -> bool {
