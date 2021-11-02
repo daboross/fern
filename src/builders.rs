@@ -898,7 +898,7 @@ impl From<Syslog4Rfc3164Logger> for Output {
     /// logging to this backend requires one allocation per log call.
     ///
     /// This is for RFC 3164 loggers. To use an RFC 5424 logger, use the
-    /// [`Output::syslog_5424`] helper method.
+    /// [`Output::syslog4_5424`] helper method.
     ///
     /// This requires the `"syslog-4"` feature.
     fn from(log: Syslog4Rfc3164Logger) -> Self {
@@ -917,7 +917,7 @@ impl From<Syslog5Rfc3164Logger> for Output {
     /// logging to this backend requires one allocation per log call.
     ///
     /// This is for RFC 3164 loggers. To use an RFC 5424 logger, use the
-    /// [`Output::syslog_5424`] helper method.
+    /// [`Output::syslog5_5424`] helper method.
     ///
     /// This requires the `"syslog-5"` feature.
     fn from(log: Syslog5Rfc3164Logger) -> Self {
@@ -1149,7 +1149,7 @@ impl Output {
     ///
     /// [the rfc]: https://tools.ietf.org/html/rfc5424
     #[cfg(all(not(windows), feature = "syslog-4"))]
-    pub fn syslog_5424<F>(logger: Syslog4Rfc5424Logger, transform: F) -> Self
+    pub fn syslog4_5424<F>(logger: Syslog4Rfc5424Logger, transform: F) -> Self
     where
         F: Fn(&log::Record) -> (i32, HashMap<String, HashMap<String, String>>, String)
             + Sync
@@ -1177,7 +1177,7 @@ impl Output {
     ///
     /// [the rfc]: https://tools.ietf.org/html/rfc5424
     #[cfg(all(not(windows), feature = "syslog-5"))]
-    pub fn syslog_5424<F>(logger: Syslog5Rfc5424Logger, transform: F) -> Self
+    pub fn syslog5_5424<F>(logger: Syslog5Rfc5424Logger, transform: F) -> Self
     where
         F: Fn(&log::Record) -> (i32, HashMap<String, HashMap<String, String>>, String)
             + Sync
