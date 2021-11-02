@@ -1,17 +1,21 @@
-#[cfg(not(windows))]
 // This is necessary because `fern` depends on version 3, 4 and 5.
-use syslog3 as syslog;
+use syslog5 as syslog;
 
 use log::{debug, info, warn};
 
-#[cfg(not(windows))]
-fn setup_logging() -> Result<(), fern::InitError> {
+fn setup_logging() -> Result<(), Box<dyn std::error::Error>> {
+    let syslog_fmt_3164 = syslog::Formatter3164 {
+        facility: syslog::Facility::LOG_USER,
+        hostname: None,
+        process: "fern-syslog-example".into(),
+        pid: 0,
+    };
     fern::Dispatch::new()
         // by default only accept warning messages so as not to spam
         .level(log::LevelFilter::Warn)
         // but accept Info if we explicitly mention it
         .level_for("explicit-syslog", log::LevelFilter::Info)
-        .chain(syslog::unix(syslog::Facility::LOG_USER)?)
+        .chain(syslog::unix(syslog_fmt_3164)?)
         .apply()?;
 
     Ok(())

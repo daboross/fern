@@ -250,6 +250,12 @@ type Syslog4Rfc5424Logger = syslog4::Logger<
     syslog4::Formatter5424,
 >;
 
+#[cfg(all(not(windows), feature = "syslog-5"))]
+type Syslog5Rfc3164Logger = syslog5::Logger<syslog5::LoggerBackend, syslog5::Formatter3164>;
+
+#[cfg(all(not(windows), feature = "syslog-5"))]
+type Syslog5Rfc5424Logger = syslog5::Logger<syslog5::LoggerBackend, syslog5::Formatter5424>;
+
 /// Convenience method for opening a log file with common options.
 ///
 /// Equivalent to:
