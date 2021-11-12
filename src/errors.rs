@@ -1,7 +1,5 @@
 use std::{error, fmt, io};
 
-use log;
-
 /// Convenience error combining possible errors which could occur while
 /// initializing logging.
 ///

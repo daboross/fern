@@ -550,11 +550,11 @@ impl Dispatch {
         filters.shrink_to_fit();
 
         let dispatch = log_impl::Dispatch {
-            output: output,
-            default_level: default_level,
+            output,
+            default_level,
             levels: levels.into(),
-            format: format,
-            filters: filters,
+            format,
+            filters,
         };
 
         (real_min, dispatch)
@@ -980,8 +980,8 @@ impl Output {
     /// If the default separator of `\n` is acceptable, a `Reopen`
     /// instance can be passed into [`Dispatch::chain`] directly.
     ///
-    /// This function is not available on Windows, and it requires the `reopen-03`
-    /// feature to be enabled.
+    /// This function is not available on Windows, and it requires the
+    /// `reopen-03` feature to be enabled.
     ///
     /// ```no_run
     /// use std::fs::OpenOptions;
