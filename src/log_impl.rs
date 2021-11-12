@@ -158,12 +158,14 @@ pub struct DateBasedConfig {
     pub file_prefix: PathBuf,
     pub file_suffix: Cow<'static, str>,
     pub timezone: ConfiguredTimezone,
+    pub size_limit_bytes: u64,
 }
 
 #[derive(Debug)]
 #[cfg(feature = "date-based")]
 pub struct DateBasedState {
     pub current_suffix: String,
+    pub current_index: u64,
     pub file_stream: Option<BufWriter<fs::File>>,
 }
 
@@ -172,6 +174,7 @@ impl DateBasedState {
     pub fn new(current_suffix: String, file_stream: Option<fs::File>) -> Self {
         DateBasedState {
             current_suffix,
+            current_index: 0,
             file_stream: file_stream.map(BufWriter::new),
         }
     }
@@ -192,12 +195,14 @@ impl DateBasedConfig {
         file_prefix: PathBuf,
         file_suffix: Cow<'static, str>,
         timezone: ConfiguredTimezone,
+        size_limit_bytes: u64,
     ) -> Self {
         DateBasedConfig {
             line_sep,
             file_prefix,
             file_suffix,
             timezone,
+            size_limit_bytes,
         }
     }
 
@@ -687,10 +692,29 @@ impl Log for DateBased {
 
             let mut state = self.state.lock().unwrap_or_else(|e| e.into_inner());
 
+            let file_size = state
+                .file_stream
+                .as_ref()
+                .and_then(|buf| buf.get_ref().metadata().ok())
+                .map(|metadata| metadata.len())
+                .unwrap_or_default();
+            let size_threshold_reached =
+                self.config.size_limit_bytes > 0 && file_size > self.config.size_limit_bytes;
+
             // check if log needs to be rotated
             let new_suffix = self.config.compute_current_suffix();
-            if state.file_stream.is_none() || state.current_suffix != new_suffix {
-                let file_open_result = self.config.open_current_log_file(&new_suffix);
+            if state.file_stream.is_none()
+                || state.current_suffix != new_suffix
+                || size_threshold_reached
+            {
+                let suffix = if state.current_suffix == new_suffix {
+                    state.current_index += 1;
+                    format!("{}.{:09}", new_suffix, state.current_index)
+                } else {
+                    state.current_index = 0;
+                    new_suffix.clone()
+                };
+                let file_open_result = self.config.open_current_log_file(&suffix);
                 match file_open_result {
                     Ok(file) => {
                         state.replace_file(new_suffix, Some(file));
