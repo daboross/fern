@@ -1,5 +1,6 @@
 //! Tests!
-use std::{fs, io, io::prelude::*};
+use chrono::Utc;
+use std::{fs, io, io::prelude::*, path::Path};
 
 use log::Level::*;
 
@@ -107,4 +108,71 @@ fn test_custom_line_separators() {
     temp_log_dir
         .close()
         .expect("Failed to clean up temporary directory");
+}
+
+#[cfg(feature = "date-based")]
+#[test]
+fn test_size_based_rotation() {
+    let path = Path::new("target").join("test-logs").join("size-based");
+    // remove leftovers from previous runs (if any), ignore any error
+    fs::remove_dir_all(&path).ok();
+    fs::create_dir_all(&path).unwrap();
+
+    let (_max_level, logger) = fern::Dispatch::new()
+        .level(log::LevelFilter::Info)
+        .chain(
+            fern::DateBased::new(
+                path.join("fern-test-").to_str().unwrap(),
+                "%Y-%m-%d-blah.log",
+            )
+            .utc_time()
+            .size_limit(64),
+        )
+        .into_log();
+
+    let lines = vec![
+        "0:012345678901234567890123456789", // 32 bytes
+        "1:012345678901234567890123456789-this-must-trigger-rotation",
+        "2:012345678901234567890123456789-this-must-go-into-a-new-file",
+        "3:012345678901234567890123456789-this-must-trigger-rotation-again",
+        "4:012345678901234567890123456789-so-this-goes-into-third-file",
+    ];
+
+    let l = &*logger;
+    lines.iter().for_each(|line| manual_log(l, Info, line));
+
+    let mut files = fs::read_dir(&path)
+        .unwrap()
+        .into_iter()
+        .flat_map(|dir| {
+            dir.unwrap()
+                .path()
+                .file_name()
+                .unwrap()
+                .to_str()
+                .map(|s| s.to_owned())
+        })
+        .collect::<Vec<_>>();
+
+    let dt = Utc::now();
+    let uno = "fern-test-".to_owned() + &dt.format("%Y-%m-%d").to_string() + "-blah.log";
+    let due = uno.clone() + ".000000001";
+    let tre = uno.clone() + ".000000002";
+
+    files.sort();
+    assert_eq!(files, vec![uno.clone(), due.clone(), tre.clone()]);
+
+    assert_eq!(
+        read_file(&path.join(uno)),
+        format!("{}\n{}\n", lines[0], lines[1])
+    );
+    assert_eq!(
+        read_file(&path.join(due)),
+        format!("{}\n{}\n", lines[2], lines[3])
+    );
+    assert_eq!(read_file(&path.join(tre)), format!("{}\n", lines[4]));
+}
+
+fn read_file(path: &Path) -> String {
+    fs::read_to_string(path).unwrap()
 }

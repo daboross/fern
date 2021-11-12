@@ -525,6 +525,7 @@ impl Dispatch {
                         } else {
                             log_impl::ConfiguredTimezone::Local
                         },
+                        config.size_limit_bytes,
                     );
 
                     let computed_suffix = config.compute_current_suffix();
@@ -1294,6 +1295,7 @@ pub struct DateBased {
     file_suffix: Cow<'static, str>,
     line_sep: Cow<'static, str>,
     utc_time: bool,
+    size_limit_bytes: u64,
 }
 
 #[cfg(feature = "date-based")]
@@ -1386,6 +1388,7 @@ impl DateBased {
             file_prefix: file_prefix.as_ref().to_owned(),
             file_suffix: file_suffix.into(),
             line_sep: "\n".into(),
+            size_limit_bytes: 0,
         }
     }
 
@@ -1442,6 +1445,22 @@ impl DateBased {
     /// ```
     pub fn local_time(mut self) -> Self {
         self.utc_time = false;
+        self
+    }
+
+    /// Sets a single file size limit (in bytes). Once size is reaches the
+    /// limit, file is rotated.
+    ///
+    /// Default is 0 (zero) - size-based rotation is disabled.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// let limit = 100 * 1024 * 1024; // 100 Mb
+    /// let log = fern::DateBased::new("logs/", "%Y-%m-%d %H my-program.log").size_limit(limit);
+    /// ```
+    pub fn size_limit(mut self, bytes: u64) -> Self {
+        self.size_limit_bytes = bytes;
         self
     }
 }
