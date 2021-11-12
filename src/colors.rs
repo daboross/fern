@@ -48,8 +48,8 @@
 //!
 //! ---
 //!
-//! Coloring levels is nice, but the alternative is good too. For an example of an
-//! application coloring each entire log line with the right color, see
+//! Coloring levels is nice, but the alternative is good too. For an example of
+//! an application coloring each entire log line with the right color, see
 //! [examples/pretty-colored.rs][ex].
 //!
 //! [`ColoredLevelConfig`]: struct.ColoredLevelConfig.html

@@ -303,7 +303,7 @@ impl Log for Output {
             Output::Dispatch(ref s) => s.enabled(metadata),
             Output::SharedDispatch(ref s) => s.enabled(metadata),
             Output::OtherBoxed(ref s) => s.enabled(metadata),
-            Output::OtherStatic(ref s) => s.enabled(metadata),
+            Output::OtherStatic(s) => s.enabled(metadata),
             #[cfg(all(not(windows), feature = "syslog-3"))]
             Output::Syslog3(ref s) => s.enabled(metadata),
             #[cfg(all(not(windows), feature = "syslog-4"))]
@@ -328,7 +328,7 @@ impl Log for Output {
             Output::Dispatch(ref s) => s.log(record),
             Output::SharedDispatch(ref s) => s.log(record),
             Output::OtherBoxed(ref s) => s.log(record),
-            Output::OtherStatic(ref s) => s.log(record),
+            Output::OtherStatic(s) => s.log(record),
             #[cfg(all(not(windows), feature = "syslog-3"))]
             Output::Syslog3(ref s) => s.log(record),
             #[cfg(all(not(windows), feature = "syslog-4"))]
@@ -353,7 +353,7 @@ impl Log for Output {
             Output::Dispatch(ref s) => s.flush(),
             Output::SharedDispatch(ref s) => s.flush(),
             Output::OtherBoxed(ref s) => s.flush(),
-            Output::OtherStatic(ref s) => s.flush(),
+            Output::OtherStatic(s) => s.flush(),
             #[cfg(all(not(windows), feature = "syslog-3"))]
             Output::Syslog3(ref s) => s.flush(),
             #[cfg(all(not(windows), feature = "syslog-4"))]
