@@ -1,5 +1,3 @@
-use std::io;
-
 use log::{debug, info, trace, warn};
 
 fn setup_logging(verbosity: u64) -> Result<(), fern::InitError> {
@@ -32,7 +30,7 @@ fn setup_logging(verbosity: u64) -> Result<(), fern::InitError> {
                 message
             ))
         })
-        .chain(fern::log_file("program.log")?);
+        .chain(fern::logger::file(fern::log_file("program.log")?));
 
     let stdout_config = fern::Dispatch::new()
         .format(|out, message, record| {
@@ -53,7 +51,7 @@ fn setup_logging(verbosity: u64) -> Result<(), fern::InitError> {
                 ))
             }
         })
-        .chain(io::stdout());
+        .chain(fern::logger::stdout());
 
     base_config
         .chain(file_config)

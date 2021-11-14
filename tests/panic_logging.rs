@@ -8,7 +8,7 @@ use support::manual_log;
 #[test]
 #[should_panic(expected = "special panic message here")]
 fn test_panic_panics() {
-    let (_max_level, logger) = fern::Dispatch::new().chain(fern::Panic).into_log();
+    let (_max_level, logger) = fern::Dispatch::new().chain(fern::logger::Panic).into_log();
 
     let l = &*logger;
 
@@ -20,9 +20,9 @@ fn warn_and_higher_panics_config() -> Box<dyn log::Log> {
         .chain(
             fern::Dispatch::new()
                 .level(log::LevelFilter::Warn)
-                .chain(fern::Panic),
+                .chain(fern::logger::Panic),
         )
-        .chain(std::io::stdout())
+        .chain(fern::logger::stdout())
         .into_log();
     logger
 }

@@ -11,7 +11,7 @@ fn setup_logging() -> Result<(), fern::InitError> {
         .level(log::LevelFilter::Warn)
         // but accept Info if we explicitly mention it
         .level_for("explicit-syslog", log::LevelFilter::Info)
-        .chain(syslog::unix(syslog::Facility::LOG_USER)?)
+        .chain(fern::syslog::syslog3(*syslog::unix(syslog::Facility::LOG_USER)?))
         .apply()?;
 
     Ok(())

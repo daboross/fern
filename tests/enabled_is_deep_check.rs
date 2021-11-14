@@ -5,12 +5,12 @@ use log::log_enabled;
 fn ensure_enabled_is_a_deep_check() {
     let dummy = fern::Dispatch::new()
         .level(log::LevelFilter::Warn)
-        .chain(std::io::stdout());
+        .chain(fern::logger::stdout());
 
     let stdout = fern::Dispatch::new()
         .level(log::LevelFilter::Info)
         .level_for("abc", log::LevelFilter::Debug)
-        .chain(std::io::stdout());
+        .chain(fern::logger::stdout());
 
     fern::Dispatch::new()
         .chain(stdout)

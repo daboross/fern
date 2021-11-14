@@ -8,9 +8,9 @@ use log::{debug, info};
 
 fn main() {
     fern::Dispatch::new()
-        .chain(std::io::stdout())
-        .chain(std::io::stderr())
-        .chain(fern::log_file("hello.txt").unwrap())
+        .chain(fern::logger::stdout())
+        .chain(fern::logger::stderr())
+        .chain(fern::logger::file(fern::log_file("hello.txt").unwrap()))
         .format(move |out, message, record| {
             out.finish(format_args!("[{}] {}", record.level(), message))
         })

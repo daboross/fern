@@ -11,7 +11,9 @@ fn test_channel_logging() {
     // Create the channel
     let (send, recv) = mpsc::channel();
 
-    let (_max_level, logger) = fern::Dispatch::new().chain(send).into_log();
+    let (_max_level, logger) = fern::Dispatch::new()
+        .chain(fern::logger::sender(send))
+        .into_log();
 
     let l = &*logger;
     manual_log(l, Info, "message1");
@@ -19,6 +21,6 @@ fn test_channel_logging() {
 
     logger.flush();
 
-    assert_eq!(recv.recv().unwrap(), "message1\n");
-    assert_eq!(recv.recv().unwrap(), "message2\n");
+    assert_eq!(recv.recv().unwrap(), "message1");
+    assert_eq!(recv.recv().unwrap(), "message2");
 }

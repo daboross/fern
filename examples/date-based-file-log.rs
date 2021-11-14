@@ -3,7 +3,7 @@ use log::{debug, info, warn};
 fn setup_logging() -> Result<(), Box<dyn std::error::Error>> {
     fern::Dispatch::new()
         .level(log::LevelFilter::Debug)
-        .chain(fern::DateBased::new("program.log.", "%Y-%m-%d"))
+        .chain(fern::logger::DateBased::new("program.log.", "%Y-%m-%d"))
         .apply()?;
 
     Ok(())

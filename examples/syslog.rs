@@ -17,7 +17,7 @@ fn setup_logging() -> Result<(), Box<dyn std::error::Error>> {
         .level(log::LevelFilter::Warn)
         // but accept Info if we explicitly mention it
         .level_for("explicit-syslog", log::LevelFilter::Info)
-        .chain(syslog::unix(syslog_fmt)?)
+        .chain(fern::syslog::syslog4_3164(syslog::unix(syslog_fmt)?))
         .apply()?;
 
     Ok(())
