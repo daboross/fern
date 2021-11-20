@@ -103,8 +103,32 @@ pub fn stderr() -> impl Log + CustomLineSep + Into<Output> {
 /// [`fs::File`]: https://doc.rust-lang.org/std/fs/struct.File.html
 /// [`Dispatch::chain`]: struct.Dispatch.html#method.chain
 /// [`fern::log_file`]: fn.log_file.html
-pub fn file(file: std::fs::File) -> impl Log + CustomLineSep + Into<Output> {
-    Writer::new(std::io::BufWriter::new(file))
+
+
+/// Convenience method for opening a log file with common options.
+///
+/// Equivalent to:
+///
+/// ```no_run
+/// std::fs::OpenOptions::new()
+///     .write(true)
+///     .create(true)
+///     .append(true)
+///     .open("filename")
+/// # ;
+/// ```
+///
+/// See [`OpenOptions`] for more information.
+///
+/// [`OpenOptions`]: https://doc.rust-lang.org/std/fs/struct.OpenOptions.html
+pub fn file(path: impl AsRef<Path>) -> std::io::Result<impl Log + CustomLineSep + Into<Output>> {
+    OpenOptions::new()
+        .write(true)
+        .create(true)
+        .append(true)
+        .open(path)
+        .map(std::io::BufWriter::new)
+        .map(Writer::new)
 }
 
 /// Returns a logger using arbitrary write object and custom separator.
@@ -174,11 +198,42 @@ pub fn writer<W: Write + Send + 'static>(writer: W) -> impl Log + CustomLineSep 
 /// # fn main() { setup_logger().expect("failed to set up logger"); }
 /// ```
 /// [`Dispatch::chain`]: struct.Dispatch.html#method.chain
+
+/// Convenience method for opening a re-openable log file with common options.
+///
+/// The file opening is equivalent to:
+///
+/// ```no_run
+/// std::fs::OpenOptions::new()
+///     .write(true)
+///     .create(true)
+///     .append(true)
+///     .open("filename")
+/// # ;
+/// ```
+///
+/// See [`OpenOptions`] for more information.
+///
+/// [`OpenOptions`]: https://doc.rust-lang.org/std/fs/struct.OpenOptions.html
+///
+/// This function is not available on Windows, and it requires the `reopen-03`
+/// feature to be enabled.
 #[cfg(all(not(windows), feature = "reopen-03"))]
-pub fn reopen(
-    reopen: reopen::Reopen<fs::File>,
-) -> impl Log + CustomLineSep + Into<Output> {
-    Writer::new(reopen)
+#[allow(deprecated)]
+pub fn reopen(path: impl Into<PathBuf>, signal: Option<libc::c_int>) -> io::Result<impl Log + CustomLineSep + Into<Output>> {
+    let path = path.into();
+    let reopen = reopen::Reopen::new(Box::new(move || {
+        OpenOptions::new()
+            .write(true)
+            .create(true)
+            .append(true)
+            .open(&path)
+    }))?;
+
+    if let Some(s) = signal {
+        reopen.handle().register_signal(s)?;
+    }
+    Ok(Writer::new(reopen))
 }
 
 /// Returns a mpsc::Sender logger using a custom separator.

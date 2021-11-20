@@ -220,9 +220,7 @@
 use std::{
     convert::AsRef,
     fmt,
-    fs::{File, OpenOptions},
     io::{self, Write},
-    path::Path,
     sync::mpsc,
 };
 
@@ -265,64 +263,6 @@ pub type Formatter = dyn Fn(FormatCallback, &fmt::Arguments, &log::Record) + Syn
 /// A type alias for a log filter. Returning true means the record should
 /// succeed - false means it should fail.
 pub type Filter = dyn Fn(&log::Metadata) -> bool + Send + Sync + 'static;
-
-/// Convenience method for opening a log file with common options.
-///
-/// Equivalent to:
-///
-/// ```no_run
-/// std::fs::OpenOptions::new()
-///     .write(true)
-///     .create(true)
-///     .append(true)
-///     .open("filename")
-/// # ;
-/// ```
-///
-/// See [`OpenOptions`] for more information.
-///
-/// [`OpenOptions`]: https://doc.rust-lang.org/std/fs/struct.OpenOptions.html
-#[inline]
-pub fn log_file<P: AsRef<Path>>(path: P) -> io::Result<File> {
-    OpenOptions::new()
-        .write(true)
-        .create(true)
-        .append(true)
-        .open(path)
-}
-
-/// Convenience method for opening a re-openable log file with common options.
-///
-/// The file opening is equivalent to:
-///
-/// ```no_run
-/// std::fs::OpenOptions::new()
-///     .write(true)
-///     .create(true)
-///     .append(true)
-///     .open("filename")
-/// # ;
-/// ```
-///
-/// See [`OpenOptions`] for more information.
-///
-/// [`OpenOptions`]: https://doc.rust-lang.org/std/fs/struct.OpenOptions.html
-///
-/// This function is not available on Windows, and it requires the `reopen-03`
-/// feature to be enabled.
-#[cfg(all(not(windows), feature = "reopen-03"))]
-#[inline]
-pub fn log_reopen(path: &Path, signal: Option<libc::c_int>) -> io::Result<reopen::Reopen<File>> {
-    let p = path.to_owned();
-    let r = reopen::Reopen::new(Box::new(move || log_file(&p)))?;
-
-    if let Some(s) = signal {
-        if let Err(e) = r.handle().register_signal(s) {
-            return Err(e);
-        }
-    }
-    Ok(r)
-}
 
 #[inline(always)]
 fn fallback_on_error<F>(record: &log::Record, log_func: F)

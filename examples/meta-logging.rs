@@ -10,7 +10,7 @@ fn main() {
     fern::Dispatch::new()
         .chain(fern::logger::stdout())
         .chain(fern::logger::stderr())
-        .chain(fern::logger::file(fern::log_file("hello.txt").unwrap()))
+        .chain(fern::logger::file("hello.txt").unwrap())
         .format(move |out, message, record| {
             out.finish(format_args!("[{}] {}", record.level(), message))
         })

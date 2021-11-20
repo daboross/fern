@@ -30,7 +30,7 @@ fn setup_logging(verbosity: u64) -> Result<(), fern::InitError> {
                 message
             ))
         })
-        .chain(fern::logger::file(fern::log_file("program.log")?));
+        .chain(fern::logger::file("program.log")?);
 
     let stdout_config = fern::Dispatch::new()
         .format(|out, message, record| {

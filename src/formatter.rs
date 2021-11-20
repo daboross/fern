@@ -129,12 +129,12 @@ impl FormatterBuilder {
              */
             match (time, level, target) {
                 (Some(time), Some(level), Some(target)) => out.finish(format_args!("{} {:<5} [{}] {}", time, level, target, message)),
-                (Some(time), Some(level), None) => out.finish(format_args!("{} {:<5} {}", time, level, message)),
+                (Some(time), Some(level), None) => out.finish(format_args!("{} {:<5}: {}", time, level, message)),
                 (Some(time), None, Some(target)) => out.finish(format_args!("{} [{}] {}", time, target, message)),
                 (Some(time), None, None) => out.finish(format_args!("{} {}", time, message)),
                 (None, Some(level), Some(target)) => out.finish(format_args!("{:<5} [{}] {}", level, target, message)),
                 (None, None, Some(target)) => out.finish(format_args!("[{}] {}", target, message)),
-                (None, Some(level), None) => out.finish(format_args!("{:<5} {}", level, message)),
+                (None, Some(level), None) => out.finish(format_args!("{}: {}", level, message)),
                 (None, None, None) => out.finish(format_args!("{}", message)),
             }
         }
