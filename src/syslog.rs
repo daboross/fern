@@ -151,3 +151,230 @@ info!(target: "explicit-syslog", "this will also show up!");
 # }
 ```
 */
+
+use crate::{*, dispatch::{Output, OutputInner}};
+
+use std::{
+    collections::HashMap,
+    sync::Mutex,
+};
+
+use log::Log;
+
+#[cfg(any(feature = "syslog-3", feature = "syslog-4"))]
+macro_rules! send_syslog {
+    ($logger:expr, $level:expr, $message:expr) => {
+        use log::Level;
+        match $level {
+            Level::Error => $logger.err($message)?,
+            Level::Warn => $logger.warning($message)?,
+            Level::Info => $logger.info($message)?,
+            Level::Debug | Level::Trace => $logger.debug($message)?,
+        }
+    };
+}
+
+/// Passes all messages to the syslog.
+/// Creates an output logger which writes all messages to the given syslog
+/// output.
+///
+/// Log levels are translated trace => debug, debug => debug, info =>
+/// informational, warn => warning, and error => error.
+///
+/// This requires the `"syslog-3"` feature.
+#[cfg(all(not(windows), feature = "syslog-3"))]
+pub fn syslog3(log: syslog3::Logger) -> impl Log + Into<Output> {
+    struct Syslog3 {
+        inner: syslog3::Logger,
+    }
+    
+    impl Log for Syslog3 {
+        fn enabled(&self, _: &log::Metadata) -> bool {
+            true
+        }
+
+        fn log(&self, record: &log::Record) {
+            fallback_on_error(record, |record| {
+                let message = record.args();
+                send_syslog!(self.inner, record.level(), message);
+    
+                Ok(())
+            });
+        }
+    
+        fn flush(&self) {}
+    }
+
+    impl From<Syslog3> for Output {
+        fn from(log: Syslog3) -> Self {
+            Output(OutputInner::Logger(Box::new(log)))
+        }
+    }
+
+    Syslog3 { inner: log }
+}
+
+
+#[cfg(all(not(windows), feature = "syslog-4"))]
+pub(crate) type Syslog4Rfc3164Logger = syslog4::Logger<syslog4::LoggerBackend, String, syslog4::Formatter3164>;
+
+/// Passes all messages to the syslog.
+#[cfg(all(not(windows), feature = "syslog-4"))]
+pub fn syslog4_3164(log: Syslog4Rfc3164Logger) -> impl Log + Into<Output> {
+    pub struct Syslog4Rfc3164 {
+        pub(crate) inner: Mutex<Syslog4Rfc3164Logger>,
+    }
+    
+    impl Log for Syslog4Rfc3164 {
+        fn enabled(&self, _: &log::Metadata) -> bool {
+            true
+        }
+    
+        fn log(&self, record: &log::Record) {
+            fallback_on_error(record, |record| {
+                let message = record.args().to_string();
+                let mut log = self.inner.lock().unwrap_or_else(|e| e.into_inner());
+                send_syslog!(log, record.level(), message);
+    
+                Ok(())
+            });
+        }
+        fn flush(&self) {}
+    }
+
+    impl From<Syslog4Rfc3164> for Output {
+        /// Creates an output logger which writes all messages to the given syslog.
+        ///
+        /// Log levels are translated trace => debug, debug => debug, info =>
+        /// informational, warn => warning, and error => error.
+        ///
+        /// Note that due to https://github.com/Geal/rust-syslog/issues/41,
+        /// logging to this backend requires one allocation per log call.
+        ///
+        /// This is for RFC 3164 loggers. To use an RFC 5424 logger, use the
+        /// [`Output::syslog_5424`] helper method.
+        ///
+        /// This requires the `"syslog-4"` feature.
+        fn from(log: Syslog4Rfc3164) -> Self {
+            Output(OutputInner::Logger(Box::new(log)))
+        }
+    }
+
+    Syslog4Rfc3164 {
+        inner: Mutex::new(log),
+    }
+}
+
+#[cfg(all(not(windows), feature = "syslog-4"))]
+pub(crate) type Syslog4Rfc5424Logger = syslog4::Logger<
+    syslog4::LoggerBackend,
+    (i32, HashMap<String, HashMap<String, String>>, String),
+    syslog4::Formatter5424,
+>;
+
+/// Passes all messages to the syslog.
+/// Returns a logger which logs into an RFC5424 syslog.
+///
+/// This method takes an additional transform method to turn the log data
+/// into RFC5424 data.
+///
+/// I've honestly got no clue what the expected keys and values are for
+/// this kind of logging, so I'm just going to link [the rfc] instead.
+///
+/// If you're an expert on syslog logging and would like to contribute
+/// an example to put here, it would be gladly accepted!
+///
+/// This requires the `"syslog-4"` feature.
+///
+/// [the rfc]: https://tools.ietf.org/html/rfc5424
+#[cfg(all(not(windows), feature = "syslog-4"))]
+pub fn syslog4_5424<F>(logger: Syslog4Rfc5424Logger, transform: F) -> impl Log + Into<Output>
+where
+    F: Fn(&log::Record) -> (i32, HashMap<String, HashMap<String, String>>, String)
+        + Sync
+        + Send
+        + 'static,
+{
+    pub struct Syslog4Rfc5424<F> {
+        pub(crate) inner: Mutex<Syslog4Rfc5424Logger>,
+        pub(crate) transform: F,
+    }
+
+    impl <F> Log for Syslog4Rfc5424<F> 
+    where 
+        F: Fn(&log::Record) -> (i32, HashMap<String, HashMap<String, String>>, String)
+        + Sync
+        + Send
+        + 'static
+    {
+        fn enabled(&self, _: &log::Metadata) -> bool {
+            true
+        }
+    
+        fn log(&self, record: &log::Record) {
+            fallback_on_error(record, |record| {
+                let transformed = (self.transform)(record);
+                let mut log = self.inner.lock().unwrap_or_else(|e| e.into_inner());
+                send_syslog!(log, record.level(), transformed);
+    
+                Ok(())
+            });
+        }
+        fn flush(&self) {}
+    }
+
+    impl <F> From<Syslog4Rfc5424<F> > for Output where 
+    F: Fn(&log::Record) -> (i32, HashMap<String, HashMap<String, String>>, String)
+    + Sync
+    + Send
+    + 'static
+    {
+        fn from(log: Syslog4Rfc5424<F>) -> Self {
+            Output(OutputInner::Logger(Box::new(log)))
+        }
+    }
+
+    Syslog4Rfc5424 {
+        inner: Mutex::new(logger),
+        transform,
+    }
+}
+
+
+// #[cfg(all(not(windows), feature = "syslog-3"))]
+// impl From<syslog3::Logger> for Output {
+//     /// Creates an output logger which writes all messages to the given syslog
+//     /// output.
+//     ///
+//     /// Log levels are translated trace => debug, debug => debug, info =>
+//     /// informational, warn => warning, and error => error.
+//     ///
+//     /// Note that while this takes a Box<Logger> for convenience (syslog
+//     /// methods return Boxes), it will be immediately unboxed upon storage
+//     /// in the configuration structure. This will create a configuration
+//     /// identical to that created by passing a raw `syslog::Logger`.
+//     ///
+//     /// This requires the `"syslog-3"` feature.
+//     fn from(log: syslog3::Logger) -> Self {
+//         Output(OutputInner::Logger(Box::new(log)))
+//     }
+// }
+
+// #[cfg(all(not(windows), feature = "syslog-3"))]
+// impl From<Box<syslog3::Logger>> for Output {
+//     /// Creates an output logger which writes all messages to the given syslog
+//     /// output.
+//     ///
+//     /// Log levels are translated trace => debug, debug => debug, info =>
+//     /// informational, warn => warning, and error => error.
+//     ///
+//     /// Note that while this takes a Box<Logger> for convenience (syslog
+//     /// methods return Boxes), it will be immediately unboxed upon storage
+//     /// in the configuration structure. This will create a configuration
+//     /// identical to that created by passing a raw `syslog::Logger`.
+//     ///
+//     /// This requires the `"syslog-3"` feature.
+//     fn from(log: Box<syslog3::Logger>) -> Self {
+//         Output(OutputInner::Logger(1log as _))
+//     }
+// }

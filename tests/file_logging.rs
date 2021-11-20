@@ -1,11 +1,12 @@
 //! Tests!
-use std::{fs, io, io::prelude::*};
+use std::{fs, io::prelude::*};
 
 use log::Level::*;
 
 mod support;
 
 use support::manual_log;
+use fern::logger::CustomLineSep;
 
 #[test]
 fn test_basic_logging_file_logging() {
@@ -18,8 +19,8 @@ fn test_basic_logging_file_logging() {
         let (_max_level, logger) = fern::Dispatch::new()
             .format(|out, msg, record| out.finish(format_args!("[{}] {}", record.level(), msg)))
             .level(log::LevelFilter::Info)
-            .chain(io::stdout())
-            .chain(fern::log_file(log_file).expect("Failed to open log file"))
+            .chain(fern::logger::stdout())
+            .chain(fern::logger::file(log_file).expect("Failed to open log file"))
             .into_log();
 
         let l = &*logger;
@@ -79,10 +80,10 @@ fn test_custom_line_separators() {
             // default format is just the message if not specified
             // default log level is 'trace' if not specified (logs all messages)
             // output to the log file with the "\r\n" line separator.
-            .chain(fern::Output::file(
-                fern::log_file(&log_file).expect("Failed to open log file"),
-                "\r\n",
-            ))
+            .chain(fern::logger::file(&log_file)
+                .expect("Failed to open log file")
+                .line_sep("\r\n".into()),
+            )
             .into_log();
 
         let l = &*logger;

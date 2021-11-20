@@ -1,4 +1,4 @@
-#![deny(missing_docs)]
+// #![deny(missing_docs)] // TODO add back in
 #![doc(html_root_url = "https://docs.rs/fern/0.6.0")]
 //! Efficient, configurable logging in Rust.
 //!
@@ -11,6 +11,24 @@
 //! log = "0.4"
 //! fern = "0.5"
 //! ```
+//!
+//! # Basic design
+//!
+//! [`Dispatch`] is a fancy multiplexer to build a tree of sub-loggers:
+//!
+//! ```text
+//! Dispatch
+//! ├── Dispatch
+//! │   └── Logger
+//! ├── Logger
+//! └── Logger
+//! ```
+//!
+//! Each dispatch may control its sub-tree of child loggers by:
+//!
+//! - Formatting the messages
+//! - Setting per module log levels
+//! - Arbitrary message filtering
 //!
 //! # Example setup
 //!
@@ -202,23 +220,32 @@
 use std::{
     convert::AsRef,
     fmt,
-    fs::{File, OpenOptions},
-    io,
-    path::Path,
+    io::{self, Write},
+    sync::mpsc,
 };
-
-#[cfg(all(not(windows), feature = "syslog-4"))]
-use std::collections::HashMap;
 
 pub use crate::{
-    builders::{Dispatch, Output, Panic},
+    dispatch::{Dispatch, Output},
     errors::InitError,
-    log_impl::FormatCallback,
+    dispatch::FormatCallback,
 };
 
-mod builders;
+pub mod formatter;
+
+mod dispatch;
 mod errors;
-mod log_impl;
+
+/// Logger implementations for different output targets
+// pub mod logger {
+    // pub use crate::log_impl::*;
+    // pub use crate::*;
+// }
+pub mod logger;
+
+// For backwards compatibilty
+// Also see https://github.com/rust-lang/rust/issues/30827
+//#[deprecated(note = "Moved to fern::logger::Panic")]
+//pub use crate::logger::Panic;
 
 #[cfg(feature = "colored")]
 pub mod colors;
@@ -237,73 +264,70 @@ pub type Formatter = dyn Fn(FormatCallback, &fmt::Arguments, &log::Record) + Syn
 /// succeed - false means it should fail.
 pub type Filter = dyn Fn(&log::Metadata) -> bool + Send + Sync + 'static;
 
-#[cfg(feature = "date-based")]
-pub use crate::builders::DateBased;
-
-#[cfg(all(not(windows), feature = "syslog-4"))]
-type Syslog4Rfc3164Logger = syslog4::Logger<syslog4::LoggerBackend, String, syslog4::Formatter3164>;
-
-#[cfg(all(not(windows), feature = "syslog-4"))]
-type Syslog4Rfc5424Logger = syslog4::Logger<
-    syslog4::LoggerBackend,
-    (i32, HashMap<String, HashMap<String, String>>, String),
-    syslog4::Formatter5424,
->;
-
-/// Convenience method for opening a log file with common options.
-///
-/// Equivalent to:
-///
-/// ```no_run
-/// std::fs::OpenOptions::new()
-///     .write(true)
-///     .create(true)
-///     .append(true)
-///     .open("filename")
-/// # ;
-/// ```
-///
-/// See [`OpenOptions`] for more information.
-///
-/// [`OpenOptions`]: https://doc.rust-lang.org/std/fs/struct.OpenOptions.html
-#[inline]
-pub fn log_file<P: AsRef<Path>>(path: P) -> io::Result<File> {
-    OpenOptions::new()
-        .write(true)
-        .create(true)
-        .append(true)
-        .open(path)
+#[inline(always)]
+fn fallback_on_error<F>(record: &log::Record, log_func: F)
+where
+    F: FnOnce(&log::Record) -> Result<(), LogError>,
+{
+    if let Err(error) = log_func(record) {
+        backup_logging(record, &error)
+    }
 }
 
-/// Convenience method for opening a re-openable log file with common options.
-///
-/// The file opening is equivalent to:
-///
-/// ```no_run
-/// std::fs::OpenOptions::new()
-///     .write(true)
-///     .create(true)
-///     .append(true)
-///     .open("filename")
-/// # ;
-/// ```
-///
-/// See [`OpenOptions`] for more information.
-///
-/// [`OpenOptions`]: https://doc.rust-lang.org/std/fs/struct.OpenOptions.html
-///
-/// This function is not available on Windows, and it requires the `reopen-03`
-/// feature to be enabled.
-#[cfg(all(not(windows), feature = "reopen-03"))]
-#[inline]
-pub fn log_reopen(path: &Path, signal: Option<libc::c_int>) -> io::Result<reopen::Reopen<File>> {
-    let p = path.to_owned();
-    let r = reopen::Reopen::new(Box::new(move || log_file(&p)))?;
+fn backup_logging(record: &log::Record, error: &LogError) {
+    let second = write!(
+        io::stderr(),
+        "Error performing logging.\
+         \n\tattempted to log: {}\
+         \n\trecord: {:?}\
+         \n\tlogging error: {}",
+        record.args(),
+        record,
+        error
+    );
 
-    if let Some(s) = signal {
-        if let Err(e) = r.handle().register_signal(s) {
-            return Err(e);
+    if let Err(second_error) = second {
+        panic!(
+            "Error performing stderr logging after error occurred during regular logging.\
+             \n\tattempted to log: {}\
+             \n\trecord: {:?}\
+             \n\tfirst logging error: {}\
+             \n\tstderr error: {}",
+            record.args(),
+            record,
+            error,
+            second_error,
+        );
+    }
+}
+
+#[derive(Debug)]
+enum LogError {
+    Io(io::Error),
+    Send(mpsc::SendError<String>),
+    #[cfg(all(not(windows), feature = "syslog-4"))]
+    Syslog4(syslog4::Error),
+}
+
+impl fmt::Display for LogError {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        match *self {
+            LogError::Io(ref e) => write!(f, "{}", e),
+            LogError::Send(ref e) => write!(f, "{}", e),
+            #[cfg(all(not(windows), feature = "syslog-4"))]
+            LogError::Syslog4(ref e) => write!(f, "{}", e),
         }
     }
-    Ok(r)
+}
+
+impl From<io::Error> for LogError {
+    fn from(error: io::Error) -> Self {
+        LogError::Io(error)
+    }
+}
+
+impl From<mpsc::SendError<String>> for LogError {
+    fn from(error: mpsc::SendError<String>) -> Self {
+        LogError::Send(error)
+    }
 }

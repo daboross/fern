@@ -4,7 +4,7 @@
 //! These tests *will* deadlock if the feature is not enabled, so they're
 //! disabled by default.
 #![cfg(feature = "meta-logging-in-format")]
-use std::{fmt, fs, io, io::prelude::*};
+use std::{fmt, fs, io::prelude::*};
 
 use log::{Level::*, Log};
 
@@ -42,8 +42,8 @@ fn file_deadlock() {
     {
         let (_max_level, logger) = fern::Dispatch::new()
             .format(|out, msg, record| out.finish(format_args!("[{}] {}", record.level(), msg)))
-            .chain(io::stdout())
-            .chain(fern::log_file(log_file).expect("Failed to open log file"))
+            .chain(fern::logger::stdout())
+            .chain(fern::logger::file(log_file).expect("Failed to open log file"))
             .into_log();
 
         let l = &*logger;

@@ -78,7 +78,7 @@ fn set_up_logging() {
         // `info!(target="special_target", "This log message is about special_target");`
         .level_for("pretty_colored", log::LevelFilter::Trace)
         // output to stdout
-        .chain(std::io::stdout())
+        .chain(fern::logger::stdout())
         .apply()
         .unwrap();
 

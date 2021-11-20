@@ -46,11 +46,11 @@ fn test_raw_write_logging() {
     let (_max_level, logger) = fern::Dispatch::new()
         .format(|out, msg, record| out.finish(format_args!("[{}] {}", record.level(), msg)))
         .level(log::LevelFilter::Info)
-        .chain(io::stdout())
-        .chain(Box::new(TestWriter {
+        .chain(fern::logger::stdout())
+        .chain(fern::logger::writer(TestWriter {
             buf: Vec::new(),
             flag: flag.clone(),
-        }) as Box<dyn io::Write + Send>)
+        }))
         .into_log();
 
     let l = &*logger;

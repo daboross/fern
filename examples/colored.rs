@@ -5,7 +5,7 @@ fn main() {
     let colors = ColoredLevelConfig::new().debug(Color::Magenta);
 
     fern::Dispatch::new()
-        .chain(std::io::stdout())
+        .chain(fern::logger::stdout())
         .format(move |out, message, record| {
             out.finish(format_args!(
                 "[{}]{} {}",
