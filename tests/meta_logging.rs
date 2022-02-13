@@ -36,7 +36,7 @@ impl<'a> fmt::Display for VerboseDisplayThing<'a> {
 #[test]
 fn file_deadlock() {
     // Create a temporary directory to put a log file into for testing
-    let temp_log_dir = tempdir::TempDir::new("fern").expect("Failed to set up temporary directory");
+    let temp_log_dir = tempfile::tempdir().expect("Failed to set up temporary directory");
     let log_file = temp_log_dir.path().join("test.log");
 
     {

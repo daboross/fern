@@ -42,7 +42,7 @@ meta-logging-in-format = []
 date-based = ["chrono"]
 
 [dev-dependencies]
-tempdir = "0.3"
+tempfile = "3"
 clap = "2.22"
 chrono = "0.4"
 

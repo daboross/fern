@@ -11,7 +11,7 @@ use support::manual_log;
 #[test]
 fn test_basic_logging_reopen_logging() {
     // Create a temporary directory to put a log file into for testing
-    let temp_log_dir = tempdir::TempDir::new("fern").expect("Failed to set up temporary directory");
+    let temp_log_dir = tempfile::tempdir().expect("Failed to set up temporary directory");
     let log_file = temp_log_dir.path().join("test.log");
 
     {
@@ -71,7 +71,7 @@ fn test_basic_logging_reopen_logging() {
 #[test]
 fn test_custom_line_separators() {
     // Create a temporary directory to put a log file into for testing
-    let temp_log_dir = tempdir::TempDir::new("fern").expect("Failed to set up temporary directory");
+    let temp_log_dir = tempfile::tempdir().expect("Failed to set up temporary directory");
     let log_file = temp_log_dir.path().join("test_custom_line_sep.log");
 
     {
