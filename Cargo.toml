@@ -26,7 +26,7 @@ maintenance = { status = "passively-maintained" }
 [dependencies]
 log = { version = "0.4", features = ["std"] }
 colored = { version = "1.5", optional = true }
-chrono = { version = "0.4", optional = true }
+chrono = { version = "0.4", default-features = false, features = ["std", "clock"], optional = true }
 
 [target."cfg(not(windows))".dependencies]
 syslog3 = { version = "3", package = "syslog", optional = true }
@@ -46,7 +46,7 @@ date-based = ["chrono"]
 [dev-dependencies]
 tempdir = "0.3"
 clap = "2.22"
-chrono = "0.4"
+chrono = { version = "0.4", default-features = false, features = ["std", "clock"]}
 
 [[example]]
 name = "cmd-program"
