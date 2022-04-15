@@ -65,7 +65,7 @@ If you're interested in helping fix an [existing issue](https://github.com/dabor
 See [CONTRIBUTING](./CONTRIBUTING.md) for technical information on contributing.
 
 [Rust]: https://www.rust-lang.org/
-[test-status-badge]: https://github.com/daboross/fern/actions/workflows/rust.yml/badge.svg?branch=main&event=push
+[test-status-badge]: https://github.com/daboross/fern/workflows/tests/badge.svg?branch=main&event=push
 [test-status-link]: https://github.com/daboross/fern/actions/workflows/rust.yml
 [issue-resolution-badge]: http://isitmaintained.com/badge/resolution/daboross/fern.svg
 [isitmaintained-link]: http://isitmaintained.com/project/daboross/fern
