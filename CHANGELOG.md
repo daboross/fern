@@ -1,14 +1,17 @@
 Unreleased
 ==========
 
-- Document reopen feature requiring a feature flag (thanks [@Palladinium]!)
-
+- Document reopen feature requiring a feature flag
+  (thanks [@Palladinium]!)
+- Fix typo in colors documentation (thanks [@sourcefrog]!)
+- Add support for reopen v1 under reopen-1 feature (thanks [@vorner]!)
+- Add syslog v6 support under syslog-6 feature (thanks folk at [@EasyPost]!)
+- Fix README badges
 
 0.6.0 (2020-03-09)
 ==================
 
 - Move date-based file logger under its own feature (thanks [@dekellum]!)
-
 
 0.5.9 (2019-10-23)
 ==================
@@ -410,3 +413,7 @@ First release, version 0.1.0.
 [@Songtronix]: https://github.com/Songtronix
 [@dekellum]: https://github.com/dekellum
 [@Palladinium]: https://github.com/Palladinium
+[@sourcefrog]: https://github.com/sourcefrog
+[@autarch]: https://github.com/autarch
+[@vorner]: https://github.com/vorner
+[@EasyPost]: https://github.com/EasyPost
