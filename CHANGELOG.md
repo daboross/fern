@@ -1,6 +1,10 @@
 Unreleased
 ==========
 
+
+0.6.1 (2022-04-15)
+==================
+
 - Document reopen feature requiring a feature flag
   (thanks [@Palladinium]!)
 - Fix typo in colors documentation (thanks [@sourcefrog]!)

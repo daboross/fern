@@ -1,5 +1,5 @@
 #![deny(missing_docs)]
-#![doc(html_root_url = "https://docs.rs/fern/0.6.0")]
+#![doc(html_root_url = "https://docs.rs/fern/0.6.1")]
 //! Efficient, configurable logging in Rust.
 //!
 //! # Depending on fern
@@ -193,8 +193,8 @@
 //! [time-and-date docs]: https://docs.rs/chrono/0.4/chrono/index.html#date-and-time
 //! [the format specifier docs]: https://docs.rs/chrono/0.4/chrono/format/strftime/index.html#specifiers
 //! [`Dispatch` documentation]: struct.Dispatch.html
-//! [full example program]: https://github.com/daboross/fern/tree/fern-0.6.0/examples/cmd-program.rs
-//! [syslog full example program]: https://github.com/daboross/fern/tree/fern-0.6.0/examples/syslog.rs
+//! [full example program]: https://github.com/daboross/fern/tree/fern-0.6.1/examples/cmd-program.rs
+//! [syslog full example program]: https://github.com/daboross/fern/tree/fern-0.6.1/examples/syslog.rs
 //! [`apply`]: struct.Dispatch.html#method.apply
 //! [colors]: colors/index.html
 //! [syslog]: syslog/index.html
