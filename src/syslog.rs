@@ -5,7 +5,7 @@ Be sure to depend on `syslog` and the `syslog` feature in `Cargo.toml`:
 
 ```toml
 [dependencies]
-fern = { version = "0.5", features = ["syslog-6"] }]
+fern = { version = "0.6", features = ["syslog-6"] }]
 syslog = "6"
 ```
 
@@ -42,7 +42,7 @@ use the `syslog-3` feature and depend on `syslog = "3"` instead.
 
 ```toml
 [dependencies]
-fern = { version = "0.5", features = ["syslog-3"] }]
+fern = { version = "0.6", features = ["syslog-3"] }]
 syslog = "3"
 ```
 
