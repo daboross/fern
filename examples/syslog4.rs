@@ -2,6 +2,7 @@
 // This is necessary because `fern` depends on both version 3 and 4.
 use syslog4 as syslog;
 
+#[cfg(not(windows))]
 use log::{debug, info, warn};
 
 #[cfg(not(windows))]

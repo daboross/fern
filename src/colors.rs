@@ -281,13 +281,13 @@ impl ColoredLogLevel for Level {
 }
 
 #[cfg(test)]
+#[cfg(not(windows))]
 mod test {
     use colored::{Color::*, Colorize};
 
     use super::WithFgColor;
 
     #[test]
-    #[cfg(not(windows))]
     fn fg_color_matches_colored_behavior() {
         for &color in &[
             Black,
@@ -322,7 +322,6 @@ mod test {
     }
 
     #[test]
-    #[cfg(not(windows))]
     fn fg_color_respects_formatting_flags() {
         let s = format!(
             "{:^8}",
