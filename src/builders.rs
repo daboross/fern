@@ -454,7 +454,7 @@ impl Dispatch {
                         line_sep,
                     }))
                 }
-                #[cfg(feature = "reopen-1")]
+                #[cfg(all(not(windows), feature = "reopen-1"))]
                 OutputInner::Reopen1 { stream, line_sep } => {
                     max_child_level = log::LevelFilter::Trace;
                     Some(log_impl::Output::Reopen1(log_impl::Reopen1 {
@@ -668,7 +668,7 @@ enum OutputInner {
     },
     /// Writes all messages to the reopen::Reopen file with `line_sep`
     /// separator.
-    #[cfg(feature = "reopen-1")]
+    #[cfg(all(not(windows), feature = "reopen-1"))]
     Reopen1 {
         stream: reopen1::Reopen<fs::File>,
         line_sep: Cow<'static, str>,
@@ -835,7 +835,7 @@ impl From<reopen03::Reopen<fs::File>> for Output {
     }
 }
 
-#[cfg(feature = "reopen-1")]
+#[cfg(all(not(windows), feature = "reopen-1"))]
 impl From<reopen1::Reopen<fs::File>> for Output {
     /// Creates an output logger which writes all messages to the file contained
     /// in the Reopen struct, using `\n` as the separator.
@@ -1118,7 +1118,7 @@ impl Output {
     /// # fn main() { setup_logger().expect("failed to set up logger"); }
     /// ```
     /// [`Dispatch::chain`]: struct.Dispatch.html#method.chain
-    #[cfg(feature = "reopen-1")]
+    #[cfg(all(not(windows), feature = "reopen-1"))]
     pub fn reopen1<T: Into<Cow<'static, str>>>(
         reopen: reopen1::Reopen<fs::File>,
         line_sep: T,
@@ -1373,7 +1373,7 @@ impl fmt::Debug for OutputInner {
                 .field("stream", &"<unknown reopen file>")
                 .field("line_sep", line_sep)
                 .finish(),
-            #[cfg(feature = "reopen-1")]
+            #[cfg(all(not(windows), feature = "reopen-1"))]
             OutputInner::Reopen1 {
                 ref line_sep,
                 ref stream,

@@ -1,5 +1,5 @@
 //! Tests!
-#![cfg(feature = "reopen-1")]
+#![cfg(all(not(windows), feature = "reopen-1"))]
 use std::{fs, io, io::prelude::*};
 
 use log::Level::*;
