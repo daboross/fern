@@ -1,0 +1,102 @@
+name: Rust
+
+on:
+  push:
+    branches: master
+  pull_request:
+    branches: master
+
+env:
+  CARGO_TERM_COLOR: always
+
+jobs:
+  test:
+    name: Test Suite
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        rust:
+          - stable
+          - beta
+        os:
+          - ubuntu-latest
+          - windows-latest
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions-rs/toolchain@v1
+        with:
+          profile: minimal
+          toolchain: ${{ matrix.rust }}
+          override: true
+      - uses: actions-rs/cargo@v1
+        with:
+          command: build
+          args: --lib --bins --examples --tests --benches
+      - uses: actions-rs/cargo@v1
+        with:
+          command: build
+          args: --lib --bins --examples --tests --benches --all-features
+      - uses: actions-rs/cargo@v1
+        with:
+          command: test
+      - uses: actions-rs/cargo@v1
+        with:
+          command: test
+          args: --no-default-features
+      - uses: actions-rs/cargo@v1
+        with:
+          command: test
+          args: --features=colored
+      - uses: actions-rs/cargo@v1
+        with:
+          command: test
+          args: --features=syslog-3
+      - uses: actions-rs/cargo@v1
+        with:
+          command: test
+          args: --features=syslog-4
+      - uses: actions-rs/cargo@v1
+        with:
+          command: test
+          args: --features=syslog-6
+      - uses: actions-rs/cargo@v1
+        with:
+          command: test
+          args: --features=reopen-03
+      - uses: actions-rs/cargo@v1
+        with:
+          command: test
+          args: --features=reopen-1
+      - uses: actions-rs/cargo@v1
+        with:
+          command: test
+          args: --features=meta-logging-in-format
+      - uses: actions-rs/cargo@v1
+        with:
+          command: test
+          args: --all-features
+      - run: cargo run --example cmd-program
+      - run: cargo run --example cmd-program -- --verbose
+      - run: cargo run --example colored --features colored
+      - run: cargo run --example pretty-colored --features colored
+      - run: cargo run --example date-based-file-log --features date-based
+      # we don't exactly have a good test suite for DateBased right now, so let's at least do this:
+      - run: cargo run --example date-based-file-log --features date-based,meta-logging-in-format
+  linux:
+    name: Linux-only Examples
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        rust:
+          - stable
+          - beta
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions-rs/toolchain@v1
+        with:
+          profile: minimal
+          toolchain: ${{ matrix.rust }}
+          override: true
+      - run: cargo run --example syslog3 --features syslog-3
+      - run: cargo run --example syslog4 --features syslog-4
+      - run: cargo run --example syslog --features syslog-6
