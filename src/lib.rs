@@ -302,14 +302,46 @@ pub fn log_file<P: AsRef<Path>>(path: P) -> io::Result<File> {
 /// feature to be enabled.
 #[cfg(all(not(windows), feature = "reopen-03"))]
 #[inline]
-pub fn log_reopen(path: &Path, signal: Option<libc::c_int>) -> io::Result<reopen::Reopen<File>> {
+pub fn log_reopen(path: &Path, signal: Option<libc::c_int>) -> io::Result<reopen03::Reopen<File>> {
     let p = path.to_owned();
-    let r = reopen::Reopen::new(Box::new(move || log_file(&p)))?;
+    let r = reopen03::Reopen::new(Box::new(move || log_file(&p)))?;
 
     if let Some(s) = signal {
         if let Err(e) = r.handle().register_signal(s) {
             return Err(e);
         }
+    }
+    Ok(r)
+}
+
+/// Convenience method for opening a re-openable log file with common options.
+///
+/// The file opening is equivalent to:
+///
+/// ```no_run
+/// std::fs::OpenOptions::new()
+///     .write(true)
+///     .create(true)
+///     .append(true)
+///     .open("filename")
+/// # ;
+/// ```
+///
+/// See [`OpenOptions`] for more information.
+///
+/// [`OpenOptions`]: https://doc.rust-lang.org/std/fs/struct.OpenOptions.html
+///
+/// This function requires the `reopen-1` feature to be enabled.
+#[cfg(feature = "reopen-1")]
+#[inline]
+pub fn log_reopen1<S: IntoIterator<Item = libc::c_int>>(path: &Path, signals: S)
+    -> io::Result<reopen1::Reopen<File>>
+{
+    let p = path.to_owned();
+    let r = reopen1::Reopen::new(Box::new(move || log_file(&p)))?;
+
+    for s in signals {
+        r.handle().register_signal(s)?;
     }
     Ok(r)
 }

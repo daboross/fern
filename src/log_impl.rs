@@ -22,7 +22,9 @@ use crate::{Syslog4Rfc3164Logger, Syslog4Rfc5424Logger};
 #[cfg(all(not(windows), feature = "syslog-6"))]
 use crate::{Syslog6Rfc3164Logger, Syslog6Rfc5424Logger};
 #[cfg(all(not(windows), feature = "reopen-03"))]
-use reopen;
+use reopen03;
+#[cfg(feature = "reopen-1")]
+use reopen1;
 
 pub enum LevelConfiguration {
     JustDefault,
@@ -84,6 +86,8 @@ pub enum Output {
     DateBased(DateBased),
     #[cfg(all(not(windows), feature = "reopen-03"))]
     Reopen(Reopen),
+    #[cfg(feature = "reopen-1")]
+    Reopen1(Reopen1),
 }
 
 pub struct Stdout {
@@ -113,7 +117,13 @@ pub struct Writer {
 
 #[cfg(all(not(windows), feature = "reopen-03"))]
 pub struct Reopen {
-    pub stream: Mutex<reopen::Reopen<fs::File>>,
+    pub stream: Mutex<reopen03::Reopen<fs::File>>,
+    pub line_sep: Cow<'static, str>,
+}
+
+#[cfg(feature = "reopen-1")]
+pub struct Reopen1 {
+    pub stream: Mutex<reopen1::Reopen<fs::File>>,
     pub line_sep: Cow<'static, str>,
 }
 
@@ -341,6 +351,8 @@ impl Log for Output {
             Output::DateBased(ref s) => s.enabled(metadata),
             #[cfg(all(not(windows), feature = "reopen-03"))]
             Output::Reopen(ref s) => s.enabled(metadata),
+            #[cfg(feature = "reopen-1")]
+            Output::Reopen1(ref s) => s.enabled(metadata),
         }
     }
 
@@ -370,6 +382,8 @@ impl Log for Output {
             Output::DateBased(ref s) => s.log(record),
             #[cfg(all(not(windows), feature = "reopen-03"))]
             Output::Reopen(ref s) => s.log(record),
+            #[cfg(feature = "reopen-1")]
+            Output::Reopen1(ref s) => s.log(record),
         }
     }
 
@@ -399,6 +413,8 @@ impl Log for Output {
             Output::DateBased(ref s) => s.flush(),
             #[cfg(all(not(windows), feature = "reopen-03"))]
             Output::Reopen(ref s) => s.flush(),
+            #[cfg(feature = "reopen-1")]
+            Output::Reopen1(ref s) => s.flush(),
         }
     }
 }
@@ -605,6 +621,9 @@ writer_log_impl!(Writer);
 
 #[cfg(all(not(windows), feature = "reopen-03"))]
 writer_log_impl!(Reopen);
+
+#[cfg(feature = "reopen-1")]
+writer_log_impl!(Reopen1);
 
 impl Log for Sender {
     fn enabled(&self, _: &log::Metadata) -> bool {
