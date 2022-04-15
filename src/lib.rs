@@ -193,8 +193,8 @@
 //! [time-and-date docs]: https://docs.rs/chrono/0.4/chrono/index.html#date-and-time
 //! [the format specifier docs]: https://docs.rs/chrono/0.4/chrono/format/strftime/index.html#specifiers
 //! [`Dispatch` documentation]: struct.Dispatch.html
-//! [full example program]: https://github.com/daboross/fern/tree/master/examples/cmd-program.rs
-//! [syslog full example program]: https://github.com/daboross/fern/tree/master/examples/syslog.rs
+//! [full example program]: https://github.com/daboross/fern/tree/fern-0.6.0/examples/cmd-program.rs
+//! [syslog full example program]: https://github.com/daboross/fern/tree/fern-0.6.0/examples/syslog.rs
 //! [`apply`]: struct.Dispatch.html#method.apply
 //! [colors]: colors/index.html
 //! [syslog]: syslog/index.html
