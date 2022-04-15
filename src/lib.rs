@@ -9,7 +9,7 @@
 //! ```toml
 //! [dependencies]
 //! log = "0.4"
-//! fern = "0.5"
+//! fern = "0.6"
 //! ```
 //!
 //! # Example setup

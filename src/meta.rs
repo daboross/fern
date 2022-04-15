@@ -39,7 +39,7 @@ following in your `Cargo.toml`:
 ```toml
 [dependencies]
 # ...
-fern = { version = "0.5", features = ["meta-logging-in-format"] }
+fern = { version = "0.6", features = ["meta-logging-in-format"] }
 ```
 
 The second mitigation is one you can make inside a formatting closure. This means extra code
