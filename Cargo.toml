@@ -44,7 +44,7 @@ meta-logging-in-format = []
 date-based = ["chrono"]
 
 [dev-dependencies]
-tempdir = "0.3"
+tempfile = "3"
 clap = "2.22"
 chrono = { version = "0.4", default-features = false, features = ["std", "clock"]}
 
