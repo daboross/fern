@@ -5,7 +5,7 @@
 //!
 //! ```toml
 //! [dependencies]
-//! fern = { version = "0.5", features = ["colored"] }
+//! fern = { version = "0.6", features = ["colored"] }
 //! ```
 //!
 //! ---
