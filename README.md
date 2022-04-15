@@ -1,10 +1,9 @@
 fern
 ====
-[![Linux Build Status][travis-image]][travis-builds]
-[![Windows Build Status][appveyor-image]][appveyor-builds]
-[![Coverage Status][coveralls-badge]][coveralls-builds]
-
 [![crates.io version badge][cratesio-badge]][fern-crate]
+[![Build Status][test-status-badge]][test-status-link]
+[![Average time to resolve an issue][issue-resolution-badge]][isitmaintained-link]
+[![Coverage Status][coveralls-badge]][coveralls-builds]
 
 Simple, efficient logging for [Rust].
 
@@ -66,15 +65,14 @@ If you're interested in helping fix an [existing issue](https://github.com/dabor
 See [CONTRIBUTING](./CONTRIBUTING.md) for technical information on contributing.
 
 [Rust]: https://www.rust-lang.org/
-[travis-image]: https://travis-ci.org/daboross/fern.svg?branch=master
-[travis-builds]: https://travis-ci.org/daboross/fern
-[appveyor-image]: https://ci.appveyor.com/api/projects/status/ofdv9657k88jbpel/branch/master?svg=true
-[appveyor-image]: https://ci.appveyor.com/api/projects/status/github/daboross/fern?branch=master&svg=true
-[appveyor-builds]: https://ci.appveyor.com/project/daboross/fern
-[cratesio-badge]: http://meritbadge.herokuapp.com/fern
+[test-status-badge]: https://github.com/daboross/fern/actions/workflows/rust.yml/badge.svg?branch=master&event=push
+[test-status-link]: https://github.com/daboross/fern/actions/workflows/rust.yml
+[issue-resolution-badge]: http://isitmaintained.com/badge/resolution/daboross/fern.svg
+[isitmaintained-link]: http://isitmaintained.com/project/daboross/fern
 [coveralls-badge]: https://coveralls.io/repos/github/daboross/fern/badge.svg
 [coveralls-builds]: https://coveralls.io/github/daboross/fern
+[cratesio-badge]: https://img.shields.io/crates/v/fern.svg
 [fern-docs]: https://docs.rs/fern/
 [fern-crate]: https://crates.io/crates/fern
 [fern-example]: https://github.com/daboross/fern/tree/master/examples/cmd-program.rs
-[log]: https://github.com/rust-lang-nursery/log
+[log]: https://github.com/rust-lang/log
