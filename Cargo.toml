@@ -16,13 +16,6 @@ categories = ["development-tools::debugging"]
 
 include = ["Cargo.toml", "src/**/*", "tests/**/*", "examples/**/*", "LICENSE", "README.md", "CONTRIBUTING.md", "CHANGELOG.md"]
 
-[badges]
-travis-ci = { repository = "daboross/fern" }
-appveyor = { repository = "daboross/fern" }
-coveralls = { repository = "daboross/fern" }
-is-it-maintained-issue-resolution = { repository = "daboross/fern" }
-maintenance = { status = "passively-maintained" }
-
 [dependencies]
 log = { version = "0.4", features = ["std"] }
 colored = { version = "1.5", optional = true }
