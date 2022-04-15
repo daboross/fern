@@ -65,7 +65,7 @@ If you're interested in helping fix an [existing issue](https://github.com/dabor
 See [CONTRIBUTING](./CONTRIBUTING.md) for technical information on contributing.
 
 [Rust]: https://www.rust-lang.org/
-[test-status-badge]: https://github.com/daboross/fern/actions/workflows/rust.yml/badge.svg?branch=master&event=push
+[test-status-badge]: https://github.com/daboross/fern/actions/workflows/rust.yml/badge.svg?branch=main&event=push
 [test-status-link]: https://github.com/daboross/fern/actions/workflows/rust.yml
 [issue-resolution-badge]: http://isitmaintained.com/badge/resolution/daboross/fern.svg
 [isitmaintained-link]: http://isitmaintained.com/project/daboross/fern
@@ -74,5 +74,5 @@ See [CONTRIBUTING](./CONTRIBUTING.md) for technical information on contributing.
 [cratesio-badge]: https://img.shields.io/crates/v/fern.svg
 [fern-docs]: https://docs.rs/fern/
 [fern-crate]: https://crates.io/crates/fern
-[fern-example]: https://github.com/daboross/fern/tree/master/examples/cmd-program.rs
+[fern-example]: https://github.com/daboross/fern/tree/main/examples/cmd-program.rs
 [log]: https://github.com/rust-lang/log
