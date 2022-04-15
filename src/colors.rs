@@ -307,6 +307,7 @@ mod test {
             BrightCyan,
             BrightWhite,
         ] {
+            colored::control::SHOULD_COLORIZE.set_override(true);
             assert_eq!(
                 format!("{}", "test".color(color)),
                 format!(
