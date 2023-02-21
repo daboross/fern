@@ -5,7 +5,7 @@ use std::{
     sync::{mpsc::Sender, Arc, Mutex},
 };
 
-#[cfg(feature = "date-based")]
+#[cfg(any(feature = "date-based", feature = "manual"))]
 use std::path::{Path, PathBuf};
 
 #[cfg(all(not(windows), any(feature = "syslog-4", feature = "syslog-6")))]
@@ -17,6 +17,9 @@ use crate::{log_impl, Filter, FormatCallback, Formatter};
 
 #[cfg(feature = "date-based")]
 use crate::log_impl::DateBasedState;
+
+#[cfg(feature = "manual")]
+use crate::log_impl::ManualState;
 
 #[cfg(all(not(windows), feature = "syslog-4"))]
 use crate::{Syslog4Rfc3164Logger, Syslog4Rfc5424Logger};
@@ -563,6 +566,31 @@ impl Dispatch {
                         state: Mutex::new(DateBasedState::new(computed_suffix, initial_file)),
                     }))
                 }
+                #[cfg(feature = "manual")]
+                OutputInner::Manual { config } => {
+                    max_child_level = log::LevelFilter::Trace;
+
+                    let config = log_impl::ManualConfig::new(
+                        config.line_sep,
+                        config.file_prefix,
+                        config.file_suffix,
+                        if config.utc_time {
+                            log_impl::ConfiguredTimezone::Utc
+                        } else {
+                            log_impl::ConfiguredTimezone::Local
+                        },
+                    );
+
+                    let computed_suffix = config.compute_current_suffix();
+
+                    // ignore errors - we'll just retry later.
+                    let initial_file = config.open_current_log_file(&computed_suffix).ok();
+
+                    Some(log_impl::Output::Manual(log_impl::Manual {
+                        config,
+                        state: Mutex::new(ManualState::new(computed_suffix, initial_file)),
+                    }))
+                }
             })
             .collect();
 
@@ -719,6 +747,8 @@ enum OutputInner {
     /// File logger with custom date and timestamp suffix in file name.
     #[cfg(feature = "date-based")]
     DateBased { config: DateBased },
+    #[cfg(feature = "manual")]
+    Manual { config: Manual },
 }
 
 /// Logger which will panic whenever anything is logged. The panic
@@ -1436,6 +1466,11 @@ impl fmt::Debug for OutputInner {
                 .debug_struct("Output::DateBased")
                 .field("config", config)
                 .finish(),
+            #[cfg(feature = "manual")]
+            OutputInner::Manual { ref config } => f
+                .debug_struct("Output::Manual")
+                .field("config", config)
+                .finish(),
         }
     }
 }
@@ -1452,6 +1487,18 @@ impl fmt::Debug for Output {
 #[derive(Debug)]
 #[cfg(feature = "date-based")]
 pub struct DateBased {
+    file_prefix: PathBuf,
+    file_suffix: Cow<'static, str>,
+    line_sep: Cow<'static, str>,
+    utc_time: bool,
+}
+
+/// This is used to generate log file suffixed based on date, hour, and minute.
+///
+/// The log file will be rotated manually when `builder::rotate()` is called.
+#[derive(Debug)]
+#[cfg(feature = "manual")]
+pub struct Manual {
     file_prefix: PathBuf,
     file_suffix: Cow<'static, str>,
     line_sep: Cow<'static, str>,
@@ -1608,11 +1655,170 @@ impl DateBased {
     }
 }
 
+#[cfg(feature = "manual")]
+impl Manual {
+    /// Create new manual file logger with the given file prefix and
+    /// strftime-based suffix pattern.
+    ///
+    /// On initialization, fern will create a file with the suffix formatted
+    /// with the current time (either utc or local, see below). Each time a
+    /// record is logged, the format is checked against the current time, and if
+    /// the time has changed, the old file is closed and a new one opened.
+    ///
+    /// `file_suffix` will be interpreted as an `strftime` format. See
+    /// [`chrono::format::strftime`] for more information.
+    ///
+    /// `file_prefix` may be a full file path, and will be prepended to the
+    /// suffix to create the final file.
+    ///
+    /// Note that no separator will be placed in between `file_name` and
+    /// `file_suffix_pattern`. So if you call `Manual::new("hello",
+    /// "%Y")`, the result will be a filepath `hello2019`.
+    ///
+    /// By default, this will use local time. For UTC time instead, use the
+    /// [`.utc_time()`][Manual::utc_time] method after creating.
+    ///
+    /// By default, this will use `\n` as a line separator. For a custom
+    /// separator, use the [`.line_sep`][Manual::line_sep] method
+    /// after creating.
+    ///
+    /// # Examples
+    ///
+    /// Containing the date (year, month and day):
+    ///
+    /// ```
+    /// // logs/2019-10-23-my-program.log
+    /// let log = fern::Manual::new("logs/", "%Y-%m-%d-my-program.log");
+    ///
+    /// // program.log.23102019
+    /// let log = fern::Manual::new("my-program.log.", "%d%m%Y");
+    /// ```
+    ///
+    /// Containing the hour:
+    ///
+    /// ```
+    /// // logs/2019-10-23 13 my-program.log
+    /// let log = fern::Manual::new("logs/", "%Y-%m-%d %H my-program.log");
+    ///
+    /// // program.log.2310201913
+    /// let log = fern::Manual::new("my-program.log.", "%d%m%Y%H");
+    /// ```
+    ///
+    /// Containing the minute:
+    ///
+    /// ```
+    /// // logs/2019-10-23 13 my-program.log
+    /// let log = fern::Manual::new("logs/", "%Y-%m-%d %H my-program.log");
+    ///
+    /// // program.log.2310201913
+    /// let log = fern::Manual::new("my-program.log.", "%d%m%Y%H");
+    /// ```
+    ///
+    /// UNIX time, or seconds since 00:00 Jan 1st 1970:
+    ///
+    /// ```
+    /// // logs/1571822854-my-program.log
+    /// let log = fern::Manual::new("logs/", "%s-my-program.log");
+    ///
+    /// // program.log.1571822854
+    /// let log = fern::Manual::new("my-program.log.", "%s");
+    /// ```
+    ///
+    /// Hourly, using UTC time:
+    ///
+    /// ```
+    /// // logs/2019-10-23 23 my-program.log
+    /// let log = fern::Manual::new("logs/", "%Y-%m-%d %H my-program.log").utc_time();
+    ///
+    /// // program.log.2310201923
+    /// let log = fern::Manual::new("my-program.log.", "%d%m%Y%H").utc_time();
+    /// ```
+    ///
+    /// [`chrono::format::strftime`]: https://docs.rs/chrono/0.4.6/chrono/format/strftime/index.html
+    pub fn new<T, U>(file_prefix: T, file_suffix: U) -> Self
+    where
+        T: AsRef<Path>,
+        U: Into<Cow<'static, str>>,
+    {
+        Manual {
+            utc_time: false,
+            file_prefix: file_prefix.as_ref().to_owned(),
+            file_suffix: file_suffix.into(),
+            line_sep: "\n".into(),
+        }
+    }
+
+    /// Changes the line separator this logger will use.
+    ///
+    /// The default line separator is `\n`.
+    ///
+    /// # Examples
+    ///
+    /// Using a windows line separator:
+    ///
+    /// ```
+    /// let log = fern::Manual::new("logs", "%s.log").line_sep("\r\n");
+    /// ```
+    pub fn line_sep<T>(mut self, line_sep: T) -> Self
+    where
+        T: Into<Cow<'static, str>>,
+    {
+        self.line_sep = line_sep.into();
+        self
+    }
+
+    /// Orients this log file suffix formatting to use UTC time.
+    ///
+    /// The default is local time.
+    ///
+    /// # Examples
+    ///
+    /// This will use UTC time to determine the date:
+    ///
+    /// ```
+    /// // program.log.2310201923
+    /// let log = fern::Manual::new("my-program.log.", "%d%m%Y%H").utc_time();
+    /// ```
+    pub fn utc_time(mut self) -> Self {
+        self.utc_time = true;
+        self
+    }
+
+    /// Orients this log file suffix formatting to use local time.
+    ///
+    /// This is the default option.
+    ///
+    /// # Examples
+    ///
+    /// This log file will use local time - the latter method call overrides the
+    /// former.
+    ///
+    /// ```
+    /// // program.log.2310201923
+    /// let log = fern::Manual::new("my-program.log.", "%d%m%Y%H")
+    ///     .utc_time()
+    ///     .local_time();
+    /// ```
+    pub fn local_time(mut self) -> Self {
+        self.utc_time = false;
+        self
+    }
+}
+
 #[cfg(feature = "date-based")]
 impl From<DateBased> for Output {
     /// Create an output logger which defers to the given date-based logger. Use
     /// configuration methods on [DateBased] to set line separator and filename.
     fn from(config: DateBased) -> Self {
         Output(OutputInner::DateBased { config })
+    }
+}
+
+#[cfg(feature = "manual")]
+impl From<Manual> for Output {
+    /// Create an output logger which defers to the given manual logger. Use
+    /// configuration methods on [Manual] to set line separator and filename.
+    fn from(config: Manual) -> Self {
+        Output(OutputInner::Manual { config })
     }
 }

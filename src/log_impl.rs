@@ -6,7 +6,7 @@ use std::{
     sync::{mpsc, Arc, Mutex},
 };
 
-#[cfg(feature = "date-based")]
+#[cfg(any(feature = "date-based", feature = "manual"))]
 use std::{
     ffi::OsString,
     fs::OpenOptions,
@@ -84,6 +84,8 @@ pub enum Output {
     Writer(Writer),
     #[cfg(feature = "date-based")]
     DateBased(DateBased),
+    #[cfg(feature = "manual")]
+    Manual(Manual),
     #[cfg(all(not(windows), feature = "reopen-03"))]
     Reopen(Reopen),
     #[cfg(all(not(windows), feature = "reopen-1"))]
@@ -174,8 +176,16 @@ pub struct DateBased {
     pub state: Mutex<DateBasedState>,
 }
 
+/// File logger with a dynamic time-based name.
 #[derive(Debug)]
-#[cfg(feature = "date-based")]
+#[cfg(feature = "manual")]
+pub struct Manual {
+    pub config: ManualConfig,
+    pub state: Mutex<ManualState>,
+}
+
+#[derive(Debug)]
+#[cfg(any(feature = "date-based", feature = "manual"))]
 pub enum ConfiguredTimezone {
     Local,
     Utc,
@@ -192,8 +202,25 @@ pub struct DateBasedConfig {
 }
 
 #[derive(Debug)]
+#[cfg(feature = "manual")]
+pub struct ManualConfig {
+    pub line_sep: Cow<'static, str>,
+    /// This is a Path not an str so it can hold invalid UTF8 paths correctly.
+    pub file_prefix: PathBuf,
+    pub file_suffix: Cow<'static, str>,
+    pub timezone: ConfiguredTimezone,
+}
+
+#[derive(Debug)]
 #[cfg(feature = "date-based")]
 pub struct DateBasedState {
+    pub current_suffix: String,
+    pub file_stream: Option<BufWriter<fs::File>>,
+}
+
+#[derive(Debug)]
+#[cfg(feature = "manual")]
+pub struct ManualState {
     pub current_suffix: String,
     pub file_stream: Option<BufWriter<fs::File>>,
 }
@@ -202,6 +229,24 @@ pub struct DateBasedState {
 impl DateBasedState {
     pub fn new(current_suffix: String, file_stream: Option<fs::File>) -> Self {
         DateBasedState {
+            current_suffix,
+            file_stream: file_stream.map(BufWriter::new),
+        }
+    }
+
+    pub fn replace_file(&mut self, new_suffix: String, new_file: Option<fs::File>) {
+        if let Some(mut old) = self.file_stream.take() {
+            let _ = old.flush();
+        }
+        self.current_suffix = new_suffix;
+        self.file_stream = new_file.map(BufWriter::new)
+    }
+}
+
+#[cfg(feature = "manual")]
+impl ManualState {
+    pub fn new(current_suffix: String, file_stream: Option<fs::File>) -> Self {
+        ManualState {
             current_suffix,
             file_stream: file_stream.map(BufWriter::new),
         }
@@ -225,6 +270,50 @@ impl DateBasedConfig {
         timezone: ConfiguredTimezone,
     ) -> Self {
         DateBasedConfig {
+            line_sep,
+            file_prefix,
+            file_suffix,
+            timezone,
+        }
+    }
+
+    pub fn compute_current_suffix(&self) -> String {
+        match self.timezone {
+            ConfiguredTimezone::Utc => chrono::Utc::now().format(&self.file_suffix).to_string(),
+            ConfiguredTimezone::Local => chrono::Local::now().format(&self.file_suffix).to_string(),
+        }
+    }
+
+    pub fn compute_file_path(&self, suffix: &str) -> PathBuf {
+        let mut path = OsString::from(&*self.file_prefix);
+        // use the OsString::push method, not PathBuf::push which would add a path
+        // separator
+        path.push(suffix);
+        path.into()
+    }
+
+    pub fn open_log_file(path: &Path) -> io::Result<fs::File> {
+        OpenOptions::new()
+            .write(true)
+            .create(true)
+            .append(true)
+            .open(path)
+    }
+
+    pub fn open_current_log_file(&self, suffix: &str) -> io::Result<fs::File> {
+        Self::open_log_file(&self.compute_file_path(&suffix))
+    }
+}
+
+#[cfg(feature = "manual")]
+impl ManualConfig {
+    pub fn new(
+        line_sep: Cow<'static, str>,
+        file_prefix: PathBuf,
+        file_suffix: Cow<'static, str>,
+        timezone: ConfiguredTimezone,
+    ) -> Self {
+        ManualConfig {
             line_sep,
             file_prefix,
             file_suffix,
@@ -349,6 +438,8 @@ impl Log for Output {
             Output::Writer(ref s) => s.enabled(metadata),
             #[cfg(feature = "date-based")]
             Output::DateBased(ref s) => s.enabled(metadata),
+            #[cfg(feature = "manual")]
+            Output::Manual(ref s) => s.enabled(metadata),
             #[cfg(all(not(windows), feature = "reopen-03"))]
             Output::Reopen(ref s) => s.enabled(metadata),
             #[cfg(all(not(windows), feature = "reopen-1"))]
@@ -380,6 +471,8 @@ impl Log for Output {
             Output::Writer(ref s) => s.log(record),
             #[cfg(feature = "date-based")]
             Output::DateBased(ref s) => s.log(record),
+            #[cfg(feature = "manual")]
+            Output::Manual(ref s) => s.log(record),
             #[cfg(all(not(windows), feature = "reopen-03"))]
             Output::Reopen(ref s) => s.log(record),
             #[cfg(all(not(windows), feature = "reopen-1"))]
@@ -411,6 +504,8 @@ impl Log for Output {
             Output::Writer(ref s) => s.flush(),
             #[cfg(feature = "date-based")]
             Output::DateBased(ref s) => s.flush(),
+            #[cfg(feature = "manual")]
+            Output::Manual(ref s) => s.flush(),
             #[cfg(all(not(windows), feature = "reopen-03"))]
             Output::Reopen(ref s) => s.flush(),
             #[cfg(all(not(windows), feature = "reopen-1"))]
@@ -760,6 +855,61 @@ impl Log for Panic {
 
 #[cfg(feature = "date-based")]
 impl Log for DateBased {
+    fn enabled(&self, _: &log::Metadata) -> bool {
+        true
+    }
+
+    fn log(&self, record: &log::Record) {
+        fallback_on_error(record, |record| {
+            // Formatting first prevents deadlocks on file-logging,
+            // when the process of formatting itself is logged.
+            // note: this is only ever needed if some Debug, Display, or other
+            // formatting trait itself is logging.
+            #[cfg(feature = "meta-logging-in-format")]
+            let msg = format!("{}{}", record.args(), self.config.line_sep);
+
+            let mut state = self.state.lock().unwrap_or_else(|e| e.into_inner());
+
+            // check if log needs to be rotated
+            let new_suffix = self.config.compute_current_suffix();
+            if state.file_stream.is_none() || state.current_suffix != new_suffix {
+                let file_open_result = self.config.open_current_log_file(&new_suffix);
+                match file_open_result {
+                    Ok(file) => {
+                        state.replace_file(new_suffix, Some(file));
+                    }
+                    Err(e) => {
+                        state.replace_file(new_suffix, None);
+                        return Err(e.into());
+                    }
+                }
+            }
+
+            // either just initialized writer above, or already errored out.
+            let writer = state.file_stream.as_mut().unwrap();
+
+            #[cfg(feature = "meta-logging-in-format")]
+            write!(writer, "{}", msg)?;
+            #[cfg(not(feature = "meta-logging-in-format"))]
+            write!(writer, "{}{}", record.args(), self.config.line_sep)?;
+
+            writer.flush()?;
+
+            Ok(())
+        });
+    }
+
+    fn flush(&self) {
+        let mut state = self.state.lock().unwrap_or_else(|e| e.into_inner());
+
+        if let Some(stream) = &mut state.file_stream {
+            let _ = stream.flush();
+        }
+    }
+}
+
+#[cfg(feature = "manual")]
+impl Log for Manual {
     fn enabled(&self, _: &log::Metadata) -> bool {
         true
     }

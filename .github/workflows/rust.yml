@@ -80,8 +80,10 @@ jobs:
       - run: cargo run --example colored --features colored
       - run: cargo run --example pretty-colored --features colored
       - run: cargo run --example date-based-file-log --features date-based
+      - run: cargo run --example manual-file-log --features manual
       # we don't exactly have a good test suite for DateBased right now, so let's at least do this:
       - run: cargo run --example date-based-file-log --features date-based,meta-logging-in-format
+      - run: cargo run --example manual-file-log --features manual,meta-logging-in-format
   linux:
     name: Linux-only Examples
     runs-on: ubuntu-latest

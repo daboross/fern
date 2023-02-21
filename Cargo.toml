@@ -37,6 +37,7 @@ reopen-03 = ["reopen03", "libc"]
 reopen-1 = ["reopen1", "libc"]
 meta-logging-in-format = []
 date-based = ["chrono"]
+manual = ["chrono"]
 
 [dev-dependencies]
 tempfile = "3"
@@ -49,6 +50,10 @@ name = "cmd-program"
 [[example]]
 name = "date-based-file-log"
 required-features = ["date-based"]
+
+[[example]]
+name = "manual-file-log"
+required-features = ["manual"]
 
 [[example]]
 name = "colored"
