@@ -177,21 +177,11 @@ pub struct DateBased {
 }
 
 /// File logger with a dynamic time-based name.
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 #[cfg(feature = "manual")]
 pub struct Manual {
     pub config: ManualConfig,
     pub state: Arc<Mutex<ManualState>>,
-}
-
-#[cfg(feature = "manual")]
-impl Manual {
-    /// Rotate the log target, if gvien.
-    ///
-    /// Returns `Some((old_path, new_path))` if rotated, `None` otherwise.
-    fn rotate(&self) -> Option<(PathBuf, PathBuf)> {
-        unimplemented!()
-    }
 }
 
 #[derive(Debug, Clone)]
@@ -260,13 +250,6 @@ impl ManualState {
             current_suffix,
             file_stream: file_stream.map(BufWriter::new),
         }
-    }
-
-    /// Rotate the log target, if gvien.
-    ///
-    /// Returns `Some((old_path, new_path))` if rotated, `None` otherwise.
-    fn rotate(&self) -> Option<(PathBuf, PathBuf)> {
-        unimplemented!()
     }
 
     pub fn replace_file(&mut self, new_suffix: String, new_file: Option<fs::File>) {
@@ -599,7 +582,7 @@ impl Dispatch {
             && self.filters.iter().all(|f| f(metadata))
     }
 
-    /// Rotate the log target, if gvien.
+    /// Rotate the log target, if given.
     ///
     /// Returns `Some((old_path, new_path))` if rotated, `None` otherwise.
     pub fn rotate(&self) -> Vec<Option<(PathBuf, PathBuf)>> {
@@ -621,6 +604,33 @@ impl Dispatch {
     /// This is recursive, and checks children.
     fn deep_enabled(&self, metadata: &log::Metadata) -> bool {
         self.shallow_enabled(metadata) && self.output.iter().any(|l| l.enabled(metadata))
+    }
+}
+
+#[cfg(feature = "manual")]
+impl Manual {
+    /// Rotate the log target, if given.
+    ///
+    /// Returns `Some((old_path, new_path))` if rotated, `None` otherwise.
+    pub fn rotate(&self) -> Option<(PathBuf, PathBuf)> {
+        let mut state = self.state.lock().unwrap();
+        let old_path = self.config.compute_file_path(state.current_suffix.as_str());
+
+        // check if log needs to be rotated
+        let new_suffix = self.config.compute_current_suffix();
+        if state.file_stream.is_none() || state.current_suffix != new_suffix {
+            let file_open_result = self.config.open_current_log_file(&new_suffix.clone());
+            match file_open_result {
+                Ok(file) => {
+                    state.replace_file(new_suffix.clone(), Some(file));
+                }
+                Err(_e) => {
+                    state.replace_file(new_suffix.clone(), None);
+                }
+            }
+        }
+        let new_path = self.config.compute_file_path(&new_suffix);
+        Some((old_path, new_path))
     }
 }
 
@@ -772,10 +782,7 @@ impl Log for Sender {
     fn flush(&self) {}
 }
 
-#[cfg(all(
-    not(windows),
-    any(feature = "syslog-3", feature = "syslog-4", feature = "syslog-6")
-))]
+#[cfg(all(not(windows), any(feature = "syslog-3", feature = "syslog-4", feature = "syslog-6")))]
 macro_rules! send_syslog {
     ($logger:expr, $level:expr, $message:expr) => {
         use log::Level;
@@ -960,21 +967,6 @@ impl Log for Manual {
             let msg = format!("{}{}", record.args(), self.config.line_sep);
 
             let mut state = self.state.lock().unwrap_or_else(|e| e.into_inner());
-
-            // // check if log needs to be rotated
-            // let new_suffix = self.config.compute_current_suffix();
-            // if state.file_stream.is_none() || state.current_suffix != new_suffix {
-            //     let file_open_result = self.config.open_current_log_file(&new_suffix);
-            //     match file_open_result {
-            //         Ok(file) => {
-            //             state.replace_file(new_suffix, Some(file));
-            //         }
-            //         Err(e) => {
-            //             state.replace_file(new_suffix, None);
-            //             return Err(e.into());
-            //         }
-            //     }
-            // }
 
             // either just initialized writer above, or already errored out.
             let writer = state.file_stream.as_mut().unwrap();
