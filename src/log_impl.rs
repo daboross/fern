@@ -184,6 +184,16 @@ pub struct Manual {
     pub state: Arc<Mutex<ManualState>>,
 }
 
+#[cfg(feature = "manual")]
+impl Manual {
+    /// Rotate the log target, if gvien.
+    ///
+    /// Returns `Some((old_path, new_path))` if rotated, `None` otherwise.
+    fn rotate(&self) -> Option<(PathBuf, PathBuf)> {
+        unimplemented!()
+    }
+}
+
 #[derive(Debug, Clone)]
 #[cfg(any(feature = "date-based", feature = "manual"))]
 pub enum ConfiguredTimezone {
@@ -250,6 +260,13 @@ impl ManualState {
             current_suffix,
             file_stream: file_stream.map(BufWriter::new),
         }
+    }
+
+    /// Rotate the log target, if gvien.
+    ///
+    /// Returns `Some((old_path, new_path))` if rotated, `None` otherwise.
+    fn rotate(&self) -> Option<(PathBuf, PathBuf)> {
+        unimplemented!()
     }
 
     pub fn replace_file(&mut self, new_suffix: String, new_file: Option<fs::File>) {
@@ -582,6 +599,22 @@ impl Dispatch {
             && self.filters.iter().all(|f| f(metadata))
     }
 
+    /// Rotate the log target, if gvien.
+    ///
+    /// Returns `Some((old_path, new_path))` if rotated, `None` otherwise.
+    pub fn rotate(&self) -> Vec<Option<(PathBuf, PathBuf)>> {
+        self.output
+            .iter()
+            .map(|o| {
+                if let Output::Manual(m) = o {
+                    m.rotate()
+                } else {
+                    None
+                }
+            })
+            .collect()
+    }
+
     /// Check whether a log with the given metadata would eventually end up
     /// outputting something.
     ///
@@ -739,7 +772,10 @@ impl Log for Sender {
     fn flush(&self) {}
 }
 
-#[cfg(all(not(windows), any(feature = "syslog-3", feature = "syslog-4", feature = "syslog-6")))]
+#[cfg(all(
+    not(windows),
+    any(feature = "syslog-3", feature = "syslog-4", feature = "syslog-6")
+))]
 macro_rules! send_syslog {
     ($logger:expr, $level:expr, $message:expr) => {
         use log::Level;

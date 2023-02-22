@@ -407,7 +407,7 @@ impl Dispatch {
     ///
     /// This could probably be refactored, but having everything in one place
     /// is also nice.
-    fn into_dispatch(self) -> (log::LevelFilter, log_impl::Dispatch) {
+    pub fn into_dispatch(self) -> (log::LevelFilter, log_impl::Dispatch) {
         let Dispatch {
             format,
             children,
@@ -586,7 +586,8 @@ impl Dispatch {
                     // ignore errors - we'll just retry later.
                     let initial_file = manual_config.open_current_log_file(&computed_suffix).ok();
 
-                    let state = Arc::new(Mutex::new(ManualState::new(computed_suffix, initial_file)));
+                    let state =
+                        Arc::new(Mutex::new(ManualState::new(computed_suffix, initial_file)));
                     config.state(state.clone());
 
                     Some(log_impl::Output::Manual(log_impl::Manual {
@@ -1089,8 +1090,8 @@ impl Output {
     /// If the default separator of `\n` is acceptable, a `Reopen`
     /// instance can be passed into [`Dispatch::chain`] directly.
     ///
-    /// This function is not available on Windows, and it requires the `reopen-03`
-    /// feature to be enabled.
+    /// This function is not available on Windows, and it requires the
+    /// `reopen-03` feature to be enabled.
     ///
     /// ```no_run
     /// use std::fs::OpenOptions;
@@ -1128,8 +1129,8 @@ impl Output {
     /// If the default separator of `\n` is acceptable, a `Reopen`
     /// instance can be passed into [`Dispatch::chain`] directly.
     ///
-    /// This function is not available on Windows, and it requires the `reopen-03`
-    /// feature to be enabled.
+    /// This function is not available on Windows, and it requires the
+    /// `reopen-03` feature to be enabled.
     ///
     /// ```no_run
     /// use std::fs::OpenOptions;
@@ -1262,7 +1263,8 @@ impl Output {
         })
     }
 
-    /// Returns a logger which logs into an RFC5424 syslog (using syslog version 6)
+    /// Returns a logger which logs into an RFC5424 syslog (using syslog version
+    /// 6)
     ///
     /// This method takes an additional transform method to turn the log data
     /// into RFC5424 data.
@@ -1837,7 +1839,7 @@ impl Manual {
                                 Ok(file) => {
                                     state.replace_file(new_suffix, Some(file));
                                 }
-                                Err(e) => {
+                                Err(_e) => {
                                     state.replace_file(new_suffix, None);
                                 }
                             }
