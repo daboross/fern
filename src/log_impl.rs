@@ -582,9 +582,18 @@ impl Dispatch {
             && self.filters.iter().all(|f| f(metadata))
     }
 
+    /// Check whether a log with the given metadata would eventually end up
+    /// outputting something.
+    ///
+    /// This is recursive, and checks children.
+    fn deep_enabled(&self, metadata: &log::Metadata) -> bool {
+        self.shallow_enabled(metadata) && self.output.iter().any(|l| l.enabled(metadata))
+    }
+
     /// Rotate the log target, if given.
     ///
     /// Returns `Some((old_path, new_path))` if rotated, `None` otherwise.
+    #[cfg(feature = "manual")]
     pub fn rotate(&self) -> Vec<Option<(PathBuf, PathBuf)>> {
         self.output
             .iter()
@@ -596,14 +605,6 @@ impl Dispatch {
                 }
             })
             .collect()
-    }
-
-    /// Check whether a log with the given metadata would eventually end up
-    /// outputting something.
-    ///
-    /// This is recursive, and checks children.
-    fn deep_enabled(&self, metadata: &log::Metadata) -> bool {
-        self.shallow_enabled(metadata) && self.output.iter().any(|l| l.enabled(metadata))
     }
 }
 
