@@ -30,7 +30,6 @@ reopen03 = { version = "^0.3", package = "reopen", optional = true }
 libc = { version = "0.2.58", optional = true }
 
 [features]
-default = ["manual"]
 syslog-3 = ["syslog3"]
 syslog-4 = ["syslog4"]
 syslog-6 = ["syslog6"]
