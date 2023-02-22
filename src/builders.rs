@@ -19,7 +19,7 @@ use crate::{log_impl, Filter, FormatCallback, Formatter};
 use crate::log_impl::DateBasedState;
 
 #[cfg(feature = "manual")]
-use crate::log_impl::ManualState;
+use crate::log_impl::{ManualConfig, ManualState};
 
 #[cfg(all(not(windows), feature = "syslog-4"))]
 use crate::{Syslog4Rfc3164Logger, Syslog4Rfc5424Logger};
@@ -570,10 +570,10 @@ impl Dispatch {
                 OutputInner::Manual { config } => {
                     max_child_level = log::LevelFilter::Trace;
 
-                    let config = log_impl::ManualConfig::new(
-                        config.line_sep,
-                        config.file_prefix,
-                        config.file_suffix,
+                    let manual_config = log_impl::ManualConfig::new(
+                        config.line_sep.clone(),
+                        config.file_prefix.clone(),
+                        config.file_suffix.clone(),
                         if config.utc_time {
                             log_impl::ConfiguredTimezone::Utc
                         } else {
@@ -581,14 +581,17 @@ impl Dispatch {
                         },
                     );
 
-                    let computed_suffix = config.compute_current_suffix();
+                    let computed_suffix = manual_config.compute_current_suffix();
 
                     // ignore errors - we'll just retry later.
-                    let initial_file = config.open_current_log_file(&computed_suffix).ok();
+                    let initial_file = manual_config.open_current_log_file(&computed_suffix).ok();
+
+                    let state = Arc::new(Mutex::new(ManualState::new(computed_suffix, initial_file)));
+                    config.state(state.clone());
 
                     Some(log_impl::Output::Manual(log_impl::Manual {
-                        config,
-                        state: Mutex::new(ManualState::new(computed_suffix, initial_file)),
+                        config: manual_config,
+                        state,
                     }))
                 }
             })
@@ -1496,13 +1499,15 @@ pub struct DateBased {
 /// This is used to generate log file suffixed based on date, hour, and minute.
 ///
 /// The log file will be rotated manually when `builder::rotate()` is called.
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 #[cfg(feature = "manual")]
 pub struct Manual {
     file_prefix: PathBuf,
     file_suffix: Cow<'static, str>,
     line_sep: Cow<'static, str>,
     utc_time: bool,
+    config: Option<ManualConfig>,
+    state: Option<Arc<Mutex<ManualState>>>,
 }
 
 #[cfg(feature = "date-based")]
@@ -1745,6 +1750,8 @@ impl Manual {
             file_prefix: file_prefix.as_ref().to_owned(),
             file_suffix: file_suffix.into(),
             line_sep: "\n".into(),
+            config: None,
+            state: None,
         }
     }
 
@@ -1802,6 +1809,45 @@ impl Manual {
     pub fn local_time(mut self) -> Self {
         self.utc_time = false;
         self
+    }
+
+    /// Sets the config to share with log_impl.
+    pub fn config(mut self, config: ManualConfig) {
+        self.config = Some(config);
+    }
+
+    /// Sets the state to share with log_impl.
+    pub fn state(mut self, state: Arc<Mutex<ManualState>>) {
+        self.state = Some(state);
+    }
+
+    /// Rotates the log file manually.
+    pub fn rotate(self) {
+        match self.config {
+            Some(ref config) => {
+                match self.state {
+                    Some(ref state) => {
+                        let mut state = state.lock().unwrap();
+
+                        // check if log needs to be rotated
+                        let new_suffix = config.compute_current_suffix();
+                        if state.file_stream.is_none() || state.current_suffix != new_suffix {
+                            let file_open_result = config.open_current_log_file(&new_suffix);
+                            match file_open_result {
+                                Ok(file) => {
+                                    state.replace_file(new_suffix, Some(file));
+                                }
+                                Err(e) => {
+                                    state.replace_file(new_suffix, None);
+                                }
+                            }
+                        }
+                    }
+                    None => {}
+                }
+            }
+            None => {}
+        }
     }
 }
 

@@ -181,10 +181,10 @@ pub struct DateBased {
 #[cfg(feature = "manual")]
 pub struct Manual {
     pub config: ManualConfig,
-    pub state: Mutex<ManualState>,
+    pub state: Arc<Mutex<ManualState>>,
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 #[cfg(any(feature = "date-based", feature = "manual"))]
 pub enum ConfiguredTimezone {
     Local,
@@ -201,7 +201,7 @@ pub struct DateBasedConfig {
     pub timezone: ConfiguredTimezone,
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 #[cfg(feature = "manual")]
 pub struct ManualConfig {
     pub line_sep: Cow<'static, str>,
@@ -925,20 +925,20 @@ impl Log for Manual {
 
             let mut state = self.state.lock().unwrap_or_else(|e| e.into_inner());
 
-            // check if log needs to be rotated
-            let new_suffix = self.config.compute_current_suffix();
-            if state.file_stream.is_none() || state.current_suffix != new_suffix {
-                let file_open_result = self.config.open_current_log_file(&new_suffix);
-                match file_open_result {
-                    Ok(file) => {
-                        state.replace_file(new_suffix, Some(file));
-                    }
-                    Err(e) => {
-                        state.replace_file(new_suffix, None);
-                        return Err(e.into());
-                    }
-                }
-            }
+            // // check if log needs to be rotated
+            // let new_suffix = self.config.compute_current_suffix();
+            // if state.file_stream.is_none() || state.current_suffix != new_suffix {
+            //     let file_open_result = self.config.open_current_log_file(&new_suffix);
+            //     match file_open_result {
+            //         Ok(file) => {
+            //             state.replace_file(new_suffix, Some(file));
+            //         }
+            //         Err(e) => {
+            //             state.replace_file(new_suffix, None);
+            //             return Err(e.into());
+            //         }
+            //     }
+            // }
 
             // either just initialized writer above, or already errored out.
             let writer = state.file_stream.as_mut().unwrap();

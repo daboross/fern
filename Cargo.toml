@@ -20,6 +20,7 @@ include = ["Cargo.toml", "src/**/*", "tests/**/*", "examples/**/*", "LICENSE", "
 log = { version = "0.4", features = ["std"] }
 colored = { version = "1.5", optional = true }
 chrono = { version = "0.4", default-features = false, features = ["std", "clock"], optional = true }
+tokio = { version = "1", features = ["rt-multi-thread", "macros"] }
 
 [target."cfg(not(windows))".dependencies]
 syslog3 = { version = "3", package = "syslog", optional = true }
@@ -30,6 +31,7 @@ reopen03 = { version = "^0.3", package = "reopen", optional = true }
 libc = { version = "0.2.58", optional = true }
 
 [features]
+default = ["manual"]
 syslog-3 = ["syslog3"]
 syslog-4 = ["syslog4"]
 syslog-6 = ["syslog6"]
