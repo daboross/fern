@@ -216,6 +216,9 @@ pub use crate::{
     log_impl::FormatCallback,
 };
 
+#[cfg(feature = "manual")]
+pub use crate::log_impl::Dispatch as ImplDispatch;
+
 mod builders;
 mod errors;
 mod log_impl;
