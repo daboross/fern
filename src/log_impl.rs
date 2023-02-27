@@ -32,6 +32,7 @@ pub enum LevelConfiguration {
     Many(HashMap<Cow<'static, str>, log::LevelFilter>),
 }
 
+#[allow(missing_docs)]
 pub struct Dispatch {
     pub output: Vec<Output>,
     pub default_level: log::LevelFilter,

@@ -43,6 +43,7 @@ manual = ["chrono"]
 tempfile = "3"
 clap = "2.22"
 chrono = { version = "0.4", default-features = false, features = ["std", "clock"]}
+lazy_static = "1.4"
 
 [[example]]
 name = "cmd-program"

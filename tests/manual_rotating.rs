@@ -1,8 +1,15 @@
 //! Tests!
 #[cfg(feature = "manual")]
-use std::fs;
+use lazy_static::lazy_static;
+#[cfg(feature = "manual")]
+use std::{fs, sync::{Arc, Mutex}};
 
 mod support;
+
+#[cfg(feature = "manual")]
+lazy_static! {
+    static ref FILE_LOGGER: Mutex<Option<Arc<fern::ImplDispatch>>> = Mutex::new(None);
+}
 
 #[cfg(feature = "manual")]
 #[test]
@@ -13,6 +20,7 @@ fn test_basic_logging_manual_rotating() {
         .level(log::LevelFilter::Info)
         .chain(fern::Manual::new("program.log.", "%Y-%m-%d_%H-%M-%S%.f"))
         .into_dispatch_with_arc();
+    *FILE_LOGGER.lock().unwrap() = Some(dispatch.clone());
 
     if level == log::LevelFilter::Off {
         log::set_boxed_logger(Box::new(NullLogger)).unwrap();
@@ -27,6 +35,9 @@ fn test_basic_logging_manual_rotating() {
     log::warn!("Test warning message");
     log::error!("Test error message");
 
+    // if let Some(dispatch) = &*FILE_LOGGER.lock().unwrap() { ... }
+    // above lock() was not released, so this code can't be used
+    // instead use dispatch directly, because it was used under clone above.
     let res = dispatch.rotate();
 
     log::trace!("SHOULD NOT DISPLAY");
