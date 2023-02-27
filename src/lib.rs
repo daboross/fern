@@ -216,6 +216,9 @@ pub use crate::{
     log_impl::FormatCallback,
 };
 
+#[cfg(feature = "manual")]
+pub use crate::log_impl::Dispatch as ImplDispatch;
+
 mod builders;
 mod errors;
 mod log_impl;
@@ -239,6 +242,9 @@ pub type Filter = dyn Fn(&log::Metadata) -> bool + Send + Sync + 'static;
 
 #[cfg(feature = "date-based")]
 pub use crate::builders::DateBased;
+
+#[cfg(feature = "manual")]
+pub use crate::builders::Manual;
 
 #[cfg(all(not(windows), feature = "syslog-4"))]
 type Syslog4Rfc3164Logger = syslog4::Logger<syslog4::LoggerBackend, String, syslog4::Formatter3164>;
