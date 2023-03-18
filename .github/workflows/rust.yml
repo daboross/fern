@@ -82,6 +82,7 @@ jobs:
       - run: cargo run --example date-based-file-log --features date-based
       # we don't exactly have a good test suite for DateBased right now, so let's at least do this:
       - run: cargo run --example date-based-file-log --features date-based,meta-logging-in-format
+      - run: RUSTDOCFLAGS="-D warnings" cargo doc --all-features
   linux:
     name: Linux-only Examples
     runs-on: ubuntu-latest
