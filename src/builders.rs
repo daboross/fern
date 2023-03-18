@@ -45,7 +45,7 @@ use crate::{Syslog6Rfc3164Logger, Syslog6Rfc5424Logger};
 /// fern::Dispatch::new()
 ///     .format(|out, message, record| {
 ///         out.finish(format_args!(
-///             "[{}][{}] {}",
+///             "[{} {}] {}",
 ///             record.level(),
 ///             record.target(),
 ///             message,
@@ -159,7 +159,7 @@ impl Dispatch {
     /// ```
     /// fern::Dispatch::new().format(|out, message, record| {
     ///     out.finish(format_args!(
-    ///         "[{}][{}] {}",
+    ///         "[{} {}] {}",
     ///         record.level(),
     ///         record.target(),
     ///         message

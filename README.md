@@ -19,10 +19,10 @@ fern::Dispatch::new()
     // Perform allocation-free log formatting
     .format(|out, message, record| {
         out.finish(format_args!(
-            "{}[{}][{}] {}",
-            chrono::Local::now().format("[%Y-%m-%d][%H:%M:%S]"),
-            record.target(),
+            "[{} {} {}] {}",
+            humantime::format_rfc3339(std::time::SystemTime::now()),
             record.level(),
+            record.target(),
             message
         ))
     })

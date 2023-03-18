@@ -22,15 +22,16 @@
 //!
 //! ```no_run
 //! use log::{debug, error, info, trace, warn};
+//! use std::time::SystemTime;
 //!
 //! fn setup_logger() -> Result<(), fern::InitError> {
 //!     fern::Dispatch::new()
 //!         .format(|out, message, record| {
 //!             out.finish(format_args!(
-//!                 "{}[{}][{}] {}",
-//!                 chrono::Local::now().format("[%Y-%m-%d][%H:%M:%S]"),
-//!                 record.target(),
+//!                 "[{} {} {}] {}",
+//!                 humantime::format_rfc3339_seconds(SystemTime::now()),
 //!                 record.level(),
+//!                 record.target(),
 //!                 message
 //!             ))
 //!         })
@@ -40,9 +41,16 @@
 //!         .apply()?;
 //!     Ok(())
 //! }
-//! # fn main() {
-//! #     setup_logger().expect("failed to set up logger")
-//! # }
+//!
+//! fn main() -> Result<(), Box<dyn std::error::Error>> {
+//!     setup_logger()?;
+//!
+//!     info!("Hello, world!");
+//!     warn!("Warning!");
+//!     debug!("Now exiting.");
+//!
+//!     Ok(())
+//! }
 //! ```
 //!
 //! Let's unwrap this:
@@ -61,16 +69,24 @@
 //!
 //! ___
 //!
-//! [`chrono::Local::now()`]
+//! [`std::time::SystemTime::now()`][std::time::SystemTime::now]
 //!
-//! Get the current time in the local timezone using the [`chrono`] library.
-//! See the [time-and-date docs].
+//! Retrieves the current time.
 //!
 //! ___
 //!
-//! [`.format("[%Y-%m-%d][%H:%M:%S]")`][chrono-format]
+//! [`humantime::format_rfc3339_seconds(...)`]
 //!
-//! Use chrono's lazy format specifier to turn the time into a readable string.
+//! Uses [`humantime`] to format this timestamp to an RFC3339 timestamp, with no
+//! fractional seconds.
+//!
+//! RFC3339 formats timestamps with `2018-02-14T00:28:07Z`, always using UTC,
+//! ignoring system timezone.
+//!
+//! `humantime` is a nice light dependency for using this format in particular.
+//! To do more custom time formatting, I recommend
+//! [chrono](https://docs.rs/chrono/) or
+//! [`time`](https://docs.rs/time/).
 //!
 //! ---
 //!
@@ -78,8 +94,8 @@
 //!
 //! Call the `fern::FormattingCallback` to submit the formatted message.
 //!
-//! This roundabout way is slightly odd, but it allows for very fast logging.
-//! No string allocation required!
+//! This roundabout way is slightly odd, but it allows for logging with no
+//! string allocation!
 //!
 //! [`format_args!()`] has the same format as [`println!()`] \(and every other
 //! [`std::fmt`]-based macro).
@@ -127,9 +143,9 @@
 //! The final output will look like:
 //!
 //! ```text
-//! [2017-01-20][12:55:04][crate-name][INFO] Hello, world!
-//! [2017-01-20][12:56:21][crate-name][WARN] Ahhh!
-//! [2017-01-20][12:58:00][crate-name][DEBUG] Something less important happened.
+//! [2023-03-18T20:12:50Z INFO cmd_program] Hello, world!
+//! [2023-03-18T20:12:50Z WARN cmd_program] Warning!
+//! [2023-03-18T20:12:50Z DEBUG cmd_program] Now exiting.
 //! ```
 //!
 //! # Logging
@@ -173,8 +189,6 @@
 //!
 //! [`fern::Dispatch::new()`]: struct.Dispatch.html#method.new
 //! [`.format(|...| ...)`]: struct.Dispatch.html#method.format
-//! [`chrono::Local::now()`]: https://docs.rs/chrono/0.4/chrono/offset/local/struct.Local.html#method.now
-//! [chrono-format]: https://docs.rs/chrono/0.4/chrono/datetime/struct.DateTime.html#method.format
 //! [`out.finish(format_args!(...))`]: struct.FormatCallback.html#method.finish
 //! [`.level(log::LevelFilter::Debug)`]: struct.Dispatch.html#method.level
 //! [`Dispatch::chain`]: struct.Dispatch.html#method.chain
@@ -190,8 +204,6 @@
 //! [`println!()`]: https://doc.rust-lang.org/std/macro.println.html
 //! [`std::fmt`]: https://doc.rust-lang.org/std/fmt/
 //! [`chrono`]: https://github.com/chronotope/chrono
-//! [time-and-date docs]: https://docs.rs/chrono/0.4/chrono/index.html#date-and-time
-//! [the format specifier docs]: https://docs.rs/chrono/0.4/chrono/format/strftime/index.html#specifiers
 //! [`Dispatch` documentation]: struct.Dispatch.html
 //! [full example program]: https://github.com/daboross/fern/tree/fern-0.6.1/examples/cmd-program.rs
 //! [syslog full example program]: https://github.com/daboross/fern/tree/fern-0.6.1/examples/syslog.rs

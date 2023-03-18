@@ -1,4 +1,4 @@
-use std::io;
+use std::{io, time::SystemTime};
 
 use log::{debug, info, trace, warn};
 
@@ -25,10 +25,10 @@ fn setup_logging(verbosity: u64) -> Result<(), fern::InitError> {
     let file_config = fern::Dispatch::new()
         .format(|out, message, record| {
             out.finish(format_args!(
-                "{}[{}][{}] {}",
-                chrono::Local::now().format("[%Y-%m-%d][%H:%M:%S]"),
-                record.target(),
+                "[{} {} {}] {}",
+                humantime::format_rfc3339_seconds(SystemTime::now()),
                 record.level(),
+                record.target(),
                 message
             ))
         })
@@ -39,16 +39,16 @@ fn setup_logging(verbosity: u64) -> Result<(), fern::InitError> {
             // special format for debug messages coming from our own crate.
             if record.level() > log::LevelFilter::Info && record.target() == "cmd_program" {
                 out.finish(format_args!(
-                    "---\nDEBUG: {}: {}\n---",
-                    chrono::Local::now().format("%H:%M:%S"),
+                    "DEBUG @ {}: {}",
+                    humantime::format_rfc3339_seconds(SystemTime::now()),
                     message
                 ))
             } else {
                 out.finish(format_args!(
-                    "[{}][{}][{}] {}",
-                    chrono::Local::now().format("%H:%M"),
-                    record.target(),
+                    "[{} {} {}] {}",
+                    humantime::format_rfc3339_seconds(SystemTime::now()),
                     record.level(),
+                    record.target(),
                     message
                 ))
             }

@@ -41,7 +41,7 @@ date-based = ["chrono"]
 [dev-dependencies]
 tempfile = "3"
 clap = "2.22"
-chrono = { version = "0.4", default-features = false, features = ["std", "clock"]}
+humantime = "2.1.0"
 
 [[example]]
 name = "cmd-program"
