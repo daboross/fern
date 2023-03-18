@@ -1,3 +1,5 @@
+use std::time::SystemTime;
+
 use fern::colors::{Color, ColoredLevelConfig};
 use log::{debug, error, warn};
 
@@ -8,10 +10,11 @@ fn main() {
         .chain(std::io::stdout())
         .format(move |out, message, record| {
             out.finish(format_args!(
-                "[{}]{} {}",
+                "[{} {} {}] {}",
+                humantime::format_rfc3339_seconds(SystemTime::now()),
                 // This will color the log level only, not the whole line. Just a touch.
                 colors.color(record.level()),
-                chrono::Utc::now().format("[%Y-%m-%d %H:%M:%S]"),
+                record.target(),
                 message
             ))
         })
