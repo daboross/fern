@@ -111,7 +111,7 @@
 //!
 //! ___
 //!
-//! [`humantime::format_rfc3339_seconds(...)`]
+//! [`humantime::format_rfc3339_seconds(...)`][format_rfc3339_seconds]
 //!
 //! Uses [`humantime`] to format this timestamp to an RFC3339 timestamp, with no
 //! fractional seconds.
@@ -247,6 +247,8 @@
 //! [colors]: colors/index.html
 //! [syslog]: syslog/index.html
 //! [meta]: meta/index.html
+//! [format_rfc3339_seconds]: https://docs.rs/humantime/2/humantime/fn.format_rfc3339_seconds.html
+//! [`humantime`]: https://docs.rs/humantime/2/
 use std::{
     convert::AsRef,
     fmt,
