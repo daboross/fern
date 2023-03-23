@@ -20,7 +20,7 @@ feature), and a custom global allocator.
 I will be releasing `fern` 0.7.0, removing `colored` as a dependency. This may
 add another color crate, or may just document usage of alternatives (such as
 [`owo-colors`](https://docs.rs/owo-colors/) +
-[`enable-ansi-support`](https://docs.rs/enable-ansi-support/0.2.1/le_ansi_support/)).
+[`enable-ansi-support`](https://docs.rs/enable-ansi-support/)).
 
 In the meantime, if you're using `#[global_allocator]`, I highly recommend
 removing the `fern/colored` feature.
