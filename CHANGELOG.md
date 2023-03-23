@@ -1,6 +1,12 @@
 Unreleased
 ==========
 
+- Add security warning for "colored" feature when using a global allocator
+  to doc homepage and README.md. See
+  [fern-0.6.2 README.md](https://github.com/daboross/fern/blob/fern-0.6.2/README.md)
+- Change examples to use `env_logger`-style formatting
+- Improve main documentation example explanation
+- Misc. style improvements (clippy lint fixes which have no functional change)
 
 0.6.1 (2022-04-15)
 ==================
