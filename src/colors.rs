@@ -53,7 +53,7 @@
 //! [examples/pretty-colored.rs][ex].
 //!
 //! [`ColoredLevelConfig`]: struct.ColoredLevelConfig.html
-//! [ex]: https://github.com/daboross/fern/blob/fern-0.6.1/examples/pretty-colored.rs
+//! [ex]: https://github.com/daboross/fern/blob/fern-0.6.2/examples/pretty-colored.rs
 use std::fmt;
 
 pub use colored::Color;

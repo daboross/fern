@@ -1,6 +1,9 @@
 Unreleased
 ==========
 
+0.6.2 (2023-03-23)
+==================
+
 - Add security warning for "colored" feature when using a global allocator
   to doc homepage and README.md. See
   [fern-0.6.2 README.md](https://github.com/daboross/fern/blob/fern-0.6.2/README.md)
