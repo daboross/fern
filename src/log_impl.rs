@@ -18,13 +18,9 @@ use log::{self, Log};
 use crate::{Filter, Formatter};
 
 #[cfg(all(not(windows), feature = "syslog-4"))]
-use crate::{Syslog4Rfc3164Logger, Syslog4Rfc5424Logger};
+use crate::{Syslog4Rfc3164Logger, Syslog4Rfc5424Logger, Syslog4TransformFn};
 #[cfg(all(not(windows), feature = "syslog-6"))]
-use crate::{Syslog6Rfc3164Logger, Syslog6Rfc5424Logger};
-#[cfg(all(not(windows), feature = "reopen-03"))]
-use reopen03;
-#[cfg(all(not(windows), feature = "reopen-1"))]
-use reopen1;
+use crate::{Syslog6Rfc3164Logger, Syslog6Rfc5424Logger, Syslog6TransformFn};
 
 pub enum LevelConfiguration {
     JustDefault,
@@ -140,11 +136,7 @@ pub struct Syslog4Rfc3164 {
 #[cfg(all(not(windows), feature = "syslog-4"))]
 pub struct Syslog4Rfc5424 {
     pub inner: Mutex<Syslog4Rfc5424Logger>,
-    pub transform: Box<
-        dyn Fn(&log::Record) -> (i32, HashMap<String, HashMap<String, String>>, String)
-            + Sync
-            + Send,
-    >,
+    pub transform: Box<Syslog4TransformFn>,
 }
 
 #[cfg(all(not(windows), feature = "syslog-6"))]
@@ -155,11 +147,7 @@ pub struct Syslog6Rfc3164 {
 #[cfg(all(not(windows), feature = "syslog-6"))]
 pub struct Syslog6Rfc5424 {
     pub inner: Mutex<Syslog6Rfc5424Logger>,
-    pub transform: Box<
-        dyn Fn(&log::Record) -> (u32, HashMap<String, HashMap<String, String>>, String)
-            + Sync
-            + Send,
-    >,
+    pub transform: Box<Syslog6TransformFn>,
 }
 
 pub struct Panic;
@@ -256,7 +244,7 @@ impl DateBasedConfig {
     }
 
     pub fn open_current_log_file(&self, suffix: &str) -> io::Result<fs::File> {
-        Self::open_log_file(&self.compute_file_path(&suffix))
+        Self::open_log_file(&self.compute_file_path(suffix))
     }
 }
 
@@ -317,8 +305,8 @@ impl LevelConfiguration {
             LevelConfiguration::JustDefault => None,
             LevelConfiguration::Minimal(ref levels) => levels
                 .iter()
-                .find(|&&(ref test_module, _)| test_module == module)
-                .map(|&(_, level)| level),
+                .find(|(test_module, _)| test_module == module)
+                .map(|(_, level)| *level),
             LevelConfiguration::Many(ref levels) => levels.get(module).cloned(),
         }
     }
@@ -644,7 +632,10 @@ impl Log for Sender {
     fn flush(&self) {}
 }
 
-#[cfg(all(not(windows), any(feature = "syslog-3", feature = "syslog-4", feature = "syslog-6")))]
+#[cfg(all(
+    not(windows),
+    any(feature = "syslog-3", feature = "syslog-4", feature = "syslog-6")
+))]
 macro_rules! send_syslog {
     ($logger:expr, $level:expr, $message:expr) => {
         use log::Level;

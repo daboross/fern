@@ -169,3 +169,15 @@ jobs:
           toolchain: 1.59.0
           override: true
       - run: cargo build --features syslog-6
+  fmt_and_clippy:
+    name: Optional Lints
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions-rs/toolchain@v1
+        with:
+          profile: minimal
+          toolchain: stable
+          override: true
+      - run: cargo fmt --check
+      - run: cargo clippy --all-features --all-targets -- -D warnings

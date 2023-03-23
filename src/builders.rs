@@ -19,10 +19,10 @@ use crate::{log_impl, Filter, FormatCallback, Formatter};
 use crate::log_impl::DateBasedState;
 
 #[cfg(all(not(windows), feature = "syslog-4"))]
-use crate::{Syslog4Rfc3164Logger, Syslog4Rfc5424Logger};
+use crate::{Syslog4Rfc3164Logger, Syslog4Rfc5424Logger, Syslog4TransformFn};
 
 #[cfg(all(not(windows), feature = "syslog-6"))]
-use crate::{Syslog6Rfc3164Logger, Syslog6Rfc5424Logger};
+use crate::{Syslog6Rfc3164Logger, Syslog6Rfc5424Logger, Syslog6TransformFn};
 
 /// The base dispatch logger.
 ///
@@ -294,7 +294,7 @@ impl Dispatch {
             .levels
             .iter()
             .enumerate()
-            .find(|&(_, &(ref name, _))| name == &module)
+            .find(|(_, (name, _))| *name == module)
         {
             self.levels.remove(index);
         }
@@ -576,11 +576,11 @@ impl Dispatch {
         filters.shrink_to_fit();
 
         let dispatch = log_impl::Dispatch {
-            output: output,
-            default_level: default_level,
+            output,
+            default_level,
             levels: levels.into(),
-            format: format,
-            filters: filters,
+            format,
+            filters,
         };
 
         (real_min, dispatch)
@@ -696,11 +696,7 @@ enum OutputInner {
     #[cfg(all(not(windows), feature = "syslog-4"))]
     Syslog4Rfc5424 {
         logger: Syslog4Rfc5424Logger,
-        transform: Box<
-            dyn Fn(&log::Record) -> (i32, HashMap<String, HashMap<String, String>>, String)
-                + Sync
-                + Send,
-        >,
+        transform: Box<Syslog4TransformFn>,
     },
     #[cfg(all(not(windows), feature = "syslog-6"))]
     Syslog6Rfc3164(Syslog6Rfc3164Logger),
@@ -708,11 +704,7 @@ enum OutputInner {
     #[cfg(all(not(windows), feature = "syslog-6"))]
     Syslog6Rfc5424 {
         logger: Syslog6Rfc5424Logger,
-        transform: Box<
-            dyn Fn(&log::Record) -> (u32, HashMap<String, HashMap<String, String>>, String)
-                + Sync
-                + Send,
-        >,
+        transform: Box<Syslog6TransformFn>,
     },
     /// Panics with messages text for all messages.
     Panic,

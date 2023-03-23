@@ -35,7 +35,7 @@ fn test_basic_logging_reopen_logging() {
 
         {
             let result = {
-                let mut log_read = fs::File::open(&temp_log_dir.path().join("test.log")).unwrap();
+                let mut log_read = fs::File::open(temp_log_dir.path().join("test.log")).unwrap();
                 let mut buf = String::new();
                 log_read.read_to_string(&mut buf).unwrap();
                 buf
@@ -96,7 +96,7 @@ fn test_custom_line_separators() {
         {
             let result = {
                 let mut log_read =
-                    fs::File::open(&temp_log_dir.path().join("test_custom_line_sep.log")).unwrap();
+                    fs::File::open(temp_log_dir.path().join("test_custom_line_sep.log")).unwrap();
                 let mut buf = String::new();
                 log_read.read_to_string(&mut buf).unwrap();
                 buf

@@ -22,15 +22,15 @@ impl LogVerify {
         let formatted_message = format!("{}", record.args());
         match &*formatted_message {
             "[INFO] Test information message" => {
-                assert_eq!(self.info, false, "expected only one info message");
+                assert!(!self.info, "expected only one info message");
                 self.info = true;
             }
             "[WARN] Test warning message" => {
-                assert_eq!(self.warn, false, "expected only one warn message");
+                assert!(!self.warn, "expected only one warn message");
                 self.warn = true;
             }
             "[ERROR] Test error message" => {
-                assert_eq!(self.error, false, "expected only one error message");
+                assert!(!self.error, "expected only one error message");
                 self.error = true;
             }
             other => panic!("unexpected message: '{}'", other),
@@ -85,16 +85,10 @@ fn test_global_logger() {
     log::logger().flush();
 
     let verify_acquired = verify.0.lock().unwrap();
-    assert_eq!(
-        verify_acquired.info, true,
-        "expected info message to be received"
-    );
-    assert_eq!(
-        verify_acquired.warn, true,
-        "expected warn message to be received"
-    );
-    assert_eq!(
-        verify_acquired.error, true,
+    assert!(verify_acquired.info, "expected info message to be received");
+    assert!(verify_acquired.warn, "expected warn message to be received");
+    assert!(
+        verify_acquired.error,
         "expected error message to be received"
     );
 }
