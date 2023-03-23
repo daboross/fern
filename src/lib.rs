@@ -260,7 +260,7 @@ use std::{
     path::Path,
 };
 
-#[cfg(all(not(windows), feature = "syslog-4"))]
+#[cfg(all(not(windows), any(feature = "syslog-4", feature = "syslog-6")))]
 use std::collections::HashMap;
 
 pub use crate::{
@@ -316,6 +316,14 @@ type Syslog6Rfc3164Logger = syslog6::Logger<syslog6::LoggerBackend, syslog6::For
 #[cfg(all(not(windows), feature = "syslog-6"))]
 type Syslog6Rfc5424Logger = syslog6::Logger<syslog6::LoggerBackend, syslog6::Formatter5424>;
 
+#[cfg(all(not(windows), feature = "syslog-4"))]
+type Syslog4TransformFn =
+    dyn Fn(&log::Record) -> (i32, HashMap<String, HashMap<String, String>>, String) + Send + Sync;
+
+#[cfg(all(not(windows), feature = "syslog-6"))]
+type Syslog6TransformFn =
+    dyn Fn(&log::Record) -> (u32, HashMap<String, HashMap<String, String>>, String) + Send + Sync;
+
 /// Convenience method for opening a log file with common options.
 ///
 /// Equivalent to:
@@ -367,9 +375,7 @@ pub fn log_reopen(path: &Path, signal: Option<libc::c_int>) -> io::Result<reopen
     let r = reopen03::Reopen::new(Box::new(move || log_file(&p)))?;
 
     if let Some(s) = signal {
-        if let Err(e) = r.handle().register_signal(s) {
-            return Err(e);
-        }
+        r.handle().register_signal(s)?;
     }
     Ok(r)
 }

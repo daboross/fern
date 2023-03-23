@@ -273,10 +273,7 @@ impl Default for ColoredLevelConfig {
 
 impl ColoredLogLevel for Level {
     fn colored(&self, color: Color) -> WithFgColor<Level> {
-        WithFgColor {
-            text: *self,
-            color: color,
-        }
+        WithFgColor { text: *self, color }
     }
 }
 
@@ -314,7 +311,7 @@ mod test {
                     "{}",
                     WithFgColor {
                         text: "test",
-                        color: color,
+                        color,
                     }
                 )
             );

@@ -34,7 +34,7 @@ fn test_basic_logging_file_logging() {
 
         {
             let result = {
-                let mut log_read = fs::File::open(&temp_log_dir.path().join("test.log")).unwrap();
+                let mut log_read = fs::File::open(temp_log_dir.path().join("test.log")).unwrap();
                 let mut buf = String::new();
                 log_read.read_to_string(&mut buf).unwrap();
                 buf
@@ -80,7 +80,7 @@ fn test_custom_line_separators() {
             // default log level is 'trace' if not specified (logs all messages)
             // output to the log file with the "\r\n" line separator.
             .chain(fern::Output::file(
-                fern::log_file(&log_file).expect("Failed to open log file"),
+                fern::log_file(log_file).expect("Failed to open log file"),
                 "\r\n",
             ))
             .into_log();
@@ -95,7 +95,7 @@ fn test_custom_line_separators() {
         {
             let result = {
                 let mut log_read =
-                    fs::File::open(&temp_log_dir.path().join("test_custom_line_sep.log")).unwrap();
+                    fs::File::open(temp_log_dir.path().join("test_custom_line_sep.log")).unwrap();
                 let mut buf = String::new();
                 log_read.read_to_string(&mut buf).unwrap();
                 buf
