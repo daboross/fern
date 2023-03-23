@@ -3,7 +3,6 @@ fern
 [![crates.io version badge][cratesio-badge]][fern-crate]
 [![Build Status][test-status-badge]][test-status-link]
 [![Average time to resolve an issue][issue-resolution-badge]][isitmaintained-link]
-[![Coverage Status][coveralls-badge]][coveralls-builds]
 
 Simple, efficient logging for [Rust].
 
@@ -107,8 +106,6 @@ See [CONTRIBUTING](./CONTRIBUTING.md) for technical information on contributing.
 [test-status-link]: https://github.com/daboross/fern/actions/workflows/rust.yml
 [issue-resolution-badge]: http://isitmaintained.com/badge/resolution/daboross/fern.svg
 [isitmaintained-link]: http://isitmaintained.com/project/daboross/fern
-[coveralls-badge]: https://coveralls.io/repos/github/daboross/fern/badge.svg
-[coveralls-builds]: https://coveralls.io/github/daboross/fern
 [cratesio-badge]: https://img.shields.io/crates/v/fern.svg
 [fern-docs]: https://docs.rs/fern/
 [fern-crate]: https://crates.io/crates/fern
