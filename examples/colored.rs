@@ -1,3 +1,4 @@
+#![allow(deprecated)]
 use std::time::SystemTime;
 
 use fern::colors::{Color, ColoredLevelConfig};

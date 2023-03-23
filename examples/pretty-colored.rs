@@ -6,6 +6,7 @@
 //!   line is white
 //! - when the log level is debug, the whole line is white
 //! - when the log level is trace, the whole line is gray ("bright black")
+#![allow(deprecated)]
 use std::time::SystemTime;
 
 use fern::colors::{Color, ColoredLevelConfig};

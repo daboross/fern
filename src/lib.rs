@@ -274,6 +274,10 @@ mod errors;
 mod log_impl;
 
 #[cfg(feature = "colored")]
+#[deprecated(
+    since = "0.6.2",
+    note = "Unsoundness issue when using atty, which colored uses, with global_allocator. See https://docs.rs/fern/0.6.2/fern/index.html#fern-044-05-06-security-warning---colored-feature--global-allocator"
+)]
 pub mod colors;
 #[cfg(all(
     feature = "syslog-3",
