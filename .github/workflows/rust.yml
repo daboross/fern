@@ -103,8 +103,8 @@ jobs:
       - run: cargo run --example syslog3 --features syslog-3
       - run: cargo run --example syslog4 --features syslog-4
       - run: cargo run --example syslog --features syslog-6
-  test:
-    name: MSRV Compatability: Core
+  msrv:
+    name: MSRV Compatability - fern
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
@@ -116,12 +116,13 @@ jobs:
       - uses: actions-rs/toolchain@v1
         with:
           profile: minimal
+          # when updating this, also update rust-version in Cargo.toml
           toolchain: 1.31.0
           override: true
       - run: cargo build
       - run: cargo build --features reopen-1,reopen-03,meta-logging-in-format,syslog-3
   msrv_date_based:
-    name: MSRV Compatability: date-based
+    name: MSRV Compatability - fern/date-based
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
@@ -137,7 +138,7 @@ jobs:
           override: true
       - run: cargo build --features date-based
   msrv_syslog_4:
-    name: MSRV Compatability: syslog-4
+    name: MSRV Compatability - fern/syslog-4
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
@@ -153,7 +154,7 @@ jobs:
           override: true
       - run: cargo build --features syslog-4
   msrv_syslog_6:
-    name: MSRV Compatability: syslog-6
+    name: MSRV Compatability - fern/syslog-6
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
@@ -167,4 +168,4 @@ jobs:
           profile: minimal
           toolchain: 1.59.0
           override: true
-      - run: cargo build --features syslog-4,syslog-6
+      - run: cargo build --features syslog-6
