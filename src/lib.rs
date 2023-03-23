@@ -2,7 +2,7 @@
 #![doc(html_root_url = "https://docs.rs/fern/0.6.1")]
 //! Efficient, configurable logging in Rust.
 //!
-//! # fern 0.6.* security warning - `colored` feature + global allocator
+//! # fern 0.4.4, 0.5.\*, 0.6.\* security warning - `colored` feature + global allocator
 //!
 //! One of our downstream dependencies, [atty](https://docs.rs/atty/), through
 //! [colored], has a critical security vulnerability:
