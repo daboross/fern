@@ -275,7 +275,14 @@ mod log_impl;
 
 #[cfg(feature = "colored")]
 pub mod colors;
-#[cfg(all(not(windows), feature = "syslog-3", feature = "syslog-4"))]
+#[cfg(all(
+    feature = "syslog-3",
+    feature = "syslog-4",
+    // disable on windows when running doctests, as the code itself only runs on
+    // linux. enable on windows otherwise because it's a documentation-only
+    // module.
+    any(not(windows), not(doctest))
+))]
 pub mod syslog;
 
 pub mod meta;
