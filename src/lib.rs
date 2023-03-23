@@ -102,13 +102,24 @@
 //! ```
 //! # fern::Dispatch::new()
 //! .format(|out, message, record| {
-//!     // ...
+//!     out.finish(format_args!(
+//!         "..."
+//!     ))
 //! })
 //! # ;
 //! ```
 //!
-//! [`Dispatch::format`] sets the formatter of the dispatch, modifying all
-//! messages sent through.
+//! This incantation sets the `Dispatch` format! The closure taking in
+//! `out, message, record` will be called once for each message going through
+//! the dispatch, and the formatted log message will be used for any downstream
+//! consumers.
+//!
+//! Do any work you want in this closure, and then call `out.finish` at the end.
+//! The callback-style result passing with `out.finish(format_args!())` lets us
+//! format without any intermediate string allocation.
+//!
+//! [`format_args!`] has the same format as [`println!`], just returning a
+//! not-yet-written result we can use internally.
 //!
 //! ```
 //! std::time::SystemTime::now()
@@ -131,32 +142,11 @@
 //! RFC3339 looks like `2018-02-14T00:28:07Z`, always using UTC, ignoring system
 //! timezone.
 //!
-//! `humantime` is a nice light dependency, but does only offer this one format.
-//! To do more custom time formatting, I recommend
-//! [`chrono`](https://docs.rs/chrono/) or
-//! [`time`](https://docs.rs/time/).
-//!
-//!
-//! ```
-//! # fern::Dispatch::new().format(|out, message, record| {
-//! out.finish(format_args!(
-//!     # /*
-//!     ...
-//!     # */ ""
-//! ))
-//! # });
-//! ```
-//!
-//! Call the `fern::FormattingCallback` to submit the formatted message.
-//!
-//! This callback-style allows for logging with no intermediate string
-//! allocation!
-//!
-//! [`format_args!`] has the same format as [`println!`], just returning a
-//! not-yet-written result we can use internally.
+//! `humantime` is a nice light dependency, but only offers this one format.
+//! For more custom time formatting, I recommend
+//! [`chrono`](https://docs.rs/chrono/) or [`time`](https://docs.rs/time/).
 //!
 //! Now, back to the [`Dispatch`] methods:
-//!
 //!
 //! ```
 //! # fern::Dispatch::new()
@@ -167,19 +157,17 @@
 //! Sets the minimum logging level for all modules, if not overwritten with
 //! [`Dispatch::level_for`], to [`Level::Debug`][log::Level::Debug].
 //!
-//!
 //! ```
 //! # fern::Dispatch::new()
 //! .chain(std::io::stdout())
 //! # ;
 //! ```
 //!
-//! Add a child to the logger. All messages which pass the filters will be sent
-//! to stdout.
+//! Adds a child to the logger. With this, all messages which pass the filters
+//! will be sent to stdout.
 //!
 //! [`Dispatch::chain`] accepts [`Stdout`], [`Stderr`], [`File`] and other
 //! [`Dispatch`] instances.
-//!
 //!
 //! ```
 //! # fern::Dispatch::new()
@@ -187,10 +175,9 @@
 //! # ; <Result<(), Box<dyn std::error::Error>>>::Ok(())
 //! ```
 //!
-//! Add a second child sending messages to the file "output.log".
+//! Adds a second child sending messages to the file "output.log".
 //!
-//! See [`log_file`] for more info on file output.
-//!
+//! See [`log_file`].
 //!
 //! ```
 //! # fern::Dispatch::new()
@@ -199,16 +186,16 @@
 //! # ;
 //! ```
 //!
-//!
-//! Consume the configuration and instantiate it as the current runtime global
+//! Consumes the configuration and instantiates it as the current runtime global
 //! logger.
 //!
 //! This will fail if and only if `.apply()` or equivalent form another crate
 //! has already been used this runtime.
 //!
-//! Since the binary crate is the only one ever setting up logging, the
-//! [`Dispatch::apply`] result can be reasonably unwrapped: it's a bug if any
-//! crate is calling this method more than once.
+//! Since the binary crate is the only one ever setting up logging, and it's
+//! usually done near the start of `main`, the [`Dispatch::apply`] result can be
+//! reasonably unwrapped: it's a bug if any crate is calling this method more
+//! than once.
 //!
 //! ---
 //!
