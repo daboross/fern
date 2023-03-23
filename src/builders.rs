@@ -904,8 +904,8 @@ impl From<Box<syslog3::Logger>> for Output {
     /// Log levels are translated trace => debug, debug => debug, info =>
     /// informational, warn => warning, and error => error.
     ///
-    /// Note that while this takes a Box<Logger> for convenience (syslog
-    /// methods return Boxes), it will be immediately unboxed upon storage
+    /// Note that while this takes a `Box<Logger>` for convenience (syslog
+    /// methods return `Box`es), it will be immediately unboxed upon storage
     /// in the configuration structure. This will create a configuration
     /// identical to that created by passing a raw `syslog::Logger`.
     ///
@@ -922,7 +922,7 @@ impl From<Syslog4Rfc3164Logger> for Output {
     /// Log levels are translated trace => debug, debug => debug, info =>
     /// informational, warn => warning, and error => error.
     ///
-    /// Note that due to https://github.com/Geal/rust-syslog/issues/41,
+    /// Note that due to <https://github.com/Geal/rust-syslog/issues/41>,
     /// logging to this backend requires one allocation per log call.
     ///
     /// This is for RFC 3164 loggers. To use an RFC 5424 logger, use the
@@ -941,7 +941,7 @@ impl From<Syslog6Rfc3164Logger> for Output {
     /// Log levels are translated trace => debug, debug => debug, info =>
     /// informational, warn => warning, and error => error.
     ///
-    /// Note that due to https://github.com/Geal/rust-syslog/issues/41,
+    /// Note that due to <https://github.com/Geal/rust-syslog/issues/41>,
     /// logging to this backend requires one allocation per log call.
     ///
     /// This is for RFC 3164 loggers. To use an RFC 5424 logger, use the

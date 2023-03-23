@@ -91,88 +91,111 @@
 //!
 //! Let's unwrap this:
 //!
-//! ---
 //!
-//! [`fern::Dispatch::new()`]
+//! ```
+//! fern::Dispatch::new()
+//! # ;
+//! ```
 //!
-//! Create an empty configuration.
+//! [`Dispatch::new`] creates an empty configuration.
 //!
-//! ---
+//! ```
+//! # fern::Dispatch::new()
+//! .format(|out, message, record| {
+//!     out.finish(format_args!(
+//!         "..."
+//!     ))
+//! })
+//! # ;
+//! ```
 //!
-//! [`.format(|...| ...)`]
+//! This incantation sets the `Dispatch` format! The closure taking in
+//! `out, message, record` will be called once for each message going through
+//! the dispatch, and the formatted log message will be used for any downstream
+//! consumers.
 //!
-//! Add a formatter to the logger, modifying all messages sent through.
+//! Do any work you want in this closure, and then call `out.finish` at the end.
+//! The callback-style result passing with `out.finish(format_args!())` lets us
+//! format without any intermediate string allocation.
 //!
-//! ___
+//! [`format_args!`] has the same format as [`println!`], just returning a
+//! not-yet-written result we can use internally.
 //!
-//! [`std::time::SystemTime::now()`][std::time::SystemTime::now]
+//! ```
+//! std::time::SystemTime::now()
+//! # ;
+//! ```
 //!
-//! Retrieves the current time.
+//! [`std::time::SystemTime::now`] retrieves the current time.
 //!
-//! ___
+//! ```
+//! humantime::format_rfc3339_seconds(
+//!     // ...
+//!     # std::time::SystemTime::now()
+//! )
+//! # ;
+//! ```
 //!
-//! [`humantime::format_rfc3339_seconds(...)`]
+//! [`humantime::format_rfc3339_seconds`] formats the current time into an
+//! RFC3339 timestamp, with second-precision.
 //!
-//! Uses [`humantime`] to format this timestamp to an RFC3339 timestamp, with no
-//! fractional seconds.
+//! RFC3339 looks like `2018-02-14T00:28:07Z`, always using UTC, ignoring system
+//! timezone.
 //!
-//! RFC3339 formats timestamps with `2018-02-14T00:28:07Z`, always using UTC,
-//! ignoring system timezone.
+//! `humantime` is a nice light dependency, but only offers this one format.
+//! For more custom time formatting, I recommend
+//! [`chrono`](https://docs.rs/chrono/) or [`time`](https://docs.rs/time/).
 //!
-//! `humantime` is a nice light dependency for using this format in particular.
-//! To do more custom time formatting, I recommend
-//! [chrono](https://docs.rs/chrono/) or
-//! [`time`](https://docs.rs/time/).
+//! Now, back to the [`Dispatch`] methods:
 //!
-//! ---
+//! ```
+//! # fern::Dispatch::new()
+//! .level(log::LevelFilter::Debug)
+//! # ;
+//! ```
 //!
-//! [`out.finish(format_args!(...))`]
+//! Sets the minimum logging level for all modules, if not overwritten with
+//! [`Dispatch::level_for`], to [`Level::Debug`][log::Level::Debug].
 //!
-//! Call the `fern::FormattingCallback` to submit the formatted message.
+//! ```
+//! # fern::Dispatch::new()
+//! .chain(std::io::stdout())
+//! # ;
+//! ```
 //!
-//! This roundabout way is slightly odd, but it allows for logging with no
-//! string allocation!
-//!
-//! [`format_args!()`] has the same format as [`println!()`] \(and every other
-//! [`std::fmt`]-based macro).
-//!
-//! ---
-//!
-//! [`.level(log::LevelFilter::Debug)`]
-//!
-//! Set the minimum level needed to output to `Debug`.
-//!
-//! ---
-//!
-//! [`.chain(std::io::stdout())`]
-//!
-//! Add a child to the logger. All messages which pass the filters will be sent
-//! to stdout.
+//! Adds a child to the logger. With this, all messages which pass the filters
+//! will be sent to stdout.
 //!
 //! [`Dispatch::chain`] accepts [`Stdout`], [`Stderr`], [`File`] and other
 //! [`Dispatch`] instances.
 //!
-//! ---
+//! ```
+//! # fern::Dispatch::new()
+//! .chain(fern::log_file("output.log")?)
+//! # ; <Result<(), Box<dyn std::error::Error>>>::Ok(())
+//! ```
 //!
-//! [`.chain(fern::log_file(...)?)`]
+//! Adds a second child sending messages to the file "output.log".
 //!
-//! Add a second child sending messages to the file "output.log".
+//! See [`log_file`].
 //!
-//! See [`fern::log_file()`] for more info on file output.
+//! ```
+//! # fern::Dispatch::new()
+//! // ...
+//! .apply()
+//! # ;
+//! ```
 //!
-//! ---
-//!
-//! [`.apply()`][`.apply`]
-//!
-//! Consume the configuration and instantiate it as the current runtime global
+//! Consumes the configuration and instantiates it as the current runtime global
 //! logger.
 //!
 //! This will fail if and only if `.apply()` or equivalent form another crate
 //! has already been used this runtime.
 //!
-//! Since the binary crate is the only one ever setting up logging, the
-//! [`apply`] result can be reasonably unwrapped: it's a bug if any crate is
-//! calling this method more than once.
+//! Since the binary crate is the only one ever setting up logging, and it's
+//! usually done near the start of `main`, the [`Dispatch::apply`] result can be
+//! reasonably unwrapped: it's a bug if any crate is calling this method more
+//! than once.
 //!
 //! ---
 //!
@@ -211,7 +234,7 @@
 //!
 //! # More
 //!
-//! The [`Dispatch` documentation] has example usages of each method, and the
+//! The [`Dispatch`] documentation has example usages of each method, and the
 //! [full example program] might be useful for using fern in a larger
 //! application context.
 //!
@@ -223,30 +246,12 @@
 //! See the [meta] module for information on getting logging-within-logging
 //! working correctly.
 //!
-//! [`fern::Dispatch::new()`]: struct.Dispatch.html#method.new
-//! [`.format(|...| ...)`]: struct.Dispatch.html#method.format
-//! [`out.finish(format_args!(...))`]: struct.FormatCallback.html#method.finish
-//! [`.level(log::LevelFilter::Debug)`]: struct.Dispatch.html#method.level
-//! [`Dispatch::chain`]: struct.Dispatch.html#method.chain
-//! [`.chain(std::io::stdout())`]: struct.Dispatch.html#method.chain
-//! [`Stdout`]: https://doc.rust-lang.org/std/io/struct.Stdout.html
-//! [`Stderr`]: https://doc.rust-lang.org/std/io/struct.Stderr.html
-//! [`File`]: https://doc.rust-lang.org/std/fs/struct.File.html
-//! [`Dispatch`]: struct.Dispatch.html
-//! [`.chain(fern::log_file(...)?)`]: struct.Dispatch.html#method.chain
-//! [`fern::log_file()`]: fn.log_file.html
-//! [`.apply`]: struct.Dispatch.html#method.apply
-//! [`format_args!()`]: https://doc.rust-lang.org/std/macro.format_args.html
-//! [`println!()`]: https://doc.rust-lang.org/std/macro.println.html
-//! [`std::fmt`]: https://doc.rust-lang.org/std/fmt/
-//! [`chrono`]: https://github.com/chronotope/chrono
-//! [`Dispatch` documentation]: struct.Dispatch.html
+//! [`Stdout`]: std::io::Stdout
+//! [`Stderr`]: std::io::Stderr
+//! [`File`]: std::fs::File
 //! [full example program]: https://github.com/daboross/fern/tree/fern-0.6.1/examples/cmd-program.rs
 //! [syslog full example program]: https://github.com/daboross/fern/tree/fern-0.6.1/examples/syslog.rs
-//! [`apply`]: struct.Dispatch.html#method.apply
-//! [colors]: colors/index.html
-//! [syslog]: syslog/index.html
-//! [meta]: meta/index.html
+//! [`humantime::format_rfc3339_seconds`]: https://docs.rs/humantime/2/humantime/fn.format_rfc3339_seconds.html
 use std::{
     convert::AsRef,
     fmt,
@@ -270,7 +275,14 @@ mod log_impl;
 
 #[cfg(feature = "colored")]
 pub mod colors;
-#[cfg(all(not(windows), feature = "syslog-3", feature = "syslog-4"))]
+#[cfg(all(
+    feature = "syslog-3",
+    feature = "syslog-4",
+    // disable on windows when running doctests, as the code itself only runs on
+    // linux. enable on windows otherwise because it's a documentation-only
+    // module.
+    any(not(windows), not(doctest))
+))]
 pub mod syslog;
 
 pub mod meta;
