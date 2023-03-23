@@ -394,9 +394,10 @@ pub fn log_reopen(path: &Path, signal: Option<libc::c_int>) -> io::Result<reopen
 /// This function requires the `reopen-1` feature to be enabled.
 #[cfg(all(not(windows), feature = "reopen-1"))]
 #[inline]
-pub fn log_reopen1<S: IntoIterator<Item = libc::c_int>>(path: &Path, signals: S)
-    -> io::Result<reopen1::Reopen<File>>
-{
+pub fn log_reopen1<S: IntoIterator<Item = libc::c_int>>(
+    path: &Path,
+    signals: S,
+) -> io::Result<reopen1::Reopen<File>> {
     let p = path.to_owned();
     let r = reopen1::Reopen::new(Box::new(move || log_file(&p)))?;
 

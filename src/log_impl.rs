@@ -644,7 +644,10 @@ impl Log for Sender {
     fn flush(&self) {}
 }
 
-#[cfg(all(not(windows), any(feature = "syslog-3", feature = "syslog-4", feature = "syslog-6")))]
+#[cfg(all(
+    not(windows),
+    any(feature = "syslog-3", feature = "syslog-4", feature = "syslog-6")
+))]
 macro_rules! send_syslog {
     ($logger:expr, $level:expr, $message:expr) => {
         use log::Level;
