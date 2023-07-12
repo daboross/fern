@@ -2,42 +2,6 @@
 #![doc(html_root_url = "https://docs.rs/fern/0.6.2")]
 //! Efficient, configurable logging in Rust.
 //!
-//! # fern 0.4.4, 0.5.\*, 0.6.\* security warning - `colored` feature + global allocator
-//!
-//! One of our downstream dependencies, [atty](https://docs.rs/atty/), through
-//! [colored], has an unsoundness issue:
-//! <https://rustsec.org/advisories/RUSTSEC-2021-0145.html>
-//!
-//! This shows up in one situation: if you're using `colored` (the crate, or our
-//! feature), and a custom global allocator.
-//!
-//! I will be releasing `fern` 0.7.0, removing `colored` as a dependency. This
-//! may add another color crate, or may just document usage of alternatives
-//! (such as [`owo-colors`](https://docs.rs/owo-colors/) +
-//! [`enable-ansi-support`](https://docs.rs/enable-ansi-support/0.2.1/enable_ansi_support/)).
-//!
-//! In the meantime, if you're using `#[global_allocator]`, I highly recommend
-//! removing the `fern/colored` feature.
-//!
-//! Or, for minimal code changes, you can also enable the `colored/no-colors`
-//! feature:
-//!
-//! ```text
-//! cargo add colored --features no-color
-//! ```
-//!
-//! With the `no-color` feature, the vulnerable code will still be present, but
-//! unless you use any of the following APIs manually, it will never be called:
-//!
-//! - [`colored::control::set_override`]
-//! - [`colored::control::unset_override`]
-//! - [`colored::control::ShouldColorize::from_env`]
-//! - [`colored::control::SHOULD_COLORIZE`][struct@colored::control::SHOULD_COLORIZE]
-//!   (referencing this `lazy_static!` variable will initialize it, running the
-//!   vulnerable code)
-//!
-//! See <https://github.com/daboross/fern/issues/113> for further discussion.
-//!
 //! # Depending on fern
 //!
 //! Ensure you require both fern and log in your project's `Cargo.toml`:

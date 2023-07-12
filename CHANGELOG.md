@@ -3,6 +3,7 @@ Unreleased
 
 - Upgrade `colored` to version 2. This is a breaking change due to
   `colored` being exposed in the public API of `fern`.
+- Remove security warning regarding `colored` since it's no longer an issue with this version.
 
 0.6.2 (2023-03-23)
 ==================
