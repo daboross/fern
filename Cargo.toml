@@ -19,7 +19,7 @@ include = ["Cargo.toml", "src/**/*", "tests/**/*", "examples/**/*", "LICENSE", "
 
 [dependencies]
 log = { version = "0.4", features = ["std"] }
-colored = { version = "1.5", optional = true }
+colored = { version = "2.1.0", optional = true }
 chrono = { version = "0.4", default-features = false, features = ["std", "clock"], optional = true }
 
 [target."cfg(not(windows))".dependencies]
