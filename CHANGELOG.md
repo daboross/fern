@@ -1,6 +1,9 @@
 Unreleased
 ==========
 
+- Upgrade `colored` to version 2. This is a breaking change due to
+  `colored` being exposed in the public API of `fern`.
+
 0.6.2 (2023-03-23)
 ==================
 
