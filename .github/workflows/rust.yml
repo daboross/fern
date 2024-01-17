@@ -117,7 +117,7 @@ jobs:
         with:
           profile: minimal
           # when updating this, also update rust-version in Cargo.toml
-          toolchain: 1.31.0
+          toolchain: 1.38.0
           override: true
       - run: cp Cargo.lock.msrv Cargo.lock
       - run: cargo build
