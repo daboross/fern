@@ -264,7 +264,7 @@ use std::{
 use std::collections::HashMap;
 
 pub use crate::{
-    builders::{Dispatch, Output, Panic},
+    builders::{Dispatch, Output, Panic, SharedDispatch},
     errors::InitError,
     log_impl::FormatCallback,
 };
