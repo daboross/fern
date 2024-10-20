@@ -2,6 +2,17 @@
 #![doc(html_root_url = "https://docs.rs/fern/0.6.2")]
 //! Efficient, configurable logging in Rust.
 //!
+//! # fern 0.4.4, 0.5.\*, 0.6.\* security warning - `colored` feature + global allocator
+//!
+//! One of our downstream dependencies, [atty](https://docs.rs/atty/), through
+//! [colored](https://docs.rs/colored/), has an unsoundness issue:
+//! <https://rustsec.org/advisories/RUSTSEC-2021-0145.html>.
+//!
+//! This shows up in one situation: if you're using `colored` 0.1.0 (the crate, or our
+//! feature), and a custom global allocator.
+//!
+//! Upgrade to `fern` 0.7.0, and `colored` 0.2.0 if you depend on it directly, to fix this issue.
+//!
 //! # Depending on fern
 //!
 //! Ensure you require both fern and log in your project's `Cargo.toml`:
