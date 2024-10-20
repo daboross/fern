@@ -236,11 +236,7 @@ impl DateBasedConfig {
     }
 
     pub fn open_log_file(path: &Path) -> io::Result<fs::File> {
-        OpenOptions::new()
-            .write(true)
-            .create(true)
-            .append(true)
-            .open(path)
+        OpenOptions::new().create(true).append(true).open(path)
     }
 
     pub fn open_current_log_file(&self, suffix: &str) -> io::Result<fs::File> {
