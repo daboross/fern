@@ -342,11 +342,7 @@ type Syslog6TransformFn =
 /// [`OpenOptions`]: https://doc.rust-lang.org/std/fs/struct.OpenOptions.html
 #[inline]
 pub fn log_file<P: AsRef<Path>>(path: P) -> io::Result<File> {
-    OpenOptions::new()
-        .write(true)
-        .create(true)
-        .append(true)
-        .open(path)
+    OpenOptions::new().create(true).append(true).open(path)
 }
 
 /// Convenience method for opening a re-openable log file with common options.
