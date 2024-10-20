@@ -2,8 +2,10 @@ Unreleased
 ==========
 
 - Upgrade `colored` to version 2. This is a breaking change due to
-  `colored` being exposed in the public API of `fern`.
-- Remove security warning regarding `colored` since it's no longer an issue with this version.
+  `colored` being exposed in the public API of `fern`. (thanks [@faern] for
+  doing the boilerplate here!)
+- Remove most of the unsoundness warning, and update it to reflect fern 0.7.0
+  fixing the issue.
 
 0.6.2 (2023-03-23)
 ==================
@@ -434,3 +436,4 @@ First release, version 0.1.0.
 [@autarch]: https://github.com/autarch
 [@vorner]: https://github.com/vorner
 [@EasyPost]: https://github.com/EasyPost
+[@faern]: https://github.com/faern
