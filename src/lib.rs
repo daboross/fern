@@ -20,7 +20,7 @@
 //! ```toml
 //! [dependencies]
 //! log = "0.4"
-//! fern = "0.6"
+//! fern = "0.7"
 //! ```
 //!
 //! # Example setup
@@ -224,8 +224,8 @@
 //! [`Stdout`]: std::io::Stdout
 //! [`Stderr`]: std::io::Stderr
 //! [`File`]: std::fs::File
-//! [full example program]: https://github.com/daboross/fern/tree/fern-0.6.2/examples/cmd-program.rs
-//! [syslog full example program]: https://github.com/daboross/fern/tree/fern-0.6.2/examples/syslog.rs
+//! [full example program]: https://github.com/daboross/fern/tree/fern-0.7.0/examples/cmd-program.rs
+//! [syslog full example program]: https://github.com/daboross/fern/tree/fern-0.7.0/examples/syslog.rs
 //! [`humantime::format_rfc3339_seconds`]: https://docs.rs/humantime/2/humantime/fn.format_rfc3339_seconds.html
 use std::{
     convert::AsRef,
