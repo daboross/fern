@@ -27,6 +27,7 @@ chrono = { version = "0.4", default-features = false, features = ["std", "clock"
 syslog3 = { version = "3", package = "syslog", optional = true }
 syslog4 = { version = "4", package = "syslog", optional = true }
 syslog6 = { version = "6", package = "syslog", optional = true }
+syslog7 = { version = "7", package = "syslog", optional = true }
 reopen1 = { version = "~1", package = "reopen", features = ["signals"], optional = true }
 reopen03 = { version = "^0.3", package = "reopen", optional = true }
 libc = { version = "0.2.58", optional = true }
@@ -35,6 +36,7 @@ libc = { version = "0.2.58", optional = true }
 syslog-3 = ["syslog3"]
 syslog-4 = ["syslog4"]
 syslog-6 = ["syslog6"]
+syslog-7 = ["syslog7"]
 reopen-03 = ["reopen03", "libc"]
 reopen-1 = ["reopen1", "libc"]
 meta-logging-in-format = []
@@ -59,6 +61,10 @@ required-features = ["colored"]
 [[example]]
 name = "pretty-colored"
 required-features = ["colored"]
+
+[[example]]
+name = "syslog7"
+required-features = ["syslog-7"]
 
 [[example]]
 name = "syslog"

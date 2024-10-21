@@ -238,6 +238,9 @@ use std::{
 #[cfg(all(not(windows), any(feature = "syslog-4", feature = "syslog-6")))]
 use std::collections::HashMap;
 
+#[cfg(all(not(windows), feature = "syslog-7"))]
+use std::collections::BTreeMap;
+
 pub use crate::{
     builders::{Dispatch, Output, Panic},
     errors::InitError,
@@ -291,6 +294,12 @@ type Syslog6Rfc3164Logger = syslog6::Logger<syslog6::LoggerBackend, syslog6::For
 #[cfg(all(not(windows), feature = "syslog-6"))]
 type Syslog6Rfc5424Logger = syslog6::Logger<syslog6::LoggerBackend, syslog6::Formatter5424>;
 
+#[cfg(all(not(windows), feature = "syslog-7"))]
+type Syslog7Rfc3164Logger = syslog7::Logger<syslog7::LoggerBackend, syslog7::Formatter3164>;
+
+#[cfg(all(not(windows), feature = "syslog-7"))]
+type Syslog7Rfc5424Logger = syslog7::Logger<syslog7::LoggerBackend, syslog7::Formatter5424>;
+
 #[cfg(all(not(windows), feature = "syslog-4"))]
 type Syslog4TransformFn =
     dyn Fn(&log::Record) -> (i32, HashMap<String, HashMap<String, String>>, String) + Send + Sync;
@@ -298,6 +307,10 @@ type Syslog4TransformFn =
 #[cfg(all(not(windows), feature = "syslog-6"))]
 type Syslog6TransformFn =
     dyn Fn(&log::Record) -> (u32, HashMap<String, HashMap<String, String>>, String) + Send + Sync;
+
+#[cfg(all(not(windows), feature = "syslog-7"))]
+type Syslog7TransformFn =
+    dyn Fn(&log::Record) -> (u32, BTreeMap<String, BTreeMap<String, String>>, String) + Send + Sync;
 
 /// Convenience method for opening a log file with common options.
 ///
