@@ -42,8 +42,6 @@ reopen-1 = ["reopen1", "libc"]
 meta-logging-in-format = []
 date-based = ["chrono"]
 
-# default = ["syslog-7"]
-
 [dev-dependencies]
 tempfile = "3"
 clap = "2.22"
