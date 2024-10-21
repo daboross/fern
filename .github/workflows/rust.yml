@@ -62,6 +62,10 @@ jobs:
       - uses: actions-rs/cargo@v1
         with:
           command: test
+          args: --features=syslog-7
+      - uses: actions-rs/cargo@v1
+        with:
+          command: test
           args: --features=reopen-03
       - uses: actions-rs/cargo@v1
         with:
@@ -103,6 +107,7 @@ jobs:
       - run: cargo run --example syslog3 --features syslog-3
       - run: cargo run --example syslog4 --features syslog-4
       - run: cargo run --example syslog --features syslog-6
+      - run: cargo run --example syslog7 --features syslog-7
   msrv:
     name: MSRV Compatability - fern
     runs-on: ${{ matrix.os }}
@@ -169,6 +174,22 @@ jobs:
           toolchain: 1.67.0
           override: true
       - run: cargo build --features syslog-6
+  msrv_syslog_7:
+    name: MSRV Compatability - fern/syslog-7
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os:
+          - ubuntu-latest
+          - windows-latest
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions-rs/toolchain@v1
+        with:
+          profile: minimal
+          toolchain: 1.67.0
+          override: true
+      - run: cargo build --features syslog-7
   fmt_and_clippy:
     name: Optional Lints
     runs-on: ubuntu-latest
