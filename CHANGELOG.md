@@ -1,6 +1,10 @@
 Unreleased
 ==========
 
+
+0.7.1 (2024-12-15)
+==================
+
 - Add syslog v7 support (thanks [@BlackDex]!)
 
 0.7.0 (2024-10-20)
