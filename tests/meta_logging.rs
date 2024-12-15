@@ -19,7 +19,7 @@ struct VerboseDisplayThing<'a> {
     msg: &'a str,
 }
 
-impl<'a> fmt::Display for VerboseDisplayThing<'a> {
+impl fmt::Display for VerboseDisplayThing<'_> {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         manual_log(
             self.log_copy,

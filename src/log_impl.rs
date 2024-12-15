@@ -509,7 +509,7 @@ impl Dispatch {
     }
 }
 
-impl<'a> FormatCallback<'a> {
+impl FormatCallback<'_> {
     /// Complete the formatting call that this FormatCallback was created for.
     ///
     /// This will call the rest of the logging chain using the given formatted
