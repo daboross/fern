@@ -1,5 +1,5 @@
 #![deny(missing_docs)]
-#![doc(html_root_url = "https://docs.rs/fern/0.7.0")]
+#![doc(html_root_url = "https://docs.rs/fern/0.7.1")]
 //! Efficient, configurable logging in Rust.
 //!
 //! # fern 0.4.4, 0.5.\*, 0.6.\* security warning - `colored` feature + global allocator
