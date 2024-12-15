@@ -119,7 +119,7 @@
 //!
 //! `humantime` is a nice light dependency, but only offers this one format.
 //! For more custom time formatting, I recommend
-//! [`chrono`](https://docs.rs/chrono/) or [`time`](https://docs.rs/time/).
+//! [`jiff`](https://docs.rs/jiff/).
 //!
 //! Now, back to the [`Dispatch`] methods:
 //!
