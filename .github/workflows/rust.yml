@@ -19,9 +19,9 @@ jobs:
         os:
           - ubuntu-latest
           - windows-latest
-      toolchain:
-        - stable
-        - 1.67.1
+        toolchain:
+          - stable
+          - 1.67.1
     steps:
       - uses: actions/checkout@v4
       - run: rustup update ${{ matrix.toolchain }} && rustup default ${{ matrix.toolchain }}
@@ -57,9 +57,9 @@ jobs:
         rust:
           - stable
           - beta
-      toolchain:
-        - stable
-        - 1.67.1
+        toolchain:
+          - stable
+          - 1.67.1
     steps:
       - uses: actions/checkout@v4
       - run: rustup update ${{ matrix.toolchain }} && rustup default ${{ matrix.toolchain }}
