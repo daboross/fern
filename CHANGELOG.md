@@ -1,6 +1,7 @@
 Unreleased
 ==========
 
+- Add syslog v7 support (thanks [@BlackDex]!)
 
 0.7.0 (2024-10-20)
 ==================
@@ -441,3 +442,4 @@ First release, version 0.1.0.
 [@vorner]: https://github.com/vorner
 [@EasyPost]: https://github.com/EasyPost
 [@faern]: https://github.com/faern
+[@BlackDex]: https://github.com/BlackDex
