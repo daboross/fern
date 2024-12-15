@@ -607,7 +607,7 @@ impl Dispatch {
         (real_min, dispatch)
     }
 
-    /// Builds this logger into a `Box<log::Log>` and calculates the minimum
+    /// Builds this logger into a `Box<dyn log::Log>` and calculates the minimum
     /// log level needed to have any effect.
     ///
     /// While this method is exposed publicly, [`Dispatch::apply`] is typically
@@ -1051,7 +1051,7 @@ impl Output {
 
     /// Returns a logger using arbitrary write object and custom separator.
     ///
-    /// If the default separator of `\n` is acceptable, an `Box<Write + Send>`
+    /// If the default separator of `\n` is acceptable, an `Box<dyn Write + Send>`
     /// instance can be passed into [`Dispatch::chain`] directly.
     ///
     /// ```no_run
@@ -1061,7 +1061,7 @@ impl Output {
     ///
     /// fern::Dispatch::new()
     ///     // as long as we explicitly cast into a type-erased Box
-    ///     .chain(Box::new(writer) as Box<std::io::Write + Send>)
+    ///     .chain(Box::new(writer) as Box<dyn std::io::Write + Send>)
     ///     # .into_log();
     /// #     Ok(())
     /// # }
