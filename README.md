@@ -2,30 +2,17 @@ fern
 ====
 [![crates.io version badge][cratesio-badge]][fern-crate]
 [![Build Status][test-status-badge]][test-status-link]
-[![Average time to resolve an issue][issue-resolution-badge]][isitmaintained-link]
+
+- [documentation][fern-docs]
+- [crates.io page][fern-crate]
+- [example program][fern-example]
 
 Simple, efficient logging for [Rust].
 
----
-
-## fern 0.4.4, 0.5.\*, 0.6.\* security warning - `colored` feature + global allocator
-
-One of our downstream dependencies, [atty](https://docs.rs/atty/), through
-[colored](https://docs.rs/colored/), has an unsoundness issue:
-<https://rustsec.org/advisories/RUSTSEC-2021-0145.html>.
-
-This shows up in one situation: if you're using `colored` 0.1.0 (the crate, or our
-feature), and a custom global allocator.
-
-Upgrade to `fern` 0.7.0, and `colored` 0.2.0 if you depend on it directly, to fix this issue.
-
----
-
-Logging configuration is recursively branched, like a fern: formatting, filters, and output can be applied recursively to match increasingly specific kinds of logging. Fern provides a builder-based configuration backing for rust's standard [log] crate.
+Logging configuration is recursively branched: formatting, filters, and output can be applied at each
+`fern::Dispatch`, applying to increasingly specific kinds of logging.
 
 ```rust
-//! With fern, we can:
-
 // Configure logger at runtime
 fern::Dispatch::new()
     // Perform allocation-free log formatting
@@ -49,30 +36,41 @@ fern::Dispatch::new()
     .apply()?;
 
 // and log using log crate macros!
-info!("hello, world!");
+log::info!("hello, world!");
 ```
 
 Examples of all features at the [api docs][fern-docs]. See fern in use with this [example command line program][fern-example].
 
----
+## Project Direction
 
-- [documentation][fern-docs]
-- [crates.io page][fern-crate]
-- [example program][fern-example]
+I've posted a GitHub Discussion talking about the future of fern: https://github.com/daboross/fern/discussions/147
 
-### Project Status
+If you've ever used fern, or you do today, I'd love input!
 
-The fern project is primarily maintained by myself, @daboross on GitHub. It's a hobby project, but one I aim to keep at a high quality.
+## fern 0.4.4, 0.5.\*, 0.6.\* security warning - `colored` crate + custom global allocator
+
+One of our downstream dependencies, [atty](https://docs.rs/atty/), through
+[colored](https://docs.rs/colored/), has an unsoundness issue:
+<https://rustsec.org/advisories/RUSTSEC-2021-0145.html>.
+
+This shows up in one situation: if you're using `colored` 0.1.0 and a custom global allocator.
+
+Upgrade to `fern` 0.7.0 to fix.
 
 ### Contributing
 
-As this is a hobby project, contributions are very welcome!
+There's one thing I need right now, more than anything else: input on what fern does well, and what it should keep
+doing well. See [Project Direction](#project-direction).
 
-The easiest way for you to contribute right now is to use fern in your application, and see where it's lacking. The current library has a solid base, but it lacks features, and I may not anticipate your use cases.
+Besides that, I'm open to PRs! I'll probably review promptly, and I'm always open to being nudged if I don't.
 
-If you have a use case fern does not cover, please file an issue. This is immensely useful to me, to anyone wanting to contribute to the project, and to you as well if the feature is implemented.
+For small PRs, I'll mark anything I need changed in a review, and work with you on that.
 
-If you're interested in helping fix an [existing issue](https://github.com/daboross/fern/issues), or an issue you just filed, help is appreciated.
+For larger PRs, I reserve the right to pull in your commits as they are, then fix things I want to be different myself.
+In a workplace, I'd try to never do this - but this is a hobby project for me, and I'd rather be overly particular about
+fern's implementation than be reasonable.
+
+This is a change from my previous policy.
 
 See [CONTRIBUTING](./CONTRIBUTING.md) for technical information on contributing.
 
