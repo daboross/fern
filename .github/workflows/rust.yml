@@ -9,7 +9,7 @@ env:
 
 jobs:
   test:
-    name: Test Suite
+    name: Run Tests
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
@@ -50,7 +50,7 @@ jobs:
         env:
           RUSTDOCFLAGS: -D warnings
   linux:
-    name: Linux-only Examples
+    name: Linux Examples
     runs-on: ubuntu-latest
     strategy:
       matrix:
@@ -68,7 +68,7 @@ jobs:
       - run: cargo run --example syslog --features syslog-6
       - run: cargo run --example syslog7 --features syslog-7
   msrv:
-    name: MSRV Compatability - fern
+    name: MSRV Compat
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
