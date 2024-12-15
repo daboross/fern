@@ -607,7 +607,7 @@ impl Dispatch {
         (real_min, dispatch)
     }
 
-    /// Builds this logger into a `Box<log::Log>` and calculates the minimum
+    /// Builds this logger into a `Box<dyn log::Log>` and calculates the minimum
     /// log level needed to have any effect.
     ///
     /// While this method is exposed publicly, [`Dispatch::apply`] is typically
@@ -1051,7 +1051,7 @@ impl Output {
 
     /// Returns a logger using arbitrary write object and custom separator.
     ///
-    /// If the default separator of `\n` is acceptable, an `Box<Write + Send>`
+    /// If the default separator of `\n` is acceptable, an `Box<dyn Write + Send>`
     /// instance can be passed into [`Dispatch::chain`] directly.
     ///
     /// ```no_run
@@ -1061,7 +1061,7 @@ impl Output {
     ///
     /// fern::Dispatch::new()
     ///     // as long as we explicitly cast into a type-erased Box
-    ///     .chain(Box::new(writer) as Box<std::io::Write + Send>)
+    ///     .chain(Box::new(writer) as Box<dyn std::io::Write + Send>)
     ///     # .into_log();
     /// #     Ok(())
     /// # }
@@ -1375,7 +1375,7 @@ impl Default for Dispatch {
 impl fmt::Debug for Dispatch {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         struct LevelsDebug<'a>(&'a [(Cow<'static, str>, log::LevelFilter)]);
-        impl<'a> fmt::Debug for LevelsDebug<'a> {
+        impl fmt::Debug for LevelsDebug<'_> {
             fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
                 f.debug_map()
                     .entries(self.0.iter().map(|t| (t.0.as_ref(), t.1)))
@@ -1383,7 +1383,7 @@ impl fmt::Debug for Dispatch {
             }
         }
         struct FiltersDebug<'a>(&'a [Box<Filter>]);
-        impl<'a> fmt::Debug for FiltersDebug<'a> {
+        impl fmt::Debug for FiltersDebug<'_> {
             fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
                 f.debug_list()
                     .entries(self.0.iter().map(|_| "<filter closure>"))

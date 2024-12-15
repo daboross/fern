@@ -144,7 +144,7 @@
 //! [`Dispatch::chain`] accepts [`Stdout`], [`Stderr`], [`File`] and other
 //! [`Dispatch`] instances.
 //!
-//! ```
+//! ```no_run
 //! # fern::Dispatch::new()
 //! .chain(fern::log_file("output.log")?)
 //! # ; <Result<(), Box<dyn std::error::Error>>>::Ok(())

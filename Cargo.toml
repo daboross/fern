@@ -4,7 +4,7 @@ name = "fern"
 version = "0.7.1"
 authors = ["David Ross <daboross@daboross.net>"]
 description = "Simple, efficient logging"
-edition = "2018"
+edition = "2021"
 # when updating this, also update toolchain in .github/workflows/rust.yml
 rust-version = "1.60"
 

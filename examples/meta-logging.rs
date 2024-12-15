@@ -21,7 +21,7 @@ fn main() {
     // Display implementation which performs logging:
     struct Thing<'a>(&'a str);
 
-    impl<'a> fmt::Display for Thing<'a> {
+    impl fmt::Display for Thing<'_> {
         fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
             debug!("formatting Thing wrapping ({})", self.0);
             f.write_str(self.0)
